@@ -1,0 +1,2364 @@
+# 二、系统架构设计
+
+---
+
+## （一）、定义核心业务实体与关系(ER Diagrams）
+
+#### 主体实体
+
+- **疾控人员** (User): 系统操作者
+- **组织机构** (Organization): 省/市/县疾控中心
+- **疾病编码** (DiseaseCode): 检疫传染病编码
+- **病原微生物** (Pathogen): 病原微生物目录
+- **个案** (Case): 已确认疾病的病例
+- **不明原因病例** (UnknownCase): 未知病原体的新发传染病
+- **随访记录** (FollowUp): 个案随访信息
+- **治疗记录** (Treatment): 个案治疗信息
+- **检测记录** (TestRecord): 实验室检测信息
+- **追踪记录** (TrackingRecord): 病例追踪信息
+- **预警事件** (AlertEvent): 预警消息
+- **统计报表** (StatisticsReport): 统计分析结果
+
+#### 支撑实体
+
+- **地区** (Region): 行政区划
+- **外部系统记录** (ExternalSystemLog): 跨系统交互日志
+- **操作日志** (OperationLog): 系统操作审计
+- **系统配置** (SystemConfig): 系统配置参数
+- **接口监控** (InterfaceMonitor): 接口状态监控
+
+---
+
+### 命名规范说明
+
+- **实体关系图编号**: ER-{组号}.{序号}
+- **实体命名**: 使用英文,采用帕斯卡命名法 (PascalCase)
+- **关系命名**: 使用动词短语,明确关系方向
+- **属性命名**: 使用驼峰命名法 (camelCase)
+
+---
+
+### 初步关系说明
+
+#### 核心关系
+
+1. **组织机构** (1) ─── (N) **疾控人员**: 一个机构有多个人员
+2. **疾控人员** (1) ─── (N) **个案**: 一个人员可管理多个个案
+3. **疾病编码** (1) ─── (N) **个案**: 一个疾病编码对应多个个案
+4. **个案** (1) ─── (N) **随访记录/治疗记录/检测记录/追踪记录**: 一个个案有多条相关记录
+5. **不明原因病例** (1) ─── (0..1) **个案**: 确诊后推送转换为个案
+6. **预警事件** (N) ─── (N) **个案**: 预警事件可关联多个个案
+
+---
+
+### 第一组: 核心主数据域 (Core Master Data)
+
+#### ER-1.1: 组织与人员实体关系图
+
+```
+@startuml
+title ER-1.1: 组织与人员实体关系图
+
+' 样式定义
+skinparam class {
+  BackgroundColor<<Master>> LightBlue
+  BorderColor Black
+  ArrowColor Black
+}
+
+' 地区实体
+entity "Region\n地区" as Region <<Master>> {
+  * **regionId**: VARCHAR(20) <<PK>>
+  --
+  * regionCode: VARCHAR(10) <<UK>>
+  * regionName: VARCHAR(100)
+  * regionLevel: ENUM('省','市','县','乡')
+  * parentRegionId: VARCHAR(20) <<FK>>
+  * longitude: DECIMAL(10,6)
+  * latitude: DECIMAL(10,6)
+  * isActive: BOOLEAN
+  * createdAt: TIMESTAMP
+  * updatedAt: TIMESTAMP
+}
+
+' 组织机构实体
+entity "Organization\n组织机构" as Org <<Master>> {
+  * **orgId**: VARCHAR(20) <<PK>>
+  --
+  * orgCode: VARCHAR(20) <<UK>>
+  * orgName: VARCHAR(200)
+  * orgType: ENUM('省疾控','市疾控','县疾控')
+  * regionId: VARCHAR(20) <<FK>>
+  * parentOrgId: VARCHAR(20) <<FK>>
+  * contactPhone: VARCHAR(20)
+  * address: VARCHAR(500)
+  * isActive: BOOLEAN
+  * createdAt: TIMESTAMP
+  * updatedAt: TIMESTAMP
+}
+
+' 疾控人员实体
+entity "User\n疾控人员" as User <<Master>> {
+  * **userId**: VARCHAR(20) <<PK>>
+  --
+  * username: VARCHAR(50) <<UK>>
+  * fullName: VARCHAR(100)
+  * idCardNo: VARCHAR(18)
+  * phone: VARCHAR(20)
+  * email: VARCHAR(100)
+  * orgId: VARCHAR(20) <<FK>>
+  * roleType: ENUM('业务人员','管理员')
+  * isActive: BOOLEAN
+  * lastLoginAt: TIMESTAMP
+  * createdAt: TIMESTAMP
+  * updatedAt: TIMESTAMP
+}
+
+' 关系定义
+Region ||--o{ Region : "上级地区\n1:N"
+Region ||--o{ Org : "所属地区\n1:N"
+Org ||--o{ Org : "上级机构\n1:N"
+Org ||--o{ User : "所属机构\n1:N"
+
+note right of Region
+  <b>说明</b>
+  行政区划层级结构
+  支持省/市/县/乡四级
+  包含地理坐标用于可视化
+end note
+
+note right of Org
+  <b>说明</b>
+  疾控中心组织架构
+  支持三级疾控体系
+  关联行政区划
+end note
+
+note right of User
+  <b>说明</b>
+  系统操作用户
+  关联组织机构
+  通过SSO Portal认证(UC19)
+end note
+
+@enduml
+```
+
+#### ER-1.2: 疾病与病原体编码实体关系图
+
+```
+@startuml
+title ER-1.2: 疾病与病原体编码实体关系图
+
+' 样式定义
+skinparam class {
+  BackgroundColor<<Master>> LightYellow
+  BorderColor Black
+  ArrowColor Black
+}
+
+' 检疫传染病编码实体
+entity "DiseaseCode\n检疫传染病编码" as Disease <<Master>> {
+  * **diseaseId**: VARCHAR(20) <<PK>>
+  --
+  * diseaseCode: VARCHAR(20) <<UK>>
+  * diseaseName: VARCHAR(200)
+  * diseaseCategory: ENUM('甲类','乙类','丙类','其他')
+  * icdCode: VARCHAR(20)
+  * description: TEXT
+  * riskLevel: ENUM('高','中','低')
+  * isQuarantine: BOOLEAN
+  * isActive: BOOLEAN
+  * createdBy: VARCHAR(20) <<FK>>
+  * createdAt: TIMESTAMP
+  * updatedAt: TIMESTAMP
+}
+
+' 病原微生物目录实体
+entity "Pathogen\n病原微生物" as Pathogen <<Master>> {
+  * **pathogenId**: VARCHAR(20) <<PK>>
+  --
+  * pathogenCode: VARCHAR(20) <<UK>>
+  * pathogenName: VARCHAR(200)
+  * pathogenType: ENUM('病毒','细菌','真菌','寄生虫','其他')
+  * scientificName: VARCHAR(200)
+  * associatedDiseases: TEXT
+  * description: TEXT
+  * biosafettyLevel: ENUM('BSL-1','BSL-2','BSL-3','BSL-4')
+  * isActive: BOOLEAN
+  * createdBy: VARCHAR(20) <<FK>>
+  * createdAt: TIMESTAMP
+  * updatedAt: TIMESTAMP
+}
+
+' 疾病-病原体关联表(多对多)
+entity "DiseasePathogenMapping\n疾病病原体关联" as Mapping {
+  * **mappingId**: VARCHAR(20) <<PK>>
+  --
+  * diseaseId: VARCHAR(20) <<FK>>
+  * pathogenId: VARCHAR(20) <<FK>>
+  * isPrimaryPathogen: BOOLEAN
+  * createdAt: TIMESTAMP
+}
+
+' 关系定义
+Disease ||--o{ Mapping : "关联病原体\n1:N"
+Pathogen ||--o{ Mapping : "关联疾病\n1:N"
+
+note right of Disease
+  <b>UC01: 管理检疫传染病编码</b>
+  • 支持新增/编辑/删除/查询/查看
+  • 包含ICD编码映射
+  • 区分检疫传染病标识
+  • 支持风险等级分类
+end note
+
+note right of Pathogen
+  <b>UC02: 管理病原微生物目录</b>
+  • 支持新增/编辑/删除/查询/查看
+  • 包含生物安全等级
+  • 支持多种病原体分类
+  • 关联可引发的疾病
+end note
+
+note bottom of Mapping
+  <b>说明</b>
+  一种疾病可由多种病原体引起
+  一种病原体可引起多种疾病
+  isPrimaryPathogen标识主要病原体
+end note
+
+@enduml
+```
+
+### 第二组: 事务处理域 (Transactional Records)
+
+#### ER-2.1: 个案管理核心实体关系图
+
+```
+@startuml
+title ER-2.1: 个案管理核心实体关系图
+
+' 个案实体(已知疾病)
+entity "Case\n个案(已知疾病)" as Case <<Transaction>> {
+  * **caseId**: VARCHAR(20) <<PK>>
+  --
+  * caseNo: VARCHAR(50) <<UK>>
+  * diseaseId: VARCHAR(20) <<FK>>
+  * patientName: VARCHAR(100)
+  * idCardNo: VARCHAR(18)
+  * gender: ENUM('男','女','未知')
+  * age: INT
+  * phone: VARCHAR(20)
+  * address: VARCHAR(500)
+  * reportOrgId: VARCHAR(20) <<FK>>
+  * reportUserId: VARCHAR(20) <<FK>>
+  * reportDate: DATE
+  * symptomOnsetDate: DATE
+  * diagnosisDate: DATE
+  * caseStatus: ENUM('新建','已核实','处理中','已关闭')
+  * caseSource: ENUM('主动监测','被动报告','不明原因转入')
+  * exposureHistory: TEXT
+  * contactHistory: TEXT
+  * travelHistory: TEXT
+  * initialDiagnosis: TEXT
+  * confirmedDiagnosis: TEXT
+  * isPushedToEpi: BOOLEAN
+  * pushedToEpiAt: TIMESTAMP
+  * createdBy: VARCHAR(20) <<FK>>
+  * createdAt: TIMESTAMP
+  * updatedAt: TIMESTAMP
+}
+
+' 不明原因病例实体(新发疾病)
+entity "UnknownCase\n不明原因病例" as UnknownCase <<Transaction>> {
+  * **unknownCaseId**: VARCHAR(20) <<PK>>
+  --
+  * unknownCaseNo: VARCHAR(50) <<UK>>
+  * patientName: VARCHAR(100)
+  * idCardNo: VARCHAR(18)
+  * gender: ENUM('男','女','未知')
+  * age: INT
+  * phone: VARCHAR(20)
+  * address: VARCHAR(500)
+  * reportOrgId: VARCHAR(20) <<FK>>
+  * reportUserId: VARCHAR(20) <<FK>>
+  * reportDate: DATE
+  * symptomOnsetDate: DATE
+  * clinicalSymptoms: TEXT
+  * unknownStatus: ENUM('待检测','检测中','已确诊','排除')
+  * suspectedPathogen: VARCHAR(200)
+  * testResults: TEXT
+  * isPushedToCase: BOOLEAN
+  * pushedToCaseId: VARCHAR(20) <<FK>>
+  * pushedAt: TIMESTAMP
+  * isPushedToEmergency: BOOLEAN
+  * pushedToEmergencyAt: TIMESTAMP
+  * isPushedToEpi: BOOLEAN
+  * pushedToEpiAt: TIMESTAMP
+  * createdBy: VARCHAR(20) <<FK>>
+  * createdAt: TIMESTAMP
+  * updatedAt: TIMESTAMP
+}
+
+' 引用外部实体
+entity "DiseaseCode" as Disease <<Master>>
+entity "Organization" as Org <<Master>>
+entity "User" as User <<Master>>
+
+' 关系定义
+Disease ||--o{ Case : "疾病类型\n1:N"
+Org ||--o{ Case : "报告机构\n1:N"
+Org ||--o{ UnknownCase : "报告机构\n1:N"
+User ||--o{ Case : "报告人员\n1:N"
+User ||--o{ UnknownCase : "报告人员\n1:N"
+UnknownCase ||--o| Case : "确诊转换\n1:0..1"
+
+note right of Case
+  <b>UC04: 管理个案调查表</b>
+  • 已确认疾病的病例管理
+  • 支持新增/编辑/删除/查看
+  • 记录流行病学信息
+  • 可推送至流调系统(EpiSys)
+  • 状态跟踪: 新建→核实→处理→关闭
+end note
+
+note right of UnknownCase
+  <b>UC09: 管理不明原因个案</b>
+  • 未知病原体的新发传染病
+  • 支持新增/编辑/查看
+  • 确诊后通过UC10推送至Case
+  • 可上报应急响应系统
+  • 可推送流调系统
+end note
+
+note bottom of Case
+  <b>Activity-2.2: 确诊转换流程</b>
+  不明原因病例确诊后:
+  1. UnknownCase.unknownStatus = '已确诊'
+  2. 通过UC10推送病例信息
+  3. 自动生成Case记录
+  4. UnknownCase.pushedToCaseId = Case.caseId
+end note
+
+@enduml
+```
+
+#### ER-2.2: 个案相关子实体关系图
+
+```
+@startuml
+title ER-2.2: 个案相关子实体关系图
+
+' 个案实体(引用)
+entity "Case\n个案" as Case <<Transaction>> {
+  * **caseId**: VARCHAR(20) <<PK>>
+  --
+  caseNo: VARCHAR(50)
+  ...
+}
+
+' 随访记录实体
+entity "FollowUp\n随访记录" as FollowUp <<SubRecord>> {
+  * **followUpId**: VARCHAR(20) <<PK>>
+  --
+  * caseId: VARCHAR(20) <<FK>>
+  * followUpDate: DATE
+  * followUpMethod: ENUM('电话','现场','线上')
+  * followUpUserId: VARCHAR(20) <<FK>>
+  * healthStatus: ENUM('正常','异常','住院','死亡')
+  * temperature: DECIMAL(4,1)
+  * symptoms: TEXT
+  * treatmentCompliance: ENUM('良好','一般','差')
+  * nextFollowUpDate: DATE
+  * remarks: TEXT
+  * createdAt: TIMESTAMP
+}
+
+' 治疗记录实体
+entity "Treatment\n治疗记录" as Treatment <<SubRecord>> {
+  * **treatmentId**: VARCHAR(20) <<PK>>
+  --
+  * caseId: VARCHAR(20) <<FK>>
+  * treatmentDate: DATE
+  * treatmentType: ENUM('门诊','住院','居家隔离')
+  * hospitalName: VARCHAR(200)
+  * departmentName: VARCHAR(100)
+  * doctorName: VARCHAR(100)
+  * diagnosis: TEXT
+  * treatmentPlan: TEXT
+  * medications: TEXT
+  * treatmentOutcome: ENUM('治愈','好转','无效','死亡','转院')
+  * dischargeDate: DATE
+  * createdBy: VARCHAR(20) <<FK>>
+  * createdAt: TIMESTAMP
+  * updatedAt: TIMESTAMP
+}
+
+' 检测记录实体
+entity "TestRecord\n检测记录" as TestRecord <<SubRecord>> {
+  * **testId**: VARCHAR(20) <<PK>>
+  --
+  * caseId: VARCHAR(20) <<FK>>
+  * testNo: VARCHAR(50) <<UK>>
+  * sampleCollectionDate: DATE
+  * sampleType: ENUM('血液','咽拭子','粪便','尿液','其他')
+  * testType: ENUM('核酸检测','抗体检测','培养','影像学','其他')
+  * testOrgName: VARCHAR(200)
+  * testDate: DATE
+  * testResult: ENUM('阳性','阴性','待定','不确定')
+  * resultDetails: TEXT
+  * pathogenDetected: VARCHAR(200)
+  * testStatus: ENUM('待确认','已确认')
+  * isPushedToLab: BOOLEAN
+  * pushedToLabAt: TIMESTAMP
+  * labReportFileUrl: VARCHAR(500)
+  * createdBy: VARCHAR(20) <<FK>>
+  * createdAt: TIMESTAMP
+  * updatedAt: TIMESTAMP
+}
+
+' 追踪记录实体
+entity "TrackingRecord\n追踪记录" as Tracking <<SubRecord>> {
+  * **trackingId**: VARCHAR(20) <<PK>>
+  --
+  * caseId: VARCHAR(20) <<FK>>
+  * trackingDate: DATE
+  * trackingType: ENUM('旅居史','接触史','物品暴露史','场所暴露史')
+  * startDate: DATE
+  * endDate: DATE
+  * locationDescription: TEXT
+  * regionId: VARCHAR(20) <<FK>>
+  * contactPersons: TEXT
+  * exposureDetails: TEXT
+  * riskAssessment: ENUM('高风险','中风险','低风险')
+  * isPushedToEpi: BOOLEAN
+  * pushedToEpiAt: TIMESTAMP
+  * createdBy: VARCHAR(20) <<FK>>
+  * createdAt: TIMESTAMP
+  * updatedAt: TIMESTAMP
+}
+
+' 关系定义
+Case ||--o{ FollowUp : "1:N"
+Case ||--o{ Treatment : "1:N"
+Case ||--o{ TestRecord : "1:N"
+Case ||--o{ Tracking : "1:N"
+
+note right of FollowUp
+  <b>UC05: 管理随访信息</b>
+  • 记录病例随访过程
+  • 跟踪健康状态变化
+  • 支持多次随访
+  • 计划下次随访时间
+end note
+
+note right of Treatment
+  <b>UC06: 管理治疗信息</b>
+  • 记录治疗过程
+  • 包含诊断、用药、转归
+  • 支持多次治疗记录
+end note
+
+note right of TestRecord
+  <b>UC07: 管理病例检测</b>
+  • 记录实验室检测信息
+  • 当前版本: 手工录入
+  • 预留接口: 对接实验室系统
+  • 可推送检测需求至Lab System
+  • Activity-3.1: 检测管理流程
+end note
+
+note right of Tracking
+  <b>UC08: 管理病例追踪</b>
+  • 记录流行病学追踪信息
+  • 包含旅居史、接触史、暴露史
+  • 风险评估
+  • 可推送至流调系统
+  • Activity-3.2: 追踪管理流程
+end note
+
+@enduml
+```
+
+#### ER-2.3: 预警与事件实体关系图
+
+```
+@startuml
+title ER-2.3: 预警与事件实体关系图
+' 预警事件实体
+entity "AlertEvent\n预警事件" as Alert <<Transaction>> {
+  * **alertId**: VARCHAR(20) <<PK>>
+  --
+  * alertNo: VARCHAR(50) <<UK>>
+  * alertType: ENUM('病例聚集','异常症状','新发疾病','其他')
+  * triggerCondition: TEXT
+  * alertLevel: ENUM('一级','二级','三级','四级')
+  * alertStatus: ENUM('待处理','处理中','已核实','已关闭','误报')
+  * detectedDate: TIMESTAMP
+  * regionId: VARCHAR(20) <<FK>>
+  * relatedDiseaseId: VARCHAR(20) <<FK>>
+  * caseCount: INT
+  * summary: TEXT
+  * riskAssessment: TEXT
+  * isPushedToEmergency: BOOLEAN
+  * pushedToEmergencyAt: TIMESTAMP
+  * handledBy: VARCHAR(20) <<FK>>
+  * handledAt: TIMESTAMP
+  * handlingResult: TEXT
+  * createdAt: TIMESTAMP
+  * updatedAt: TIMESTAMP
+}
+
+' 预警-个案关联表
+entity "AlertCaseMapping\n预警个案关联" as AlertCase {
+  * **mappingId**: VARCHAR(20) <<PK>>
+  --
+  * alertId: VARCHAR(20) <<FK>>
+  * caseId: VARCHAR(20) <<FK>>
+  * createdAt: TIMESTAMP
+}
+
+' 统计报表实体
+entity "StatisticsReport\n统计报表" as Statistics <<Analysis>> {
+  * **reportId**: VARCHAR(20) <<PK>>
+  --
+  * reportNo: VARCHAR(50) <<UK>>
+  * reportType: ENUM('移动轨迹','可视化展示','分地区统计','分类统计','地区统计')
+  * reportTitle: VARCHAR(200)
+  * statisticsDimension: TEXT
+  * queryConditions: JSON
+  * startDate: DATE
+  * endDate: DATE
+  * diseaseIds: TEXT
+  * regionIds: TEXT
+  * resultData: JSON
+  * chartType: ENUM('折线图','柱状图','饼图','地图','表格')
+  * generatedBy: VARCHAR(20) <<FK>>
+  * generatedAt: TIMESTAMP
+  * isExported: BOOLEAN
+  * exportedAt: TIMESTAMP
+  * exportFormat: ENUM('Excel','PDF','图片')
+  * exportFileUrl: VARCHAR(500)
+}
+
+' 引用外部实体
+entity "Case\n个案" as Case
+entity "Region\n地区" as Region
+entity "DiseaseCode\n疾病编码" as Disease
+entity "User\n用户" as User
+
+' 关系定义
+Alert }o--|| Region : "发生地区\n1:1"
+Alert }o--o| Disease : "相关疾病\n1:0..1"
+Alert }o--o| User : "处理人员\n1:0..1"
+Alert ||--o{ AlertCase : "1:N"
+Case ||--o{ AlertCase : "1:N"
+Statistics }o--|| User : "生成人\n1:1"
+
+note right of Alert
+  <b>UC03: 推送预警消息</b>
+  • 检测异常病例触发预警
+  • 规则引擎匹配触发条件
+  • 推送至应急指挥系统
+  • 推送站内信至责任人
+  • Activity-2.1: 预警推送流程
+  
+  <b>状态流转</b>
+  待处理 → 处理中 → 已核实/已关闭/误报
+end note
+
+note right of Statistics
+  <b>UC12-UC18: 统计分析</b>
+  • UC12: 展示移动轨迹
+  • UC13: 可视化展示
+  • UC14: 分地区统计
+  • UC15: 分类统计(病原微生物)
+  • UC16: 地区统计(病原微生物)
+  • UC17: 查询统计数据(通用)
+  • UC18: 导出统计结果(通用)
+  • Activity-4: 统计分析流程
+  
+  <b>数据来源</b>
+  基于DHIS2数据库聚合分析
+end note
+
+note bottom of AlertCase
+  <b>说明</b>
+  一个预警事件可关联多个个案
+  一个个案可触发多个预警事件
+  多对多关系
+end note
+
+@enduml
+```
+
+### 第三组: 审计与集成域 (Audit & Integration)
+
+#### ER-3.1: 系统审计实体关系图
+
+```
+@startuml
+title ER-3.1: 系统审计实体关系图
+
+' 操作日志实体
+entity "OperationLog\n操作日志" as OpLog <<Audit>> {
+  * **logId**: VARCHAR(20) <<PK>>
+  --
+  * logNo: VARCHAR(50) <<UK>>
+  * userId: VARCHAR(20) <<FK>>
+  * userName: VARCHAR(100)
+  * orgId: VARCHAR(20) <<FK>>
+  * operationType: ENUM('新增','编辑','删除','查询','导出','登录','登出')
+  * moduleName: VARCHAR(100)
+  * functionName: VARCHAR(100)
+  * targetEntityType: VARCHAR(50)
+  * targetEntityId: VARCHAR(20)
+  * operationDetail: TEXT
+  * requestParams: JSON
+  * responseStatus: ENUM('成功','失败')
+  * errorMessage: TEXT
+  * ipAddress: VARCHAR(50)
+  * userAgent: VARCHAR(500)
+  * operationDuration: INT
+  * operatedAt: TIMESTAMP
+  * createdAt: TIMESTAMP
+}
+
+' 引用外部实体
+entity "User\n用户" as User
+entity "Organization\n组织" as Org
+
+' 关系定义
+User ||--o{ OpLog : "操作人\n1:N"
+Org ||--o{ OpLog : "所属机构\n1:N"
+
+note right of OpLog
+  <b>审计功能</b>
+  • 记录所有业务操作
+  • 支持全流程追溯
+  • 安全审计与合规
+  • 性能监控
+  
+  <b>记录范围</b>
+  • 疾病编码管理 (UC01/UC02)
+  • 个案管理 (UC04-UC08)
+  • 不明原因病例管理 (UC09-UC11)
+  • 预警管理 (UC03)
+  • 统计分析 (UC12-UC18)
+  • 系统配置 (UC21)
+  • 用户登录登出
+  
+  <b>Activity流程中的日志记录</b>
+  • Activity-1.1: 疾病编码操作日志
+  • Activity-1.2: 个案调查表操作日志
+  • Activity-3.1: 病例检测操作日志
+  • Activity-3.2: 病例追踪操作日志
+  • Activity-4: 统计查询与导出日志
+end note
+
+note bottom of OpLog
+  <b>数据保留策略</b>
+  • 关键操作日志永久保留
+  • 查询日志保留1年
+  • 登录日志保留6个月
+  • 支持归档与清理
+end note
+
+@enduml
+```
+
+#### ER-3.2: 外部系统集成实体关系图
+
+```
+@startuml
+title ER-3.2: 外部系统集成实体关系图
+
+' 外部系统记录实体
+entity "ExternalSystemLog\n外部系统交互日志" as ExtLog <<Integration>> {
+  * **extLogId**: VARCHAR(20) <<PK>>
+  --
+  * extLogNo: VARCHAR(50) <<UK>>
+  * systemName: ENUM('Lab','Emergency','EpiSys','Portal','DataHub')
+  * systemDisplayName: VARCHAR(100)
+  * interfaceType: ENUM('推送','拉取','查询','回调')
+  * businessType: ENUM('个案推送','预警推送','检测推送','数据同步','认证')
+  * sourceEntityType: VARCHAR(50)
+  * sourceEntityId: VARCHAR(20)
+  * requestMethod: ENUM('GET','POST','PUT','DELETE')
+  * requestUrl: VARCHAR(500)
+  * requestHeaders: JSON
+  * requestBody: TEXT
+  * responseStatus: INT
+  * responseBody: TEXT
+  * isSuccess: BOOLEAN
+  * errorCode: VARCHAR(20)
+  * errorMessage: TEXT
+  * retryCount: INT
+  * executionDuration: INT
+  * requestedAt: TIMESTAMP
+  * respondedAt: TIMESTAMP
+  * createdAt: TIMESTAMP
+}
+
+' 接口监控实体
+entity "InterfaceMonitor\n接口监控" as Monitor <<Integration>> {
+  * **monitorId**: VARCHAR(20) <<PK>>
+  --
+  * systemName: ENUM('Lab','Emergency','EpiSys','Portal','DataHub')
+  * interfaceName: VARCHAR(100)
+  * interfaceUrl: VARCHAR(500)
+  * monitorStatus: ENUM('正常','异常','维护中','已停用')
+  * lastCheckAt: TIMESTAMP
+  * lastSuccessAt: TIMESTAMP
+  * lastFailureAt: TIMESTAMP
+  * successCount: INT
+  * failureCount: INT
+  * avgResponseTime: INT
+  * maxResponseTime: INT
+  * availabilityRate: DECIMAL(5,2)
+  * alertThreshold: INT
+  * isAlertEnabled: BOOLEAN
+  * remarks: TEXT
+  * createdAt: TIMESTAMP
+  * updatedAt: TIMESTAMP
+}
+
+' 系统配置实体
+entity "SystemConfig\n系统配置" as Config <<Config>> {
+  * **configId**: VARCHAR(20) <<PK>>
+  --
+  * configKey: VARCHAR(100) <<UK>>
+  * configValue: TEXT
+  * configType: ENUM('系统参数','接口配置','业务规则','预警规则')
+  * configCategory: VARCHAR(50)
+  * description: TEXT
+  * isEncrypted: BOOLEAN
+  * isActive: BOOLEAN
+  * modifiedBy: VARCHAR(20) <<FK>>
+  * modifiedAt: TIMESTAMP
+  * createdAt: TIMESTAMP
+}
+
+' 关系定义
+Monitor ||--o{ ExtLog : "接口调用记录\n1:N"
+
+note right of ExtLog
+  <b>外部系统交互记录</b>
+  
+  <b>实验室系统 (Lab System)</b>
+  • UC07: 推送检测需求
+  • UC11: 预留接口获取检测结果
+  
+  <b>应急指挥系统 (Emergency)</b>
+  • UC03: 推送预警事件
+  • UC09: 上报不明原因病例
+  
+  <b>流调系统 (EpiSys)</b>
+  • UC04: 推送个案信息
+  • UC08: 推送追踪信息
+  • UC09: 上报不明原因病例
+  
+  <b>疾控业务门户 (Portal)</b>
+  • UC19: 单点登录认证
+  
+  <b>数据中台 (DataHub)</b>
+  • UC20: 数据共享对接
+  
+  <b>Activity流程中的交互</b>
+  • Activity-2.1: 预警推送至应急系统
+  • Activity-2.2: 病例推送至流调系统
+end note
+
+note right of Monitor
+  <b>UC22: 接口监控维护</b>
+  • 实时监控外部接口状态
+  • 记录可用性指标
+  • 性能分析(响应时间)
+  • 故障告警
+  • 支持系统管理员查看
+end note
+
+note right of Config
+  <b>UC21: 系统配置管理</b>
+  • 系统参数配置
+  • 外部接口配置
+  • 业务规则配置
+  • 预警规则配置
+  • 支持加密存储
+  • 仅系统管理员可修改
+end note
+
+note bottom of ExtLog
+  <b>典型交互场景</b>
+  
+  1. 个案推送流调系统
+     sourceEntityType='Case'
+     systemName='EpiSys'
+     businessType='个案推送'
+  
+  2. 预警推送应急系统
+     sourceEntityType='AlertEvent'
+     systemName='Emergency'
+     businessType='预警推送'
+  
+  3. SSO认证
+     systemName='Portal'
+     businessType='认证'
+end note
+
+@enduml
+```
+
+## （二）、模型内部状态转换机 (State Machine Diagrams)
+
+### 核心状态实体
+
+1. **Case (个案)** - 从新建到关闭的完整生命周期
+2. **UnknownCase (不明原因病例)** - 从待检测到确诊/排除的流程
+3. **AlertEvent (预警事件)** - 从检测到处理关闭的流程
+4. **TestRecord (检测记录)** - 从待确认到已确认的状态
+
+
+## （三）、生成状态机图 (State Machine Diagrams)
+
+#### 第一组: 病例生命周期管理
+
+##### SM-1.1
+
+个案状态流转 (新建 → 已核实 → 处理中 → 已关闭)
+
+- 关联: UC04, UC05, UC06, UC07, UC08, Activity-1.2
+
+```
+@startuml
+title SM-1.1: 个案状态流转 (Case Lifecycle)
+
+[*] --> 新建 : 创建个案\n(UC04: 新增个案调查表)
+
+新建 --> 已核实 : 完成初步核查\n[疾控人员验证信息完整性]
+
+已核实 --> 处理中 : 启动处理流程\n[开始治疗/随访/检测]
+
+处理中 --> 处理中 : 更新处理信息\n• 新增随访记录(UC05)\n• 新增治疗记录(UC06)\n• 新增检测记录(UC07)\n• 新增追踪记录(UC08)
+
+处理中 --> 已关闭 : 结案\n[治疗结束/康复/死亡/终止跟踪]
+
+已核实 --> 已关闭 : 直接结案\n[无需进一步处理]
+
+新建 --> 已关闭 : 取消个案\n[误报/重复病例]
+
+已关闭 --> [*]
+
+note right of 新建
+  <b>新建状态</b>
+  • 个案刚创建
+  • 基本信息已录入
+  • 等待初步核查
+
+  <b>数据来源</b>
+  • 主动监测发现
+  • 被动报告
+  • 不明原因病例转入(UC10)
+end note
+
+note right of 已核实
+  <b>已核实状态</b>
+  • 信息完整性已验证
+  • 确认为有效病例
+  • 可推送至流调系统(Activity-1.2)
+end note
+
+note right of 处理中
+  <b>处理中状态</b>
+  • 正在进行临床管理
+  • 持续随访监测
+  • 实验室检测进行中
+  • 流行病学追踪
+
+  <b>循环处理</b>
+  可反复记录多次:
+  • 随访信息
+  • 治疗信息
+  • 检测结果
+  • 追踪记录
+end note
+
+note right of 已关闭
+  <b>已关闭状态</b>
+  • 个案处理完结
+  • 不再需要跟踪
+
+  <b>结案原因</b>
+  • 治愈出院
+  • 患者康复
+  • 患者死亡
+  • 终止跟踪
+  • 误报/取消
+end note
+
+@enduml
+```
+
+##### SM-1.2
+
+不明原因病例状态流转 (待检测 → 检测中 → 已确诊/排除 → 已推送)
+
+- 关联: UC09, UC10, UC11, Activity-2.2
+
+```
+@startuml
+title SM-1.2: 不明原因病例状态流转 (UnknownCase Lifecycle)
+
+[*] --> 待检测 : 创建不明原因病例\n(UC09: 管理不明原因个案)
+
+待检测 --> 检测中 : 送检样本\n[采集样本送实验室]
+
+检测中 --> 检测中 : 录入检测信息\n(UC11: 管理实验室检测信息)
+
+检测中 --> 已确诊 : 确认病原体\n[实验室检测阳性]
+
+检测中 --> 排除 : 排除传染病\n[检测阴性/确认非传染病]
+
+已确诊 --> 已推送 : 推送病例信息\n(UC10: 推送至个案管理)\n[生成Case记录]
+
+待检测 --> 排除 : 临床排除\n[临床判断非传染病]
+
+已推送 --> [*]
+
+排除 --> [*]
+
+note right of 待检测
+  <b>待检测状态</b>
+  • 发现不明原因病例
+  • 临床症状不明确
+  • 病原体未知
+  • 等待实验室检测
+
+  <b>可能上报</b>
+  • 应急指挥系统
+  • 流调系统
+end note
+
+note right of 检测中
+  <b>检测中状态</b>
+  • 样本已送检
+  • 等待检测结果
+  • 持续录入检测信息
+
+  <b>UC11: 手工录入</b>
+  当前版本手工录入
+  预留实验室系统接口
+end note
+
+note right of 已确诊
+  <b>已确诊状态</b>
+  • 病原体已确认
+  • 疾病类型明确
+  • 准备推送至个案管理
+
+  <b>触发条件</b>
+  检测结果为"确诊"
+  数据校验通过
+end note
+
+note right of 已推送
+  <b>已推送状态</b>
+  • 已转入个案管理(Case)
+  • 不再作为不明原因病例跟踪
+
+  <b>Activity-2.2流程</b>
+  UC09 → UC10 → UC04
+  UnknownCase → Case
+
+  <b>同步推送</b>
+  • 应急指挥系统(上报)
+  • 流调系统(启动流调)
+end note
+
+note right of 排除
+  <b>排除状态</b>
+  • 确认非传染病
+  • 或检测阴性
+  • 终止作为不明病例管理
+
+  <b>排除原因</b>
+  • 实验室检测阴性
+  • 临床诊断为其他疾病
+  • 症状消失/好转
+end note
+
+@enduml
+```
+
+
+
+#### 第二组: 事件与检测生命周期 
+
+##### SM-2.1
+
+预警事件状态流转 (待处理 → 处理中 → 已核实/误报 → 已关闭)
+
+- 关联: UC03, Activity-2.1
+
+```
+@startuml
+title SM-2.1: 预警事件状态流转 (AlertEvent Lifecycle)
+
+[*] --> 待处理 : 触发预警\n[规则引擎检测异常]
+
+待处理 --> 处理中 : 开始核查\n[疾控人员接收预警]
+
+处理中 --> 已核实 : 确认异常\n[核实为真实预警事件]
+
+处理中 --> 误报 : 确认误报\n[核实非异常情况]
+
+已核实 --> 已关闭 : 完成处理\n[应急响应完成/立案完成]
+
+误报 --> 已关闭 : 归档\n[记录误报原因]
+
+处理中 --> 处理中 : 更新处理信息\n[持续核查与响应]
+
+已关闭 --> [*]
+
+note right of 待处理
+  <b>待处理状态</b>
+  • 系统检测到异常
+  • 规则引擎触发预警
+  • 生成预警事件
+
+  <b>触发条件(示例)</b>
+  • 病例数异常增加
+  • 出现异常症状聚集
+  • 新发疾病出现
+
+  <b>UC03: 推送预警消息</b>
+  • 推送至应急指挥系统
+  • 站内信通知责任人
+  • Activity-2.1流程
+end note
+
+note right of 处理中
+  <b>处理中状态</b>
+  • 疾控人员开始核查
+  • 收集相关病例信息
+  • 初步风险评估
+
+  <b>核查内容</b>
+  • 病例信息验证
+  • 流行病学调查
+  • 现场核实
+end note
+
+note right of 已核实
+  <b>已核实状态</b>
+  • 确认为真实预警
+  • 需要采取应对措施
+
+  <b>后续操作</b>
+  • 创建个案调查任务
+  • 关联病例信息
+  • 进入UC04流程
+  • 触发应急响应
+end note
+
+note right of 误报
+  <b>误报状态</b>
+  • 经核实非真实预警
+  • 数据误判或规则误触发
+
+  <b>处理方式</b>
+  • 记录误报原因
+  • 优化预警规则
+  • 归档备查
+end note
+
+note right of 已关闭
+  <b>已关闭状态</b>
+  • 预警事件处理完结
+  • 应急响应完成
+
+  <b>关闭原因</b>
+  • 已立案处理(核实)
+  • 确认误报(误报)
+  • 风险已消除
+end note
+
+@enduml
+
+
+```
+
+##### SM-2.2
+
+检测记录状态流转 (待确认 → 已确认)
+
+- 关联: UC07, UC11, Activity-3.1
+
+```
+@startuml
+title SM-2.2: 检测记录状态流转 (TestRecord Lifecycle)
+
+[*] --> 待确认 : 创建检测记录\n(UC07/UC11: 手工录入)
+
+待确认 --> 已确认 : 人工确认\n[疾控人员确认信息]
+
+待确认 --> 已确认 : 系统自动确认\n[实验室系统上传结果]\n(预留接口)
+
+待确认 --> 待确认 : 更新检测信息\n[补充或修改数据]
+
+已确认 --> [*]
+
+note right of 待确认
+  <b>待确认状态</b>
+  • 检测记录已创建
+  • 基本信息已录入
+  • 等待结果确认
+
+  <b>创建方式</b>
+  • UC07: 个案检测管理(手工录入)
+  • UC11: 不明原因病例检测(手工录入)
+  • 预留: 实验室系统推送
+
+  <b>记录内容</b>
+  • 采集时间
+  • 样本类型
+  • 检测类型
+  • 送检机构
+
+  <b>Activity-3.1流程</b>
+  病例检测管理流程
+end note
+
+note right of 已确认
+  <b>已确认状态</b>
+  • 检测结果已确认
+  • 数据完整可用
+  • 可用于分析统计
+
+  <b>确认方式</b>
+
+    1. 人工确认
+       疾控人员审核后标记
+
+    2. 系统自动确认(预留)
+       实验室系统上传报告
+       系统自动更新状态
+
+  <b>结果类型</b>
+  • 阳性
+  • 阴性
+  • 待定
+  • 不确定
+
+  <b>后续使用</b>
+  • 个案诊断依据
+  • 不明病例确诊依据
+  • 统计分析数据源
+  • 推送至实验室系统(UC07)
+end note
+
+note bottom of 待确认
+  <b>外部系统交互</b>
+
+  <b>推送至实验室系统</b>
+  • UC07: 管理病例检测
+  • 推送检测需求
+  • isPushedToLab = true
+
+  <b>接收实验室结果(预留)</b>
+  • 实验室系统回传报告
+  • 自动更新检测状态
+  • labReportFileUrl存储报告链接
+end note
+
+@enduml
+```
+
+## （四）、定义消息流与对象生命周期 (Sequence Diagrams)
+
+#### 序列图设计原则
+
+1. **参与者识别**: 明确人员、系统组件、外部系统
+2. **消息流向**: 清晰标注请求/响应方向
+3. **生命线**: 展示对象的活动时间
+4. **同步/异步**: 区分同步调用和异步消息
+5. **条件分支**: 使用alt/opt表示条件逻辑
+6. **循环**: 使用loop表示重复操作
+7. **注释**: 关键步骤添加说明
+
+------
+
+## （五）、生成序列图 (Sequence Diagrams)
+
+### 第一组: 核心数据管理流程
+
+#### Seq-1.1: 疾病编码管理流程
+
+```
+@startuml
+title Seq-1.1: 疾病编码管理流程 (UC01/UC02, Activity-1.1)
+
+actor "疾控业务人员" as User
+participant "疾病编码管理模块" as Module
+participant "认证服务\n(SSO Portal)" as Auth
+participant "数据验证服务" as Validator
+participant "数据库" as DB
+participant "操作日志服务" as Logger
+
+== 登录与认证 ==
+User -> Module: 访问疾病编码管理页面
+Module -> Auth: 请求单点登录认证 (UC19)
+Auth --> Module: 返回认证令牌
+Module --> User: 展示管理界面
+
+== 查询编码目录 ==
+User -> Module: 查看编码列表\n(检疫传染病/病原微生物)
+Module -> DB: SELECT * FROM DiseaseCode/Pathogen\nWHERE isActive=true
+DB --> Module: 返回编码列表
+Module --> User: 展示编码目录
+
+== 新增编码 ==
+User -> Module: 点击"新增编码"
+Module --> User: 展示新增表单
+
+User -> Module: 填写编码信息\n(名称、代码、类别、描述等)\n提交保存
+Module -> Validator: 验证数据完整性与唯一性
+Validator -> DB: 检查编码是否重复\nSELECT COUNT(*) WHERE code=?
+DB --> Validator: 返回检查结果
+
+alt 验证通过
+    Validator --> Module: 验证成功
+    Module -> DB: INSERT INTO DiseaseCode/Pathogen
+    DB --> Module: 返回新记录ID
+    Module -> Logger: 记录操作日志\n(操作类型=新增)
+    Logger -> DB: INSERT INTO OperationLog
+    Module --> User: 提示"保存成功"
+else 验证失败
+    Validator --> Module: 返回错误信息\n(重复编码/缺失字段)
+    Module --> User: 提示错误信息
+end
+
+== 编辑编码 ==
+User -> Module: 选中编码，点击"编辑"
+Module -> DB: SELECT * FROM DiseaseCode/Pathogen\nWHERE id=?
+DB --> Module: 返回编码详情
+Module --> User: 展示编辑表单(预填数据)
+
+User -> Module: 修改信息并提交
+Module -> Validator: 验证数据
+alt 验证通过
+    Module -> DB: UPDATE DiseaseCode/Pathogen\nSET ... WHERE id=?
+    DB --> Module: 更新成功
+    Module -> Logger: 记录操作日志\n(操作类型=编辑)
+    Module --> User: 提示"更新成功"
+else 验证失败
+    Module --> User: 提示错误信息
+end
+
+== 删除编码 ==
+User -> Module: 选中编码，点击"删除"
+Module --> User: 弹出确认对话框
+
+User -> Module: 确认删除
+Module -> DB: 检查是否被引用\nSELECT COUNT(*) FROM Case\nWHERE diseaseId=?
+DB --> Module: 返回引用计数
+
+alt 无引用关系
+    Module -> DB: UPDATE DiseaseCode/Pathogen\nSET isActive=false\nWHERE id=?\n(软删除)
+    DB --> Module: 删除成功
+    Module -> Logger: 记录操作日志\n(操作类型=删除)
+    Module --> User: 提示"删除成功"
+else 存在引用
+    Module --> User: 提示"该编码已被使用,无法删除"
+end
+
+== 导出编码目录 ==
+User -> Module: 点击"导出"按钮
+Module -> DB: SELECT * FROM DiseaseCode/Pathogen
+DB --> Module: 返回全量数据
+Module -> Module: 生成Excel/CSV文件
+Module --> User: 提供文件下载
+Module -> Logger: 记录操作日志\n(操作类型=导出)
+
+note right of Module
+  <b>关联用例</b>
+  • UC01: 管理检疫传染病编码
+  • UC02: 管理病原微生物目录
+  • UC19: 单点登录认证(include)
+
+  <b>Activity-1.1流程</b>
+  支持新增/编辑/删除/查询/导出
+end note
+
+note right of Validator
+  <b>验证规则</b>
+  • 编码唯一性
+  • 必填字段完整性
+  • 数据格式正确性
+  • 枚举值有效性
+end note
+
+note right of Logger
+  <b>审计日志</b>
+  记录所有CRUD操作
+  包含操作人、时间、详情
+  支持合规审计
+end note
+
+@enduml
+```
+
+#### Seq-1.2: 个案调查表管理流程
+
+```
+@startuml
+title Seq-1.2: 个案调查表管理流程 (UC04, Activity-1.2)
+
+actor "疾控业务人员" as User
+participant "个案管理模块" as CaseModule
+participant "认证服务" as Auth
+participant "数据验证服务" as Validator
+participant "数据库" as DB
+participant "流调系统接口" as EpiSys
+participant "操作日志服务" as Logger
+
+== 登录与进入模块 ==
+User -> CaseModule: 访问个案管理
+CaseModule -> Auth: 单点登录认证 (UC19)
+Auth --> CaseModule: 认证通过
+CaseModule --> User: 展示个案列表
+
+== 查看个案列表 ==
+User -> CaseModule: 查看个案列表\n(可按疾病类型/来源筛选)
+CaseModule -> DB: SELECT * FROM Case\nWHERE ... ORDER BY reportDate DESC
+DB --> CaseModule: 返回个案列表
+CaseModule --> User: 展示个案列表
+
+== 新增个案 ==
+User -> CaseModule: 点击"新增个案"
+CaseModule --> User: 展示个案调查表表单
+
+User -> CaseModule: 填写个案信息并提交\n• 基本信息(姓名/性别/年龄等)\n• 流行病学信息(暴露史/接触史/旅行史)\n• 初步诊断信息
+CaseModule -> Validator: 验证表单数据
+Validator -> DB: 检查重复病例\nSELECT COUNT(*) FROM Case\nWHERE idCardNo=? AND diseaseId=?
+DB --> Validator: 返回检查结果
+
+alt 数据校验通过
+    Validator --> CaseModule: 验证成功
+    CaseModule -> CaseModule: 生成个案编号 (caseNo)
+    CaseModule -> DB: INSERT INTO Case\nVALUES (...)
+    DB --> CaseModule: 返回caseId
+    CaseModule -> DB: 更新状态为"新建"
+    CaseModule -> Logger: 记录操作日志
+    CaseModule --> User: 提示"保存成功"\n显示个案编号
+else 数据校验失败
+    Validator --> CaseModule: 返回错误(缺失字段/格式错误/重复病例)
+    CaseModule --> User: 提示错误信息
+end
+
+== 编辑个案 ==
+User -> CaseModule: 选中个案，点击"编辑"
+CaseModule -> DB: SELECT * FROM Case WHERE caseId=?
+DB --> CaseModule: 返回个案详情
+CaseModule --> User: 展示编辑表单(预填数据)
+
+User -> CaseModule: 修改信息并提交
+CaseModule -> Validator: 验证数据
+alt 验证通过
+    CaseModule -> DB: UPDATE Case SET ... WHERE caseId=?
+    DB --> CaseModule: 更新成功
+    CaseModule -> Logger: 记录操作日志
+    CaseModule --> User: 提示"更新成功"
+else 验证失败
+    CaseModule --> User: 提示错误信息
+end
+
+== 查看个案详情 ==
+User -> CaseModule: 点击"查看详情"
+CaseModule -> DB: SELECT * FROM Case WHERE caseId=?
+CaseModule -> DB: SELECT * FROM FollowUp WHERE caseId=?
+CaseModule -> DB: SELECT * FROM Treatment WHERE caseId=?
+CaseModule -> DB: SELECT * FROM TestRecord WHERE caseId=?
+CaseModule -> DB: SELECT * FROM TrackingRecord WHERE caseId=?
+DB --> CaseModule: 返回完整个案信息
+CaseModule --> User: 展示个案详情页\n(含随访/治疗/检测/追踪记录)
+
+== 推送至流调系统 ==
+User -> CaseModule: 点击"推送流调"
+CaseModule -> DB: SELECT * FROM Case WHERE caseId=?
+DB --> CaseModule: 返回个案数据
+
+CaseModule -> CaseModule: 封装个案数据包\n(JSON格式)
+CaseModule -> EpiSys: POST /api/epi/case\n{caseData}
+
+alt 推送成功
+    EpiSys --> CaseModule: 返回200 OK\n{epiCaseId}
+    CaseModule -> DB: UPDATE Case\nSET isPushedToEpi=true,\npushedToEpiAt=NOW()
+    CaseModule -> Logger: 记录推送日志
+    Logger -> DB: INSERT INTO ExternalSystemLog\n(systemName='EpiSys',\nbusinessType='个案推送')
+    CaseModule --> User: 提示"推送成功"
+else 推送失败
+    EpiSys --> CaseModule: 返回错误(400/500/超时)
+    CaseModule -> Logger: 记录失败日志
+    CaseModule --> User: 提示"推送失败,请重试"
+end
+
+== 删除个案 ==
+User -> CaseModule: 选中个案，点击"删除"
+CaseModule --> User: 弹出确认对话框
+
+User -> CaseModule: 确认删除
+CaseModule -> DB: 检查关联记录\nSELECT COUNT(*) FROM FollowUp/Treatment/...\nWHERE caseId=?
+DB --> CaseModule: 返回关联记录数
+
+alt 无关联记录或允许级联删除
+    CaseModule -> DB: UPDATE Case\nSET caseStatus='已关闭',\nisActive=false
+    DB --> CaseModule: 软删除成功
+    CaseModule -> Logger: 记录删除日志
+    CaseModule --> User: 提示"删除成功"
+else 存在关联记录且不允许删除
+    CaseModule --> User: 提示"该个案已有关联记录,\n请先处理相关数据"
+end
+
+note right of CaseModule
+  <b>UC04: 管理个案调查表</b>
+  • 支持新增/编辑/删除/查看
+  • 记录流行病学信息
+  • 可推送至流调系统
+
+  <b>Activity-1.2流程</b>
+  完整的个案生命周期管理
+
+  <b>个案来源</b>
+  • 主动监测
+  • 被动报告
+  • 不明原因病例转入(UC10)
+end note
+
+note right of EpiSys
+  <b>流调系统集成</b>
+  • RESTful API接口
+  • JSON数据格式
+  • 异步推送机制
+  • 支持重试
+
+  <b>推送内容</b>
+  个案核心数据+流行病学信息
+end note
+
+@enduml
+```
+
+### 第二组: 跨系统交互流程
+
+#### Seq-2.1: 预警消息推送流程
+
+```
+@startuml
+title Seq-2.1: 预警消息推送流程 (UC03, Activity-2.1)
+
+participant "监测系统" as Monitor
+participant "规则引擎" as RuleEngine
+participant "预警管理模块" as AlertModule
+participant "数据库" as DB
+participant "消息推送服务" as MsgService
+participant "应急指挥系统" as Emergency
+participant "站内消息中心" as InternalMsg
+participant "外部系统日志" as ExtLog
+actor "疾控业务人员" as User
+
+== 异常检测与预警触发 ==
+Monitor -> Monitor: 检测疑似异常病例数据\n(定时任务/实时监控)
+Monitor -> RuleEngine: 提交疑似病例数据进行规则匹配
+
+RuleEngine -> DB: 加载预警规则配置\nSELECT * FROM SystemConfig\nWHERE configType='预警规则'
+DB --> RuleEngine: 返回规则列表
+
+RuleEngine -> RuleEngine: 执行规则引擎\n• 病例数聚集规则\n• 异常症状规则\n• 新发疾病规则
+
+alt 符合预警条件
+    RuleEngine --> Monitor: 返回预警匹配结果\n{ruleName, riskLevel}
+    Monitor -> AlertModule: 创建预警事件
+    
+
+    AlertModule -> AlertModule: 生成预警事件对象\n• alertNo\n• alertType\n• alertLevel\n• summary
+    
+    AlertModule -> DB: INSERT INTO AlertEvent\nVALUES (...)\nSET alertStatus='待处理'
+    DB --> AlertModule: 返回alertId
+    
+    AlertModule -> DB: INSERT INTO AlertCaseMapping\n(关联相关病例)
+
+else 不符合预警条件
+    RuleEngine --> Monitor: 无匹配规则
+    Monitor -> DB: 记录日志(无预警触发)
+    Monitor -> [*]: 结束流程
+end
+
+== 确定接收单位与人员 ==
+AlertModule -> DB: 查询责任单位与人员\nSELECT * FROM Organization o\nJOIN User u ON o.orgId=u.orgId\nWHERE o.regionId=?
+DB --> AlertModule: 返回接收人员列表
+
+== 生成并推送预警消息 ==
+AlertModule -> MsgService: 请求推送预警消息\n{alertData, recipients}
+
+MsgService -> MsgService: 生成预警消息内容\n• 病例摘要\n• 发生地区\n• 时间\n• 风险等级
+
+par 并行推送
+    MsgService -> Emergency: POST /api/emergency/alert\n{alertEvent}
+    
+
+    alt 推送成功
+        Emergency --> MsgService: 返回200 OK\n{eventId}
+        MsgService -> DB: UPDATE AlertEvent\nSET isPushedToEmergency=true,\npushedToEmergencyAt=NOW()
+        MsgService -> ExtLog: 记录推送成功日志
+        ExtLog -> DB: INSERT INTO ExternalSystemLog\n(systemName='Emergency',\nisSuccess=true)
+    else 推送失败
+        Emergency --> MsgService: 返回错误(超时/400/500)
+        MsgService -> ExtLog: 记录推送失败日志
+        ExtLog -> DB: INSERT INTO ExternalSystemLog\n(systemName='Emergency',\nisSuccess=false,\nerrorMessage=...)
+        MsgService -> MsgService: 加入重试队列
+    end
+    
+    MsgService -> InternalMsg: 发送站内信\nFOREACH recipient IN recipients
+    InternalMsg -> DB: INSERT INTO Notification\n(userId, alertId, msgType='预警')
+    InternalMsg --> MsgService: 站内信发送完成
+
+end
+
+MsgService --> AlertModule: 推送结果汇总
+
+== 疾控人员查看与响应 ==
+User -> InternalMsg: 登录系统查看消息
+InternalMsg -> DB: SELECT * FROM Notification\nWHERE userId=? AND isRead=false
+DB --> InternalMsg: 返回未读消息
+InternalMsg --> User: 展示预警消息列表
+
+User -> AlertModule: 点击查看预警详情
+AlertModule -> DB: SELECT * FROM AlertEvent\nWHERE alertId=?
+AlertModule -> DB: SELECT * FROM AlertCaseMapping acm\nJOIN Case c ON acm.caseId=c.caseId\nWHERE acm.alertId=?
+DB --> AlertModule: 返回预警详情+关联病例
+AlertModule --> User: 展示预警详情页
+
+== 初步核实与响应 ==
+User -> AlertModule: 选择响应操作
+
+alt 立案处理
+    User -> AlertModule: 点击"立案"
+    AlertModule -> DB: UPDATE AlertEvent\nSET alertStatus='处理中',\nhandledBy=?, handledAt=NOW()
+    AlertModule -> AlertModule: 创建个案调查任务\n(关联病例信息)
+    AlertModule --> User: 跳转至个案管理(UC04)
+    
+else 忽略预警
+    User -> AlertModule: 点击"忽略"\n(输入忽略原因)
+    AlertModule -> DB: UPDATE AlertEvent\nSET alertStatus='误报',\nhandlingResult=?
+    AlertModule --> User: 提示"已标记为误报"
+    
+else 已核实非异常
+    User -> AlertModule: 点击"核实"\n(输入核实结果)
+    AlertModule -> DB: UPDATE AlertEvent\nSET alertStatus='已关闭',\nhandlingResult=?
+    AlertModule --> User: 提示"预警已关闭"
+end
+
+note right of RuleEngine
+  <b>预警规则引擎</b>
+  参考DHIS2规则触发通知设计
+
+  <b>触发条件示例</b>
+  • 7天内同地区同疾病>5例
+  • 出现异常症状聚集
+  • 检测到新发疾病
+  • 死亡率异常升高
+end note
+
+note right of MsgService
+  <b>消息推送机制</b>
+  • 统一的Webhook推送
+  • 支持多渠道(应急系统+站内信)
+  • 异步推送+重试机制
+  • 推送状态跟踪
+end note
+
+note right of Emergency
+  <b>应急指挥系统集成</b>
+  • 接收预警事件
+  • 触发应急响应流程
+  • 返回事件跟踪ID
+end note
+
+@enduml
+```
+
+#### Seq-2.2: 不明原因病例确诊转个案流程
+
+```
+@startuml
+title Seq-2.2: 不明原因病例确诊转个案流程 (UC09→UC10→UC04, Activity-2.2)
+
+actor "疾控业务人员" as User
+participant "不明原因疾病\n管理模块" as UnknownModule
+participant "数据库" as DB
+participant "病例推送模块" as PushModule
+participant "个案管理模块" as CaseModule
+participant "应急指挥系统" as Emergency
+participant "流调系统" as EpiSys
+participant "外部系统日志" as ExtLog
+participant "操作日志服务" as Logger
+
+== 登录并管理不明原因病例 ==
+User -> UnknownModule: 登录系统，进入\n"不明原因疾病管理"模块
+UnknownModule -> DB: SELECT * FROM UnknownCase\nWHERE unknownStatus IN\n('待检测','检测中')
+DB --> UnknownModule: 返回不明原因病例列表
+UnknownModule --> User: 展示病例列表
+
+== 录入实验室检测结果 ==
+User -> UnknownModule: 选择病例，录入检测结果\n(UC11: 管理实验室检测信息)
+UnknownModule --> User: 展示检测信息表单
+
+User -> UnknownModule: 填写检测结果\n• 检测类型\n• 检测结果: 阳性/确诊\n• 确认病原体\n• 确诊疾病名称
+UnknownModule -> DB: INSERT INTO TestRecord\nVALUES (...)\n(关联unknownCaseId)
+DB --> UnknownModule: 保存成功
+
+== 系统更新病例状态 ==
+UnknownModule -> UnknownModule: 检测结果分析\nIF testResult='阳性' AND\npathogenDetected IS NOT NULL
+
+alt 检测结果为"确诊"
+    UnknownModule -> DB: UPDATE UnknownCase\nSET unknownStatus='已确诊',\ntestResults=?,\nsuspectedPathogen=?\nWHERE unknownCaseId=?
+    DB --> UnknownModule: 更新成功
+    UnknownModule --> User: 提示"病例状态已更新为'已确诊'"
+    
+    UnknownModule -> DB: 检查是否存在重复个案\nSELECT COUNT(*) FROM Case\nWHERE idCardNo=?\nAND diseaseId=?
+    DB --> UnknownModule: 返回检查结果
+    
+    alt 校验通过，无重复
+        UnknownModule --> User: 展示"病例推送"按钮
+    else 校验失败，存在重复
+        UnknownModule --> User: 提示"检测到重复病例，请核查"
+        note over UnknownModule, User
+          暂停流程，等待用户处理
+        end note
+    end
+    
+else 检测结果为"排除"或"待定"
+    UnknownModule -> DB: UPDATE UnknownCase\nSET unknownStatus='排除'或保持'检测中'
+    UnknownModule --> User: 病例继续留在\n"不明原因病例"列表
+    note over UnknownModule, User
+      流程结束
+    end note
+end
+
+== 疾控人员确认推送 ==
+User -> UnknownModule: 点击"病例推送"按钮
+UnknownModule --> User: 弹出确认对话框\n"确认将该病例推送至个案管理?"
+
+User -> UnknownModule: 确认推送操作
+UnknownModule -> PushModule: 触发病例推送(UC10)
+
+== 封装病例数据 ==
+PushModule -> DB: SELECT * FROM UnknownCase\nWHERE unknownCaseId=?
+PushModule -> DB: SELECT * FROM TestRecord\nWHERE unknownCaseId=?
+DB --> PushModule: 返回完整病例数据
+
+PushModule -> PushModule: 封装病例核心数据\n• 患者基本信息\n• 确诊疾病信息\n• 检测结果\n• 流行病学信息
+
+== 推送至个案管理模块 ==
+PushModule -> CaseModule: 内部接口调用\ncreateCase(unknownCaseData)
+
+CaseModule -> CaseModule: 数据映射转换\nUnknownCase → Case
+CaseModule -> CaseModule: 生成个案编号(caseNo)
+CaseModule -> DB: BEGIN TRANSACTION
+
+CaseModule -> DB: INSERT INTO Case\nVALUES (...)\nSET caseSource='不明原因转入',\ncaseStatus='新建'
+DB --> CaseModule: 返回caseId
+
+CaseModule -> DB: INSERT INTO TestRecord\n(复制检测记录，关联caseId)
+DB --> CaseModule: 保存成功
+
+CaseModule -> DB: COMMIT TRANSACTION
+CaseModule --> PushModule: 返回推送结果\n{caseId, caseNo}
+
+== 更新不明原因病例状态 ==
+PushModule -> DB: UPDATE UnknownCase\nSET isPushedToCase=true,\npushedToCaseId=?,\npushedAt=NOW(),\nunknownStatus='已推送'\nWHERE unknownCaseId=?
+DB --> PushModule: 更新成功
+
+PushModule -> Logger: 记录推送操作日志
+Logger -> DB: INSERT INTO OperationLog\n(operationType='病例推送',\ntargetEntityType='UnknownCase→Case')
+
+== 并行推送外部系统 ==
+par 推送至应急指挥系统
+    PushModule -> Emergency: POST /api/emergency/confirmed-case\n{caseData}
+    
+    alt 推送成功
+        Emergency --> PushModule: 返回200 OK
+        PushModule -> DB: UPDATE UnknownCase\nSET isPushedToEmergency=true,\npushedToEmergencyAt=NOW()
+        PushModule -> ExtLog: 记录推送成功
+        ExtLog -> DB: INSERT INTO ExternalSystemLog\n(systemName='Emergency',\nbusinessType='确诊病例上报')
+    else 推送失败
+        Emergency --> PushModule: 返回错误
+        PushModule -> ExtLog: 记录推送失败
+        PushModule -> PushModule: 加入重试队列
+    end
+end
+
+par 推送至流调系统
+    PushModule -> EpiSys: POST /api/epi/case\n{caseData}
+    
+    alt 推送成功
+        EpiSys --> PushModule: 返回200 OK
+        PushModule -> DB: UPDATE Case\nSET isPushedToEpi=true,\npushedToEpiAt=NOW()
+        PushModule -> ExtLog: 记录推送成功
+        ExtLog -> DB: INSERT INTO ExternalSystemLog\n(systemName='EpiSys',\nbusinessType='个案推送')
+    else 推送失败
+        EpiSys --> PushModule: 返回错误
+        PushModule -> ExtLog: 记录推送失败
+    end
+end
+
+PushModule --> UnknownModule: 返回推送结果汇总
+
+== 用户查看推送结果 ==
+UnknownModule --> User: 提示"病例推送成功"\n显示生成的个案编号
+
+User -> CaseModule: 进入"个案管理"模块\n查看新生成的个案
+CaseModule -> DB: SELECT * FROM Case\nWHERE caseId=?
+DB --> CaseModule: 返回个案详情
+CaseModule --> User: 展示个案调查表
+
+note right of PushModule
+  <b>UC10: 推送病例信息</b>
+  • 内部推送: UnknownCase → Case
+  • 外部推送: 应急系统+流调系统
+  
+  <b>Activity-2.2流程</b>
+  UC09 → UC10 → UC04
+  不明原因病例确诊后的完整转换流程
+end note
+
+note right of CaseModule
+  <b>数据映射关系</b>
+  UnknownCase字段 → Case字段
+  • patientName → patientName
+  • idCardNo → idCardNo
+  • reportOrgId → reportOrgId
+  • unknownCaseNo → 参考生成caseNo
+  • caseSource = '不明原因转入'
+end note
+
+note right of Emergency
+  <b>应急指挥系统上报</b>
+  • UC09: 上报不明原因病例
+  • 确诊后上报确诊病例
+  • 触发应急响应或备案
+end note
+
+note right of EpiSys
+  <b>流调系统接收</b>
+  • 接收确诊病例数据
+  • 启动流行病学调查任务
+  • 支持后续追踪管理
+end note
+
+@enduml
+```
+
+### 第三组: 检测与追踪流程
+
+#### Seq-3.1: 病例检测管理流
+
+```
+@startuml
+title Seq-3.1: 病例检测管理流程 (UC07, Activity-3.1)
+
+actor "疾控业务人员" as User
+participant "病例检测\n管理模块" as TestModule
+participant "数据验证服务" as Validator
+participant "数据库" as DB
+participant "实验室系统\n(预留接口)" as LabSys
+participant "外部系统日志" as ExtLog
+participant "操作日志服务" as Logger
+
+== 登录并进入模块 ==
+User -> TestModule: 登录系统\n进入"病例检测管理"模块
+TestModule -> DB: SELECT tr.*, c.patientName, c.caseNo\nFROM TestRecord tr\nJOIN Case c ON tr.caseId=c.caseId\nORDER BY tr.createdAt DESC
+DB --> TestModule: 返回病例检测记录列表
+TestModule --> User: 展示检测记录列表
+
+== 新增检测记录 ==
+User -> TestModule: 点击"新增"按钮
+TestModule --> User: 打开新增检测信息表单
+
+User -> TestModule: 填写检测信息并保存\n• 关联病例(caseId)\n• 采集时间\n• 样本类型\n• 检测类型\n• 检测机构\n• 初步结果(可选)
+
+TestModule -> Validator: 校验数据完整性
+Validator -> DB: 检查病例是否存在\nSELECT COUNT(*) FROM Case\nWHERE caseId=?
+DB --> Validator: 返回检查结果
+
+alt 数据校验通过
+    Validator --> TestModule: 验证成功
+    TestModule -> TestModule: 生成检测编号(testNo)
+    TestModule -> DB: INSERT INTO TestRecord\nVALUES (...)\nSET testStatus='待确认'
+    DB --> TestModule: 返回testId
+    TestModule -> Logger: 记录操作日志
+    Logger -> DB: INSERT INTO OperationLog\n(operationType='新增',\nmoduleName='病例检测')
+    TestModule --> User: 提示"保存成功"\n显示检测编号
+else 数据校验失败
+    Validator --> TestModule: 返回错误信息
+    TestModule --> User: 提示错误(缺失字段/病例不存在)
+end
+
+== 推送检测需求至实验室系统 ==
+opt 需要推送至实验室系统
+    User -> TestModule: 点击"推送实验室"按钮
+    TestModule -> DB: SELECT * FROM TestRecord\nWHERE testId=?
+    DB --> TestModule: 返回检测记录详情
+    
+
+    TestModule -> TestModule: 封装检测需求数据\n• 样本信息\n• 检测项目\n• 病例信息
+    
+    TestModule -> LabSys: POST /api/lab/test-request\n{testRequestData}
+    
+    alt 推送成功
+        LabSys --> TestModule: 返回200 OK\n{labRequestId}
+        TestModule -> DB: UPDATE TestRecord\nSET isPushedToLab=true,\npushedToLabAt=NOW()
+        TestModule -> ExtLog: 记录推送成功日志
+        ExtLog -> DB: INSERT INTO ExternalSystemLog\n(systemName='Lab',\nbusinessType='检测推送',\nisSuccess=true)
+        TestModule --> User: 提示"推送成功"
+    else 推送失败
+        LabSys --> TestModule: 返回错误
+        TestModule -> ExtLog: 记录推送失败日志
+        ExtLog -> DB: INSERT INTO ExternalSystemLog\n(systemName='Lab',\nisSuccess=false)
+        TestModule --> User: 提示"推送失败"
+    end
+
+end
+
+== 编辑检测记录 ==
+User -> TestModule: 选中记录，点击"编辑"
+TestModule -> DB: SELECT * FROM TestRecord\nWHERE testId=?
+DB --> TestModule: 返回检测记录
+TestModule --> User: 展示编辑表单(预填数据)
+
+User -> TestModule: 修改必要字段并保存\n(如更新检测结果、补充详情)
+TestModule -> Validator: 验证数据
+
+alt 验证通过
+    TestModule -> DB: UPDATE TestRecord\nSET ... WHERE testId=?
+    DB --> TestModule: 更新成功
+    TestModule -> Logger: 记录操作日志
+    TestModule --> User: 提示"更新成功"
+else 验证失败
+    TestModule --> User: 提示错误信息
+end
+
+== 人工确认检测结果 ==
+User -> TestModule: 选中记录，点击"确认结果"
+TestModule -> DB: SELECT * FROM TestRecord\nWHERE testId=?
+DB --> TestModule: 返回检测记录
+
+TestModule --> User: 展示确认对话框\n(检测结果详情)
+
+User -> TestModule: 确认检测结果\n(阳性/阴性/待定/不确定)
+TestModule -> DB: UPDATE TestRecord\nSET testStatus='已确认',\ntestResult=?,\nresultDetails=?\nWHERE testId=?
+DB --> TestModule: 更新成功
+
+TestModule -> Logger: 记录确认操作日志
+TestModule --> User: 提示"检测结果已确认"
+
+== 实验室系统自动上传结果(预留) ==
+note over LabSys, TestModule
+  <b>预留功能: 实验室系统主动推送</b>
+  当前版本为手工录入
+  未来版本支持实验室系统自动上传
+end note
+
+LabSys -> TestModule: POST /api/test/result-callback\n{testId, labResult, reportFile}
+
+TestModule -> DB: SELECT * FROM TestRecord\nWHERE testId=?
+DB --> TestModule: 返回检测记录
+
+alt 检测记录存在
+    TestModule -> DB: UPDATE TestRecord\nSET testResult=?,\nresultDetails=?,\nlabReportFileUrl=?,\ntestStatus='已确认'\nWHERE testId=?
+    DB --> TestModule: 自动更新成功
+    
+
+    TestModule -> ExtLog: 记录回调成功日志
+    ExtLog -> DB: INSERT INTO ExternalSystemLog\n(systemName='Lab',\nbusinessType='结果回传')
+    
+    TestModule --> LabSys: 返回200 OK
+
+else 检测记录不存在
+    TestModule --> LabSys: 返回404 Not Found
+end
+
+== 删除检测记录 ==
+User -> TestModule: 选中记录，点击"删除"
+TestModule --> User: 弹出确认对话框
+
+User -> TestModule: 确认删除
+TestModule -> DB: UPDATE TestRecord\nSET isActive=false\nWHERE testId=?\n(软删除)
+DB --> TestModule: 删除成功
+TestModule -> Logger: 记录删除操作日志
+TestModule --> User: 提示"删除成功"
+
+== 查询与查看 ==
+User -> TestModule: 输入筛选条件\n(病例编号/检测类型/时间范围等)
+TestModule -> DB: SELECT * FROM TestRecord tr\nJOIN Case c ON tr.caseId=c.caseId\nWHERE ... ORDER BY ...
+DB --> TestModule: 返回匹配结果
+TestModule --> User: 展示查询结果
+
+User -> TestModule: 点击"查看详情"
+TestModule -> DB: SELECT * FROM TestRecord\nWHERE testId=?
+DB --> TestModule: 返回详细信息
+TestModule --> User: 展示检测详情页\n(含报告文件链接)
+
+note right of TestModule
+  <b>UC07: 管理病例检测</b>
+  • 支持新增/编辑/删除/查询/查看
+  • 人工录入检测信息
+  • 推送检测需求至实验室
+  • 人工确认检测结果
+
+  <b>Activity-3.1流程</b>
+  完整的检测记录生命周期
+
+  <b>状态流转</b>
+  待确认 → 已确认
+  (参见SM-2.2)
+end note
+
+note right of LabSys
+  <b>实验室系统集成</b>
+
+  <b>当前版本</b>
+  • 手工录入检测信息
+  • 预留推送接口
+
+  <b>预留功能</b>
+  • 推送检测需求
+  • 接收检测结果回调
+  • 自动更新检测状态
+  • 下载检测报告
+
+  <b>UC11关联</b>
+  不明原因病例检测
+  同样使用此流程
+end note
+
+@enduml
+```
+
+#### Seq-3.2: 病例追踪管理流程
+
+```
+@startuml
+title Seq-3.2: 病例追踪管理流程 (UC08, Activity-3.2)
+
+actor "疾控业务人员" as User
+participant "病例追踪\n管理模块" as TrackingModule
+participant "数据验证服务" as Validator
+participant "数据库" as DB
+participant "流调系统\n(预留接口)" as EpiSys
+participant "外部系统日志" as ExtLog
+participant "操作日志服务" as Logger
+
+== 登录并进入模块 ==
+User -> TrackingModule: 登录系统\n进入"病例追踪管理"模块
+TrackingModule -> DB: SELECT tr.*, c.patientName, c.caseNo\nFROM TrackingRecord tr\nJOIN Case c ON tr.caseId=c.caseId\nORDER BY tr.trackingDate DESC
+DB --> TrackingModule: 返回病例追踪记录列表
+TrackingModule --> User: 展示追踪记录列表
+
+== 新增追踪记录 ==
+User -> TrackingModule: 点击"新增"按钮
+TrackingModule --> User: 打开新增追踪信息表单
+
+User -> TrackingModule: 填写追踪信息并保存\n• 关联病例(caseId)\n• 追踪日期\n• 追踪类型(旅居史/接触史/暴露史)\n• 时间范围(起止日期)\n• 地点描述\n• 关联地区\n• 接触人员信息\n• 暴露详情\n• 风险评估
+
+TrackingModule -> Validator: 校验数据完整性
+Validator -> DB: 检查病例是否存在\nSELECT COUNT(*) FROM Case\nWHERE caseId=?
+DB --> Validator: 返回检查结果
+
+Validator -> DB: 检查地区是否有效\nSELECT COUNT(*) FROM Region\nWHERE regionId=?
+DB --> Validator: 返回地区验证结果
+
+alt 数据校验通过
+    Validator --> TrackingModule: 验证成功
+    TrackingModule -> DB: INSERT INTO TrackingRecord\nVALUES (...)
+    DB --> TrackingModule: 返回trackingId
+    TrackingModule -> Logger: 记录操作日志
+    Logger -> DB: INSERT INTO OperationLog\n(operationType='新增',\nmoduleName='病例追踪')
+    TrackingModule --> User: 提示"保存成功"
+else 数据校验失败
+    Validator --> TrackingModule: 返回错误信息
+    TrackingModule --> User: 提示错误(缺失字段/病例不存在)
+end
+
+== 推送追踪信息至流调系统 ==
+opt 需要推送至流调系统
+    User -> TrackingModule: 点击"推送流调"按钮
+    TrackingModule -> DB: SELECT tr.*, c.*\nFROM TrackingRecord tr\nJOIN Case c ON tr.caseId=c.caseId\nWHERE tr.trackingId=?
+    DB --> TrackingModule: 返回追踪记录+病例信息
+    
+
+    TrackingModule -> TrackingModule: 封装流调数据包\n• 病例基本信息\n• 追踪记录详情\n• 地理位置信息\n• 接触人员列表
+    
+    TrackingModule -> EpiSys: POST /api/epi/tracking\n{trackingData}
+    
+    alt 推送成功
+        EpiSys --> TrackingModule: 返回200 OK\n{epiTrackingId}
+        TrackingModule -> DB: UPDATE TrackingRecord\nSET isPushedToEpi=true,\npushedToEpiAt=NOW()
+        TrackingModule -> ExtLog: 记录推送成功日志
+        ExtLog -> DB: INSERT INTO ExternalSystemLog\n(systemName='EpiSys',\nbusinessType='追踪信息推送',\nisSuccess=true)
+        TrackingModule --> User: 提示"推送成功"
+    else 推送失败
+        EpiSys --> TrackingModule: 返回错误(超时/400/500)
+        TrackingModule -> ExtLog: 记录推送失败日志
+        ExtLog -> DB: INSERT INTO ExternalSystemLog\n(systemName='EpiSys',\nisSuccess=false,\nerrorMessage=...)
+        TrackingModule -> TrackingModule: 加入重试队列
+        TrackingModule --> User: 提示"推送失败，请重试"
+    end
+
+end
+
+== 编辑追踪记录 ==
+User -> TrackingModule: 选中记录，点击"编辑"
+TrackingModule -> DB: SELECT * FROM TrackingRecord\nWHERE trackingId=?
+DB --> TrackingModule: 返回追踪记录
+TrackingModule --> User: 展示编辑表单(预填数据)
+
+User -> TrackingModule: 修改必要字段并保存\n(如补充接触人员、更新风险评估)
+TrackingModule -> Validator: 验证数据
+
+alt 验证通过
+    TrackingModule -> DB: UPDATE TrackingRecord\nSET ... WHERE trackingId=?
+    DB --> TrackingModule: 更新成功
+    TrackingModule -> Logger: 记录操作日志
+    Logger -> DB: INSERT INTO OperationLog\n(operationType='编辑')
+    TrackingModule --> User: 提示"更新成功"
+else 验证失败
+    TrackingModule --> User: 提示错误信息
+end
+
+== 删除追踪记录 ==
+User -> TrackingModule: 选中记录，点击"删除"
+TrackingModule --> User: 弹出确认对话框
+
+User -> TrackingModule: 确认删除
+TrackingModule -> DB: UPDATE TrackingRecord\nSET isActive=false\nWHERE trackingId=?\n(软删除)
+DB --> TrackingModule: 删除成功
+TrackingModule -> Logger: 记录删除操作日志
+Logger -> DB: INSERT INTO OperationLog\n(operationType='删除')
+TrackingModule --> User: 提示"删除成功"
+
+== 查询与查看 ==
+User -> TrackingModule: 输入筛选条件\n(病例编号/追踪类型/时间范围/地区等)
+TrackingModule -> DB: SELECT * FROM TrackingRecord tr\nJOIN Case c ON tr.caseId=c.caseId\nLEFT JOIN Region r ON tr.regionId=r.regionId\nWHERE ... ORDER BY ...
+DB --> TrackingModule: 返回匹配结果
+TrackingModule --> User: 展示查询结果
+
+User -> TrackingModule: 点击"查看详情"
+TrackingModule -> DB: SELECT tr.*, c.*, r.regionName\nFROM TrackingRecord tr\nJOIN Case c ON tr.caseId=c.caseId\nLEFT JOIN Region r ON tr.regionId=r.regionId\nWHERE tr.trackingId=?
+DB --> TrackingModule: 返回详细信息
+TrackingModule --> User: 展示追踪详情页\n• 追踪时间线\n• 地理位置\n• 接触关系图\n• 风险评估结果
+
+== 批量操作(可选增强功能) ==
+opt 批量推送至流调系统
+    User -> TrackingModule: 选择多条记录\n点击"批量推送"
+    
+
+    loop 遍历选中记录
+        TrackingModule -> DB: SELECT * FROM TrackingRecord\nWHERE trackingId IN (?)
+        TrackingModule -> EpiSys: POST /api/epi/tracking/batch\n{trackingDataList}
+    end
+    
+    TrackingModule -> DB: UPDATE TrackingRecord\nSET isPushedToEpi=true\nWHERE trackingId IN (?)
+    TrackingModule --> User: 提示"批量推送完成\n成功X条，失败Y条"
+
+end
+
+note right of TrackingModule
+  <b>UC08: 管理病例追踪</b>
+  • 支持新增/编辑/删除/查询/查看
+  • 记录流行病学追踪信息
+  • 推送至流调系统
+
+  <b>Activity-3.2流程</b>
+  完整的追踪记录管理流程
+
+  <b>追踪类型</b>
+  • 旅居史: 病例活动轨迹
+  • 接触史: 密切接触者信息
+  • 物品暴露史: 可疑物品接触
+  • 场所暴露史: 高风险场所
+end note
+
+note right of EpiSys
+  <b>流调系统集成</b>
+
+  <b>接收数据</b>
+  • 病例追踪信息
+  • 接触人员列表
+  • 地理位置数据
+  • 时间轴信息
+
+  <b>用于流调分析</b>
+  • 传播链追溯
+  • 密接者筛查
+  • 聚集性疫情分析
+  • 风险地图绘制
+
+  <b>预留接口</b>
+  当前手工推送
+  支持自动同步
+end note
+
+note right of Validator
+  <b>数据验证规则</b>
+  • 病例必须存在
+  • 地区必须有效
+  • 时间范围合理(起始<结束)
+  • 追踪日期不能早于症状开始日期
+  • 风险评估等级必选
+end note
+
+@enduml
+```
+
+### 第四组: 统计分析流程
+
+#### Seq-4: 统计分析查询导出流程
+
+```
+@startuml
+title Seq-4: 统计分析查询导出流程 (UC12-UC18, Activity-4)
+
+actor "疾控业务人员" as User
+participant "统计分析模块" as StatModule
+participant "查询条件\n构建器" as QueryBuilder
+participant "DHIS2数据库" as DHIS2
+participant "数据聚合\n分析引擎" as AnalysisEngine
+participant "可视化\n渲染引擎" as Visualization
+participant "导出服务" as ExportService
+participant "操作日志服务" as Logger
+participant "数据库" as DB
+
+== 登录并选择统计模块 ==
+User -> StatModule: 登录系统\n进入"统计分析"模块
+StatModule --> User: 展示统计模块菜单\n• UC12: 移动轨迹展示\n• UC13: 可视化展示\n• UC14: 分地区统计\n• UC15: 分类统计(病原微生物)\n• UC16: 地区统计(病原微生物)
+
+User -> StatModule: 选择统计类型\n(如: 分地区统计)
+StatModule --> User: 展示查询条件输入区
+
+== 输入查询条件 ==
+User -> StatModule: 输入查询条件\n• 时间范围(startDate, endDate)\n• 疾病类别(diseaseIds)\n• 地区范围(regionIds)\n• 统计维度(按月/周/日)\n• 其他筛选条件
+
+StatModule -> QueryBuilder: 构建查询条件对象
+QueryBuilder -> QueryBuilder: 验证条件有效性\n• 时间范围合理\n• 地区存在\n• 疾病编码有效
+
+alt 条件验证通过
+    QueryBuilder --> StatModule: 返回查询条件对象
+    
+
+    User -> StatModule: 点击"查询"按钮
+    StatModule --> User: 显示加载动画
+
+else 条件验证失败
+    QueryBuilder --> StatModule: 返回验证错误
+    StatModule --> User: 提示错误信息\n(如: 时间范围过大/地区无效)
+    note over StatModule, User
+      等待用户修正条件
+    end note
+end
+
+== 从DHIS2数据库提取数据 ==
+StatModule -> DHIS2: 执行数据查询\nSELECT语句基于统计类型
+
+alt UC12: 移动轨迹展示
+    DHIS2 -> DHIS2: SELECT c.caseNo, c.patientName,\ntr.trackingDate, tr.locationDescription,\nr.regionName, r.longitude, r.latitude\nFROM Case c\nJOIN TrackingRecord tr ON c.caseId=tr.caseId\nJOIN Region r ON tr.regionId=r.regionId\nWHERE c.diseaseId IN (?)\nAND tr.trackingDate BETWEEN ? AND ?\nORDER BY c.caseId, tr.trackingDate
+    
+else UC13: 可视化展示
+    DHIS2 -> DHIS2: SELECT diseaseCode, diseaseName,\nCOUNT(caseId) as caseCount,\nDATE_FORMAT(reportDate, '%Y-%m') as month\nFROM Case c\nJOIN DiseaseCode d ON c.diseaseId=d.diseaseId\nWHERE reportDate BETWEEN ? AND ?\nGROUP BY diseaseId, month\nORDER BY month, caseCount DESC
+    
+else UC14: 分地区统计
+    DHIS2 -> DHIS2: SELECT r.regionName, r.regionLevel,\nCOUNT(c.caseId) as caseCount,\nCOUNT(DISTINCT c.idCardNo) as patientCount\nFROM Case c\nJOIN Organization o ON c.reportOrgId=o.orgId\nJOIN Region r ON o.regionId=r.regionId\nWHERE c.reportDate BETWEEN ? AND ?\nAND c.diseaseId IN (?)\nGROUP BY r.regionId\nORDER BY caseCount DESC
+    
+else UC15: 分类统计(病原微生物)
+    DHIS2 -> DHIS2: SELECT p.pathogenName, p.pathogenType,\nCOUNT(DISTINCT c.caseId) as caseCount,\nCOUNT(DISTINCT tr.testId) as testCount\nFROM TestRecord tr\nJOIN Case c ON tr.caseId=c.caseId\nJOIN Pathogen p ON tr.pathogenDetected=p.pathogenName\nWHERE tr.testDate BETWEEN ? AND ?\nAND tr.testResult='阳性'\nGROUP BY p.pathogenId\nORDER BY caseCount DESC
+    
+else UC16: 地区统计(病原微生物)
+    DHIS2 -> DHIS2: SELECT r.regionName, p.pathogenName,\nCOUNT(DISTINCT c.caseId) as caseCount\nFROM TestRecord tr\nJOIN Case c ON tr.caseId=c.caseId\nJOIN Organization o ON c.reportOrgId=o.orgId\nJOIN Region r ON o.regionId=r.regionId\nJOIN Pathogen p ON tr.pathogenDetected=p.pathogenName\nWHERE tr.testDate BETWEEN ? AND ?\nAND tr.testResult='阳性'\nGROUP BY r.regionId, p.pathogenId\nORDER BY r.regionName, caseCount DESC
+end
+
+DHIS2 --> StatModule: 返回查询结果集\n(原始数据)
+
+== 数据聚合与分析 ==
+StatModule -> AnalysisEngine: 请求数据聚合分析\n{rawData, analysisType}
+
+AnalysisEngine -> AnalysisEngine: 执行聚合计算\n• 统计汇总(SUM, COUNT, AVG)\n• 分组聚合(GROUP BY)\n• 趋势分析\n• 同比/环比计算
+
+AnalysisEngine --> StatModule: 返回聚合分析结果\n{aggregatedData, statistics}
+
+== 生成可视化图表 ==
+StatModule -> Visualization: 请求生成可视化\n{aggregatedData, chartType}
+
+Visualization -> Visualization: 根据统计类型选择图表
+
+alt UC12: 移动轨迹
+    Visualization -> Visualization: 生成地图可视化\n• 标注移动轨迹点\n• 连接时间线\n• 颜色区分病例
+    
+else UC13: 可视化展示
+    Visualization -> Visualization: 生成趋势图\n• 折线图(时间序列)\n• 柱状图(分类对比)
+    
+else UC14/UC16: 地区统计
+    Visualization -> Visualization: 生成地区分布图\n• 热力地图\n• 饼图(占比)\n• 柱状图(排名)
+    
+else UC15: 分类统计
+    Visualization -> Visualization: 生成分类图表\n• 饼图(病原体占比)\n• 柱状图(数量对比)
+end
+
+Visualization --> StatModule: 返回图表对象\n{chartData, chartConfig}
+
+== 展示统计结果 ==
+StatModule --> User: 在界面展示统计结果\n• 可视化图表\n• 统计表格\n• 汇总指标
+
+StatModule -> Logger: 记录查询操作
+Logger -> DB: INSERT INTO OperationLog\n(operationType='查询',\nmoduleName='统计分析')
+
+== 导出统计结果(UC18) ==
+opt 用户需要导出
+    User -> StatModule: 点击"导出"按钮
+    StatModule --> User: 弹出导出选项\n• 导出格式(Excel/PDF/图片)\n• 导出内容(图表/表格/完整报告)
+    
+
+    User -> StatModule: 选择导出格式并确认
+    StatModule -> ExportService: 请求生成导出文件\n{data, format, content}
+    
+    alt 导出Excel格式
+        ExportService -> ExportService: 生成Excel文件\n• 数据表格\n• 图表嵌入\n• 格式化样式
+        
+    else 导出PDF格式
+        ExportService -> ExportService: 生成PDF文档\n• 报表标题\n• 统计图表\n• 数据表格\n• 页眉页脚
+        
+    else 导出图片格式
+        ExportService -> ExportService: 生成图片文件\n(PNG/JPEG)\n• 高清图表截图
+    end
+    
+    ExportService -> ExportService: 保存文件到临时目录\n生成下载链接
+    ExportService --> StatModule: 返回文件下载URL
+    
+    StatModule -> DB: 保存导出记录\nINSERT INTO StatisticsReport\n(reportType, exportFormat,\nexportFileUrl, generatedBy)
+    
+    StatModule -> Logger: 记录导出操作
+    Logger -> DB: INSERT INTO OperationLog\n(operationType='导出')
+    
+    StatModule --> User: 提供文件下载链接
+    User -> StatModule: 点击下载
+    StatModule --> User: 下载文件
+
+end
+
+note right of DHIS2
+  <b>DHIS2数据库</b>
+  • 存储所有业务数据
+  • 支持复杂查询与聚合
+  • 提供时间序列分析
+  • 地理空间数据支持
+
+  <b>数据表关联</b>
+  • Case: 个案主表
+  • TrackingRecord: 追踪记录
+  • TestRecord: 检测记录
+  • Region: 地区信息
+  • DiseaseCode: 疾病编码
+  • Pathogen: 病原微生物
+end note
+
+note right of AnalysisEngine
+  <b>数据聚合分析引擎</b>
+  • 多维度统计
+  • 趋势分析
+  • 同比/环比计算
+  • 异常值检测
+
+  <b>支持的聚合函数</b>
+  • COUNT: 计数
+  • SUM: 求和
+  • AVG: 平均值
+  • MAX/MIN: 最大/最小值
+  • GROUP BY: 分组统计
+end note
+
+note right of Visualization
+  <b>可视化渲染引擎</b>
+  • 多种图表类型
+  • 交互式图表
+  • 地图可视化
+  • 响应式设计
+
+  <b>图表类型</b>
+  • 折线图: 趋势分析
+  • 柱状图: 分类对比
+  • 饼图: 占比展示
+  • 地图: 地理分布
+  • 热力图: 密度展示
+end note
+
+note right of ExportService
+  <b>导出服务</b>
+  • 支持多种格式
+  • 模板化生成
+  • 异步导出(大数据)
+
+  <b>UC18: 导出统计结果</b>
+  • Excel: 数据表格+图表
+  • PDF: 完整报告
+  • 图片: 高清图表
+
+  <b>导出内容</b>
+  • 查询条件
+  • 统计数据
+  • 可视化图表
+  • 生成时间/人员
+end note
+
+note left of StatModule
+  <b>统计分析模块功能清单</b>
+
+  <b>UC12: 展示移动轨迹</b>
+  • 地图标注病例轨迹
+  • 时间线可视化
+  • 支持轨迹回放
+
+  <b>UC13: 可视化展示</b>
+  • 疾病趋势图
+  • 多维度对比
+  • 交互式图表
+
+  <b>UC14: 分地区统计</b>
+  • 按省/市/县统计
+  • 病例数分布
+  • 热力地图
+
+  <b>UC15: 分类统计(病原微生物)</b>
+  • 按病原体类型统计
+  • 检测阳性率分析
+  • 占比分布
+
+  <b>UC16: 地区统计(病原微生物)</b>
+  • 地区+病原体交叉统计
+  • 传播特征分析
+
+  <b>UC17: 查询统计数据(通用)</b>
+  • 灵活查询条件
+  • 快速检索
+  • 结果分页
+
+  <b>UC18: 导出统计结果(通用)</b>
+  • 多格式导出
+  • 一键生成报告
+
+  <b>Activity-4流程</b>
+  完整的统计分析查询导出流程
+end note
+
+@enduml
+```

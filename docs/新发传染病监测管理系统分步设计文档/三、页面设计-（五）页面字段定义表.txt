@@ -1,0 +1,839 @@
+（五）、页面字段定义表 (Page Field Definition Tables)
+概述
+基于Stage 4的低保真原型，将详细定义每个页面的所有输入/输出字段，并映射到后端数据模型（ER图）的实体属性。
+
+PF-5.1 页面分组计划
+页面分组策略
+分组编号	分组名称	包含页面	优先级
+Group A	个案管理核心页面	个案列表、个案详情、新增个案、随访/治疗/检测/追踪表单	P0
+Group B	不明原因疾病管理	病例列表、病例详情、新增病例、推送确认	P0
+Group C	预警管理页面	预警列表、预警详情、处理表单	P0
+Group D	统计分析页面	疾病统计、病原体统计、查询条件、导出	P1
+Group E	基础数据管理	疾病编码、病原体、组织机构、地区	P1
+Group F	系统管理页面	用户管理、系统配置、接口监控、日志	P1
+Group G	通用组件	首页工作台、消息中心、个人中心	P0
+PF-5.2 Group A - 个案管理核心页面字段定义
+PF-5.2.1 个案列表页 (Case List Page)
+筛选条件区字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	说明
+filter_caseNo	个案编号	Text Input	否	Case.caseNo	支持模糊搜索
+filter_patientName	患者姓名	Text Input	否	Case.patientName	支持模糊搜索
+filter_idCardNo	身份证号	Text Input	否	Case.idCardNo	支持部分匹配
+filter_diseaseId	疾病类型	Dropdown	否	Case.diseaseId	关联DiseaseCode表
+filter_reportDateStart	报告日期（开始）	Date Picker	否	Case.reportDate	范围查询
+filter_reportDateEnd	报告日期（结束）	Date Picker	否	Case.reportDate	范围查询
+filter_caseStatus	个案状态	Dropdown	否	Case.caseStatus	枚举值：新建/已核实/处理中/已关闭
+filter_reportOrgId	报告单位	Cascader	否	Case.reportOrgId	关联Organization表
+filter_caseSource	个案来源	Dropdown	否	Case.caseSource	枚举值：主动监测/被动报告/不明原因转入
+列表数据字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+list_checkbox	复选框	Checkbox	-	-	批量操作选择
+list_caseNo	个案编号	Text (Link)	Case	Case.caseNo	点击跳转详情
+list_patientName	患者姓名	Text	Case	Case.patientName	脱敏显示
+list_gender	性别	Text	Case	Case.gender	男/女/未知
+list_age	年龄	Text	Case	Case.age	单位：岁
+list_diseaseName	疾病类型	Text	DiseaseCode	DiseaseCode.diseaseName	关联查询
+list_reportDate	报告日期	Date	Case	Case.reportDate	格式：YYYY-MM-DD
+list_reportOrgName	报告单位	Text	Organization	Organization.orgName	关联查询
+list_caseStatus	个案状态	Badge	Case	Case.caseStatus	带颜色标识
+list_actions	操作	Button Group	-	-	查看/编辑/推送/删除
+批量操作字段
+字段ID	字段名称	字段类型	触发条件	说明
+batch_selectAll	全选	Checkbox	-	选中/取消全选
+batch_pushToEpi	批量推送流调	Button	选中>0	批量推送至流调系统
+batch_export	批量导出	Button	选中>0	导出选中个案
+batch_selectedCount	已选数量	Text	选中>0	显示已选中数量
+分页字段
+字段ID	字段名称	字段类型	默认值	说明
+page_current	当前页码	Number	1	当前页
+page_pageSize	每页条数	Dropdown	10	可选：10/20/50/100
+page_total	总记录数	Number	-	查询结果总数
+page_jumpTo	跳转页码	Number Input	-	快速跳转
+PF-5.2.2 个案详情页 (Case Detail Page)
+基本信息Tab字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	是否可编辑	说明
+患者基本信息						
+detail_caseNo	个案编号	Text (Display)	Case	Case.caseNo	否	系统生成
+detail_patientName	患者姓名	Text (Display)	Case	Case.patientName	是	-
+detail_gender	性别	Text (Display)	Case	Case.gender	是	男/女/未知
+detail_age	年龄	Text (Display)	Case	Case.age	是	单位：岁
+detail_idCardNo	身份证号	Text (Display)	Case	Case.idCardNo	是	脱敏显示
+detail_phone	联系电话	Text (Display)	Case	Case.phone	是	脱敏显示
+detail_address	现住址	Text (Display)	Case	Case.address	是	完整地址
+报告信息						
+detail_reportOrgName	报告单位	Text (Display)	Organization	Organization.orgName	否	关联查询
+detail_reportUserName	报告人员	Text (Display)	User	User.fullName	否	关联查询
+detail_reportDate	报告日期	DateTime (Display)	Case	Case.reportDate	否	格式：YYYY-MM-DD HH:mm
+detail_symptomOnsetDate	症状开始日期	Date (Display)	Case	Case.symptomOnsetDate	是	-
+detail_diagnosisDate	诊断日期	Date (Display)	Case	Case.diagnosisDate	是	-
+诊断信息						
+detail_diseaseName	疾病类型	Text (Display)	DiseaseCode	DiseaseCode.diseaseName	是	关联查询
+detail_initialDiagnosis	初步诊断	Textarea (Display)	Case	Case.initialDiagnosis	是	-
+detail_confirmedDiagnosis	确诊诊断	Textarea (Display)	Case	Case.confirmedDiagnosis	是	-
+detail_caseSource	个案来源	Text (Display)	Case	Case.caseSource	否	主动监测/被动报告/不明原因转入
+detail_caseStatus	个案状态	Badge	Case	Case.caseStatus	否	新建/已核实/处理中/已关闭
+流行病学信息Tab字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	是否可编辑
+detail_exposureHistory	暴露史	Textarea (Display)	Case	Case.exposureHistory	是
+detail_contactHistory	接触史	Textarea (Display)	Case	Case.contactHistory	是
+detail_travelHistory	旅行史	Textarea (Display)	Case	Case.travelHistory	是
+随访记录Tab字段（列表）
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+followup_followUpDate	随访日期	Date	FollowUp	FollowUp.followUpDate	-
+followup_followUpMethod	随访方式	Text	FollowUp	FollowUp.followUpMethod	电话/现场/线上
+followup_followUpUserName	随访人员	Text	User	User.fullName	关联查询
+followup_healthStatus	健康状态	Badge	FollowUp	FollowUp.healthStatus	正常/异常/住院/死亡
+followup_temperature	体温	Text	FollowUp	FollowUp.temperature	单位：°C
+followup_symptoms	症状描述	Text	FollowUp	FollowUp.symptoms	折叠显示
+followup_treatmentCompliance	治疗依从性	Text	FollowUp	FollowUp.treatmentCompliance	良好/一般/差
+followup_nextFollowUpDate	下次随访日期	Date	FollowUp	FollowUp.nextFollowUpDate	-
+followup_actions	操作	Button Group	-	-	查看详情/编辑
+治疗记录Tab字段（列表）
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+treatment_treatmentDate	治疗日期	Date	Treatment	Treatment.treatmentDate	-
+treatment_treatmentType	治疗类型	Text	Treatment	Treatment.treatmentType	门诊/住院/居家隔离
+treatment_hospitalName	医院名称	Text	Treatment	Treatment.hospitalName	-
+treatment_diagnosis	诊断	Text	Treatment	Treatment.diagnosis	折叠显示
+treatment_treatmentOutcome	治疗转归	Badge	Treatment	Treatment.treatmentOutcome	治愈/好转/无效/死亡/转院
+treatment_dischargeDate	出院日期	Date	Treatment	Treatment.dischargeDate	仅住院显示
+treatment_actions	操作	Button Group	-	-	查看详情/编辑
+检测记录Tab字段（列表）
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+test_testNo	检测编号	Text (Link)	TestRecord	TestRecord.testNo	点击查看详情
+test_sampleCollectionDate	采集时间	DateTime	TestRecord	TestRecord.sampleCollectionDate	-
+test_sampleType	样本类型	Text	TestRecord	TestRecord.sampleType	血液/咽拭子/粪便/尿液/其他
+test_testType	检测类型	Text	TestRecord	TestRecord.testType	核酸/抗体/培养/影像学/其他
+test_testResult	检测结果	Badge	TestRecord	TestRecord.testResult	阳性/阴性/待定/不确定
+test_testStatus	检测状态	Badge	TestRecord	TestRecord.testStatus	待确认/已确认
+test_pathogenDetected	检出病原体	Text	TestRecord	TestRecord.pathogenDetected	-
+test_isPushedToLab	推送状态	Icon	TestRecord	TestRecord.isPushedToLab	已推送/未推送
+test_actions	操作	Button Group	-	-	查看/编辑/推送实验室
+追踪记录Tab字段（列表）
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+tracking_trackingDate	追踪日期	Date	TrackingRecord	TrackingRecord.trackingDate	-
+tracking_trackingType	追踪类型	Text	TrackingRecord	TrackingRecord.trackingType	旅居史/接触史/物品暴露史/场所暴露史
+tracking_startDate	开始日期	Date	TrackingRecord	TrackingRecord.startDate	-
+tracking_endDate	结束日期	Date	TrackingRecord	TrackingRecord.endDate	-
+tracking_regionName	地区	Text	Region	Region.regionName	关联查询
+tracking_locationDescription	地点描述	Text	TrackingRecord	TrackingRecord.locationDescription	折叠显示
+tracking_riskAssessment	风险评估	Badge	TrackingRecord	TrackingRecord.riskAssessment	高风险/中风险/低风险
+tracking_isPushedToEpi	推送状态	Icon	TrackingRecord	TrackingRecord.isPushedToEpi	已推送/未推送
+tracking_actions	操作	Button Group	-	-	查看/编辑/推送流调
+操作日志Tab字段（列表）
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+log_operatedAt	操作时间	DateTime	OperationLog	OperationLog.operatedAt	-
+log_userName	操作人员	Text	User	User.fullName	关联查询
+log_operationType	操作类型	Text	OperationLog	OperationLog.operationType	新增/编辑/删除/查询/导出
+log_functionName	功能名称	Text	OperationLog	OperationLog.functionName	-
+log_operationDetail	操作详情	Text	OperationLog	OperationLog.operationDetail	折叠显示
+log_responseStatus	操作结果	Badge	OperationLog	OperationLog.responseStatus	成功/失败
+顶部操作按钮字段
+字段ID	字段名称	字段类型	触发条件	说明
+action_edit	编辑	Button	caseStatus != '已关闭'	进入编辑模式
+action_pushToEpi	推送流调	Button	caseStatus != '已关闭'	推送至流调系统
+action_close	结案	Button	caseStatus == '处理中'	更新状态为已关闭
+action_back	返回列表	Button	-	返回个案列表
+PF-5.2.3 新增个案表单页 (Add Case Form Page)
+第一步：基本信息字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	验证规则	说明
+疾病选择						
+form_diseaseId	疾病类型	Dropdown	是	Case.diseaseId	必选	关联DiseaseCode表
+患者基本信息						
+form_patientName	患者姓名	Text Input	是	Case.patientName	长度2-50	-
+form_gender	性别	Radio Button	是	Case.gender	必选	男/女/未知
+form_idCardNo	身份证号	Text Input	是	Case.idCardNo	身份证格式	自动验证重复
+form_birthDate	出生日期	Date Picker	否	-	-	从身份证自动提取
+form_age	年龄	Number Input	是	Case.age	0-150	从身份证或出生日期自动计算
+form_phone	联系电话	Text Input	是	Case.phone	手机号格式	-
+现住地址						
+form_regionProvince	省/直辖市	Cascader (Level 1)	是	-	必选	级联选择
+form_regionCity	市	Cascader (Level 2)	是	-	必选	级联选择
+form_regionDistrict	区/县	Cascader (Level 3)	是	-	必选	级联选择
+form_addressDetail	详细地址	Text Input	是	Case.address	长度5-200	拼接完整地址
+报告信息						
+form_reportOrgId	报告单位	Text (Display)	-	Case.reportOrgId	-	自动填充当前用户机构
+form_reportUserId	报告人员	Text (Display)	-	Case.reportUserId	-	自动填充当前用户
+form_reportDate	报告日期	Date (Display)	-	Case.reportDate	-	自动填充当前日期
+form_symptomOnsetDate	症状开始日期	Date Picker	是	Case.symptomOnsetDate	不晚于今天	-
+form_symptomOnsetTime	症状开始时间	Time Picker	否	-	-	可选
+第二步：流行病学信息字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	说明
+暴露史					
+form_hasExposure	是否有疫区暴露史	Radio Button	是	-	是/否
+form_exposureHistory	暴露详情	Textarea	否	Case.exposureHistory	当选"是"时必填
+接触史					
+form_hasContact	是否有确诊/疑似病例接触史	Radio Button	是	-	是/否
+form_contactDate	接触时间	Date Picker	否	-	当选"是"时必填
+form_contactLocation	接触地点	Text Input	否	-	当选"是"时必填
+form_contactHistory	接触详情	Textarea	否	Case.contactHistory	当选"是"时必填
+旅行史					
+form_hasTravel	近14天是否有外出旅行	Radio Button	是	-	是/否
+form_travelStartDate	出发时间	Date Picker	否	-	当选"是"时必填
+form_travelEndDate	返回时间	Date Picker	否	-	当选"是"时必填
+form_travelDestination	目的地	Cascader	否	-	省/市选择，当选"是"时必填
+form_travelHistory	旅行详情	Textarea	否	Case.travelHistory	当选"是"时必填
+第三步：诊断信息字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	说明
+form_diagnosisDate	诊断日期	Date Picker	否	Case.diagnosisDate	不早于症状开始日期
+form_initialDiagnosis	初步诊断	Textarea	是	Case.initialDiagnosis	长度10-500
+form_clinicalSymptoms	临床症状描述	Textarea	是	-	长度10-500
+form_confirmedDiagnosis	确诊诊断	Textarea	否	Case.confirmedDiagnosis	可后续补充
+第四步：确认提交字段
+字段ID	字段名称	字段类型	说明
+preview_allFields	信息预览	Display Panel	展示所有填写内容
+confirm_checkbox	确认信息无误	Checkbox	必须勾选才能提交
+表单控制字段
+字段ID	字段名称	字段类型	说明
+form_currentStep	当前步骤	Number	1-4
+form_isDraft	是否草稿	Boolean	自动保存标识
+form_draftId	草稿ID	String	草稿记录ID
+action_saveDraft	保存草稿	Button	保存当前填写内容
+action_prevStep	上一步	Button	返回上一步
+action_nextStep	下一步	Button	进入下一步（需验证当前步骤）
+action_submit	提交	Button	最终提交（第四步）
+action_cancel	取消	Button	取消新增，返回列表
+PF-5.2.4 随访记录表单 (Follow-up Form)
+字段ID	字段名称	字段类型	是否必填	映射实体属性	验证规则	说明
+followup_caseId	关联个案ID	Hidden	是	FollowUp.caseId	-	自动填充
+followup_followUpDate	随访日期	Date Picker	是	FollowUp.followUpDate	不晚于今天	默认今天
+followup_followUpMethod	随访方式	Radio Button	是	FollowUp.followUpMethod	必选	电话/现场/线上
+followup_followUpUserId	随访人员	Text (Display)	-	FollowUp.followUpUserId	-	自动填充当前用户
+followup_healthStatus	健康状态	Radio Button	是	FollowUp.healthStatus	必选	正常/异常/住院/死亡
+followup_temperature	体温	Number Input	否	FollowUp.temperature	35.0-42.0	单位：°C
+followup_symptoms	症状描述	Textarea	否	FollowUp.symptoms	长度0-500	-
+followup_treatmentCompliance	治疗依从性	Radio Button	是	FollowUp.treatmentCompliance	必选	良好/一般/差
+followup_nextFollowUpDate	下次随访日期	Date Picker	否	FollowUp.nextFollowUpDate	晚于今天	系统可自动建议
+followup_remarks	备注	Textarea	否	FollowUp.remarks	长度0-500	-
+action_save	保存	Button	-	-	-	保存随访记录
+action_cancel	取消	Button	-	-	-	取消操作
+PF-5.2.5 治疗记录表单 (Treatment Form)
+字段ID	字段名称	字段类型	是否必填	映射实体属性	验证规则	说明
+treatment_caseId	关联个案ID	Hidden	是	Treatment.caseId	-	自动填充
+treatment_treatmentDate	治疗日期	Date Picker	是	Treatment.treatmentDate	不晚于今天	-
+treatment_treatmentType	治疗类型	Radio Button	是	Treatment.treatmentType	必选	门诊/住院/居家隔离
+treatment_hospitalName	医院名称	Text Input	是	Treatment.hospitalName	长度2-200	-
+treatment_departmentName	科室名称	Text Input	否	Treatment.departmentName	长度2-100	-
+treatment_doctorName	医生姓名	Text Input	否	Treatment.doctorName	长度2-50	-
+treatment_diagnosis	诊断	Textarea	是	Treatment.diagnosis	长度10-500	-
+treatment_treatmentPlan	治疗方案	Textarea	是	Treatment.treatmentPlan	长度10-1000	-
+treatment_medications	用药情况	Textarea	否	Treatment.medications	长度0-1000	-
+treatment_treatmentOutcome	治疗转归	Dropdown	否	Treatment.treatmentOutcome	-	治愈/好转/无效/死亡/转院
+treatment_dischargeDate	出院日期	Date Picker	否	Treatment.dischargeDate	不早于治疗日期	仅住院时填写
+treatment_createdBy	创建人	Hidden	-	Treatment.createdBy	-	自动填充
+action_save	保存	Button	-	-	-	保存治疗记录
+action_cancel	取消	Button	-	-	-	取消操作
+PF-5.2.6 检测记录表单 (Test Record Form)
+字段ID	字段名称	字段类型	是否必填	映射实体属性	验证规则	说明
+test_caseId	关联个案ID	Hidden	是	TestRecord.caseId	-	自动填充
+test_testNo	检测编号	Text (Display)	-	TestRecord.testNo	-	系统自动生成
+test_sampleCollectionDate	采集时间	DateTime Picker	是	TestRecord.sampleCollectionDate	不晚于当前时间	-
+test_sampleType	样本类型	Dropdown	是	TestRecord.sampleType	必选	血液/咽拭子/粪便/尿液/其他
+test_testType	检测类型	Dropdown	是	TestRecord.testType	必选	核酸检测/抗体检测/培养/影像学/其他
+test_testOrgName	检测机构	Text Input	是	TestRecord.testOrgName	长度2-200	-
+test_testDate	检测日期	Date Picker	否	TestRecord.testDate	不早于采集时间	-
+test_testResult	检测结果	Radio Button	否	TestRecord.testResult	-	阳性/阴性/待定/不确定
+test_resultDetails	结果详情	Textarea	否	TestRecord.resultDetails	长度0-1000	-
+test_pathogenDetected	检出病原体	Text Input	否	TestRecord.pathogenDetected	长度0-200	结果为阳性时建议填写
+test_testStatus	检测状态	Radio Button	是	TestRecord.testStatus	必选	待确认/已确认
+test_labReportFile	检测报告文件	File Upload	否	TestRecord.labReportFileUrl	PDF/JPG/PNG	支持上传
+test_createdBy	创建人	Hidden	-	TestRecord.createdBy	-	自动填充
+action_save	保存	Button	-	-	-	保存检测记录
+action_pushToLab	推送实验室	Button	-	-	-	推送检测需求至实验室系统
+action_cancel	取消	Button	-	-	-	取消操作
+PF-5.2.7 追踪记录表单 (Tracking Record Form)
+字段ID	字段名称	字段类型	是否必填	映射实体属性	验证规则	说明
+tracking_caseId	关联个案ID	Hidden	是	TrackingRecord.caseId	-	自动填充
+tracking_trackingDate	追踪日期	Date Picker	是	TrackingRecord.trackingDate	不晚于今天	默认今天
+tracking_trackingType	追踪类型	Radio Button	是	TrackingRecord.trackingType	必选	旅居史/接触史/物品暴露史/场所暴露史
+tracking_startDate	开始日期	Date Picker	是	TrackingRecord.startDate	不晚于结束日期	-
+tracking_endDate	结束日期	Date Picker	是	TrackingRecord.endDate	不早于开始日期	-
+tracking_regionId	关联地区	Cascader	是	TrackingRecord.regionId	必选	省/市/县三级选择
+tracking_locationDescription	地点描述	Textarea	是	TrackingRecord.locationDescription	长度10-500	-
+tracking_locationMap	地图选点	Map Picker	否	-	-	可选地图标注位置
+tracking_longitude	经度	Number	否	-	-	从地图选点自动提取
+tracking_latitude	纬度	Number	否	-	-	从地图选点自动提取
+tracking_contactPersons	接触人员信息	Textarea	否	TrackingRecord.contactPersons	长度0-1000	追踪类型为"接触史"时建议填写
+tracking_exposureDetails	暴露详情	Textarea	是	TrackingRecord.exposureDetails	长度10-1000	-
+tracking_riskAssessment	风险评估	Radio Button	是	TrackingRecord.riskAssessment	必选	高风险/中风险/低风险
+tracking_createdBy	创建人	Hidden	-	TrackingRecord.createdBy	-	自动填充
+action_save	保存	Button	-	-	-	保存追踪记录
+action_pushToEpi	推送流调	Button	-	-	-	推送至流调系统
+action_cancel	取消	Button	-	-	-	取消操作
+PF-5.3 Group B - 不明原因疾病管理页面字段定义
+PF-5.3.1 不明原因病例列表页 (Unknown Case List Page)
+筛选条件区字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	说明
+filter_unknownCaseNo	病例编号	Text Input	否	UnknownCase.unknownCaseNo	支持模糊搜索
+filter_patientName	患者姓名	Text Input	否	UnknownCase.patientName	支持模糊搜索
+filter_reportDateStart	报告日期（开始）	Date Picker	否	UnknownCase.reportDate	范围查询
+filter_reportDateEnd	报告日期（结束）	Date Picker	否	UnknownCase.reportDate	范围查询
+filter_unknownStatus	病例状态	Dropdown	否	UnknownCase.unknownStatus	待检测/检测中/已确诊/排除
+列表数据字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+list_checkbox	复选框	Checkbox	-	-	批量操作选择
+list_unknownCaseNo	病例编号	Text (Link)	UnknownCase	UnknownCase.unknownCaseNo	点击跳转详情
+list_patientName	患者姓名	Text	UnknownCase	UnknownCase.patientName	脱敏显示
+list_reportDate	报告日期	Date	UnknownCase	UnknownCase.reportDate	-
+list_unknownStatus	病例状态	Badge	UnknownCase	UnknownCase.unknownStatus	带颜色标识
+list_urgencyLevel	紧急度	Badge	-	-	高/中/低（根据症状严重程度计算）
+list_actions	操作	Button Group	-	-	查看/编辑/上报/推送
+PF-5.3.2 不明原因病例详情页 (Unknown Case Detail Page)
+基本信息Tab字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	是否可编辑
+detail_unknownCaseNo	病例编号	Text (Display)	UnknownCase	UnknownCase.unknownCaseNo	否
+detail_patientName	患者姓名	Text (Display)	UnknownCase	UnknownCase.patientName	是
+detail_gender	性别	Text (Display)	UnknownCase	UnknownCase.gender	是
+detail_age	年龄	Text (Display)	UnknownCase	UnknownCase.age	是
+detail_idCardNo	身份证号	Text (Display)	UnknownCase	UnknownCase.idCardNo	是
+detail_phone	联系电话	Text (Display)	UnknownCase	UnknownCase.phone	是
+detail_address	现住址	Text (Display)	UnknownCase	UnknownCase.address	是
+detail_reportOrgName	报告单位	Text (Display)	Organization	Organization.orgName	否
+detail_reportDate	报告日期	DateTime (Display)	UnknownCase	UnknownCase.reportDate	否
+detail_symptomOnsetDate	症状开始日期	Date (Display)	UnknownCase	UnknownCase.symptomOnsetDate	是
+detail_unknownStatus	病例状态	Badge	UnknownCase	UnknownCase.unknownStatus	否
+detail_suspectedPathogen	疑似病原体	Text (Display)	UnknownCase	UnknownCase.suspectedPathogen	是
+临床症状Tab字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	是否可编辑
+detail_clinicalSymptoms	临床症状描述	Textarea (Display)	UnknownCase	UnknownCase.clinicalSymptoms	是
+detail_testResults	检测结果汇总	Textarea (Display)	UnknownCase	UnknownCase.testResults	是
+检测记录Tab字段
+与个案详情页的检测记录Tab相同，但关联字段为 unknownCaseId
+
+推送记录Tab字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+push_isPushedToEmergency	已推送应急系统	Icon + Text	UnknownCase	UnknownCase.isPushedToEmergency	是/否
+push_pushedToEmergencyAt	推送时间	DateTime	UnknownCase	UnknownCase.pushedToEmergencyAt	-
+push_isPushedToEpi	已推送流调系统	Icon + Text	UnknownCase	UnknownCase.isPushedToEpi	是/否
+push_pushedToEpiAt	推送时间	DateTime	UnknownCase	UnknownCase.pushedToEpiAt	-
+push_isPushedToCase	已推送个案管理	Icon + Text	UnknownCase	UnknownCase.isPushedToCase	是/否
+push_pushedToCaseId	个案编号	Text (Link)	UnknownCase	UnknownCase.pushedToCaseId	点击跳转个案详情
+push_pushedAt	推送时间	DateTime	UnknownCase	UnknownCase.pushedAt	-
+PF-5.3.3 新增不明原因病例表单 (Add Unknown Case Form)
+字段ID	字段名称	字段类型	是否必填	映射实体属性	验证规则	说明
+患者基本信息						
+form_patientName	患者姓名	Text Input	是	UnknownCase.patientName	长度2-50	-
+form_gender	性别	Radio Button	是	UnknownCase.gender	必选	男/女/未知
+form_idCardNo	身份证号	Text Input	是	UnknownCase.idCardNo	身份证格式	自动验证重复
+form_age	年龄	Number Input	是	UnknownCase.age	0-150	从身份证自动计算
+form_phone	联系电话	Text Input	是	UnknownCase.phone	手机号格式	-
+form_address	现住址	Text Input	是	UnknownCase.address	长度5-500	级联选择+详细地址
+报告信息						
+form_reportOrgId	报告单位	Text (Display)	-	UnknownCase.reportOrgId	-	自动填充
+form_reportUserId	报告人员	Text (Display)	-	UnknownCase.reportUserId	-	自动填充
+form_reportDate	报告日期	Date (Display)	-	UnknownCase.reportDate	-	自动填充今天
+form_symptomOnsetDate	症状开始日期	Date Picker	是	UnknownCase.symptomOnsetDate	不晚于今天	-
+临床症状						
+form_clinicalSymptoms	临床症状描述	Textarea	是	UnknownCase.clinicalSymptoms	长度20-2000	详细描述异常症状
+form_suspectedPathogen	疑似病原体	Text Input	否	UnknownCase.suspectedPathogen	长度0-200	可选填写
+初步判断						
+form_initialAssessment	初步评估	Textarea	否	-	长度0-500	医生初步判断
+form_urgencyLevel	紧急程度	Radio Button	是	-	必选	高/中/低
+操作按钮						
+action_save	保存	Button	-	-	-	保存病例
+action_saveAndReport	保存并上报	Button	-	-	-	保存后立即上报应急系统
+action_cancel	取消	Button	-	-	-	取消操作
+PF-5.3.4 病例推送确认对话框 (Case Push Confirmation Dialog)
+字段ID	字段名称	字段类型	数据源	说明
+confirm_unknownCaseNo	病例编号	Text (Display)	UnknownCase	只读显示
+confirm_patientName	患者姓名	Text (Display)	UnknownCase	只读显示
+confirm_confirmedDisease	确诊疾病	Text (Display)	-	从检测结果提取
+confirm_confirmedPathogen	确诊病原体	Text (Display)	TestRecord	从检测记录提取
+confirm_actionList	推送后执行操作列表	Checklist (Display)	-	展示将执行的操作
+confirm_warning	警告提示	Alert	-	提示推送后无法撤销
+action_cancel	取消	Button	-	取消推送
+action_confirmPush	确认推送	Button	-	执行推送操作
+推送进度提示字段
+字段ID	字段名称	字段类型	说明
+progress_dataValidation	数据校验	Progress Item	步骤1
+progress_createCase	创建个案记录	Progress Item	步骤2
+progress_copyTestRecords	复制检测记录	Progress Item	步骤3
+progress_pushToEmergency	推送应急系统	Progress Item	步骤4
+progress_pushToEpi	推送流调系统	Progress Item	步骤5
+progress_updateStatus	更新病例状态	Progress Item	步骤6
+progress_percentage	进度百分比	Progress Bar	0-100%
+推送成功提示字段
+字段ID	字段名称	字段类型	说明
+success_icon	成功图标	Icon	✅
+success_message	成功消息	Text	"病例推送成功！"
+success_caseNo	生成的个案编号	Text (Link)	点击跳转个案详情
+success_pushStatus	推送状态汇总	Checklist	各系统推送结果
+action_viewCase	查看个案详情	Button	跳转至新生成的个案
+action_backToList	返回病例列表	Button	返回不明原因病例列表
+PF-5.4 Group C - 预警管理页面字段定义
+PF-5.4.1 预警列表页 (Alert List Page)
+筛选条件区字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	说明
+filter_alertNo	预警编号	Text Input	否	AlertEvent.alertNo	支持模糊搜索
+filter_alertType	预警类型	Dropdown	否	AlertEvent.alertType	病例聚集/异常症状/新发疾病/其他
+filter_regionId	发生地区	Cascader	否	AlertEvent.regionId	省/市/县三级选择
+filter_alertLevel	预警等级	Dropdown	否	AlertEvent.alertLevel	一级/二级/三级/四级
+filter_detectedDateStart	检测时间（开始）	DateTime Picker	否	AlertEvent.detectedDate	范围查询
+filter_detectedDateEnd	检测时间（结束）	DateTime Picker	否	AlertEvent.detectedDate	范围查询
+filter_alertStatus	预警状态	Dropdown	否	AlertEvent.alertStatus	待处理/处理中/已核实/误报/已关闭
+列表数据字段（卡片式展示）
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+card_alertNo	预警编号	Text (Link)	AlertEvent	AlertEvent.alertNo	点击跳转详情
+card_alertType	预警类型	Badge	AlertEvent	AlertEvent.alertType	病例聚集/异常症状/新发疾病/其他
+card_regionName	发生地区	Text	Region	Region.regionName	关联查询
+card_detectedDate	检测时间	DateTime	AlertEvent	AlertEvent.detectedDate	格式：MM-DD HH:mm
+card_alertLevel	预警等级	Badge	AlertEvent	AlertEvent.alertLevel	颜色区分：一级红/二级橙/三级黄/四级蓝
+card_alertStatus	预警状态	Badge	AlertEvent	AlertEvent.alertStatus	颜色区分状态
+card_caseCount	关联病例数	Text + Icon	-	-	从AlertCaseMapping统计
+card_triggerCondition	触发规则	Text	AlertEvent	AlertEvent.triggerCondition	简短说明
+card_summary	预警摘要	Text (Expandable)	AlertEvent	AlertEvent.summary	可展开/折叠
+card_actions	操作	Button Group	-	-	处理/查看
+PF-5.4.2 预警详情页 (Alert Detail Page)
+预警信息Tab字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+detail_alertNo	预警编号	Text (Display)	AlertEvent	AlertEvent.alertNo	-
+detail_alertType	预警类型	Badge	AlertEvent	AlertEvent.alertType	-
+detail_alertLevel	预警等级	Badge	AlertEvent	AlertEvent.alertLevel	-
+detail_alertStatus	预警状态	Badge	AlertEvent	AlertEvent.alertStatus	-
+detail_detectedDate	检测时间	DateTime (Display)	AlertEvent	AlertEvent.detectedDate	-
+detail_regionName	发生地区	Text (Display)	Region	Region.regionName	关联查询
+detail_relatedDiseaseName	相关疾病	Text (Display)	DiseaseCode	DiseaseCode.diseaseName	关联查询
+detail_caseCount	关联病例数	Number (Display)	-	AlertEvent.caseCount	-
+detail_triggerCondition	触发条件	Textarea (Display)	AlertEvent	AlertEvent.triggerCondition	-
+detail_summary	预警摘要	Textarea (Display)	AlertEvent	AlertEvent.summary	-
+detail_riskAssessment	风险评估	Textarea (Display)	AlertEvent	AlertEvent.riskAssessment	-
+detail_isPushedToEmergency	已推送应急系统	Icon + Text	AlertEvent	AlertEvent.isPushedToEmergency	是/否
+detail_pushedToEmergencyAt	推送时间	DateTime	AlertEvent	AlertEvent.pushedToEmergencyAt	-
+关联病例Tab字段（列表）
+字段ID	字段名称	字段类型	数据源	映射关系	说明
+case_caseNo	个案编号	Text (Link)	Case	AlertCaseMapping.caseId → Case.caseNo	点击跳转个案详情
+case_patientName	患者姓名	Text	Case	Case.patientName	脱敏显示
+case_diseaseName	疾病类型	Text	DiseaseCode	Case.diseaseId → DiseaseCode.diseaseName	关联查询
+case_reportDate	报告日期	Date	Case	Case.reportDate	-
+case_caseStatus	个案状态	Badge	Case	Case.caseStatus	-
+case_actions	操作	Button	-	-	查看详情
+处理记录Tab字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+handle_handledBy	处理人员	Text (Display)	User	User.fullName	关联查询
+handle_handledAt	处理时间	DateTime (Display)	AlertEvent	AlertEvent.handledAt	-
+handle_handlingResult	处理结果	Textarea (Display)	AlertEvent	AlertEvent.handlingResult	-
+handle_statusHistory	状态变更历史	Timeline	-	-	从操作日志提取
+顶部操作按钮字段
+字段ID	字段名称	字段类型	触发条件	说明
+action_handle	处理预警	Button	alertStatus == '待处理'	更新状态为"处理中"
+action_confirm	核实为真实预警	Button	alertStatus == '处理中'	立案处理
+action_markAsFalse	标记为误报	Button	alertStatus == '处理中'	填写误报原因
+action_close	关闭预警	Button	alertStatus == '已核实'	更新状态为"已关闭"
+action_back	返回列表	Button	-	返回预警列表
+PF-5.4.3 预警处理表单 (Alert Handling Form)
+立案处理表单字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	说明
+handle_alertId	预警ID	Hidden	-	AlertEvent.alertId	自动填充
+handle_handlingAction	处理动作	Radio Button	是	-	立案/核实非异常
+handle_handlingResult	处理结果说明	Textarea	是	AlertEvent.handlingResult	长度20-500
+handle_createCaseTask	创建个案调查任务	Checkbox	否	-	立案时可选
+handle_linkedCases	关联个案	Multi-Select	否	-	从关联病例中选择
+action_submit	提交	Button	-	-	提交处理结果
+action_cancel	取消	Button	-	-	取消操作
+标记误报表单字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	说明
+false_alertId	预警ID	Hidden	-	AlertEvent.alertId	自动填充
+false_reason	误报原因	Textarea	是	AlertEvent.handlingResult	长度20-500
+false_reasonCategory	误报类别	Dropdown	是	-	重复报告/数据错误/规则误判/其他
+false_suggestion	改进建议	Textarea	否	-	长度0-500
+action_submit	提交	Button	-	-	提交误报标记
+action_cancel	取消	Button	-	-	取消操作
+PF-5.5 Group D - 统计分析页面字段定义
+PF-5.5.1 疾病统计页面 (Disease Statistics Page)
+查询条件区字段
+字段ID	字段名称	字段类型	是否必填	数据源	验证规则	说明
+query_dateStart	时间范围（开始）	Date Picker	是	-	不晚于结束日期	-
+query_dateEnd	时间范围（结束）	Date Picker	是	-	不早于开始日期	默认今天
+query_diseaseIds	疾病类别	Multi-Select Checkbox	否	DiseaseCode	-	可多选，默认全选
+query_regionIds	地区范围	Cascader	否	Region	-	省/市/县三级选择
+query_dimension	统计维度	Radio Button	是	-	必选	按日/按周/按月
+action_query	查询	Button	-	-	-	执行查询
+action_reset	重置	Button	-	-	-	重置查询条件
+action_saveTemplate	保存为模板	Button	-	-	-	保存当前查询条件
+工具栏字段
+字段ID	字段名称	字段类型	说明
+tool_chartType	图表类型	Dropdown	折线图/柱状图/饼图/表格
+action_exportExcel	导出Excel	Button	导出数据表格+图表
+action_exportImage	导出图片	Button	导出高清图表PNG
+action_exportPDF	导出PDF	Button	导出完整报告
+图表展示区字段
+字段ID	字段名称	字段类型	数据源	说明
+chart_title	图表标题	Text	-	自动生成，如"2024年1月疾病趋势图"
+chart_xAxis	X轴数据	Array	-	时间序列（日期/周/月）
+chart_yAxis	Y轴数据	Array	-	病例数
+chart_series	数据系列	Array	Case表聚合	每种疾病一个系列
+chart_legend	图例	Component	-	显示疾病名称和颜色
+chart_tooltip	悬停提示	Component	-	显示详细数据点信息
+统计摘要区字段
+字段ID	字段名称	字段类型	数据源	计算方式	说明
+summary_totalCases	总病例数	Number	Case表	COUNT(*)	查询时间范围内总数
+summary_newCases	新增病例数	Number	Case表	COUNT(*) WHERE reportDate IN 最近周期	如最近一周/月
+summary_ringRatio	环比	Percentage	Case表	(本期-上期)/上期 * 100%	带↑↓图标
+summary_yearOnYear	同比	Percentage	Case表	(本期-去年同期)/去年同期 * 100%	带↑↓图标
+summary_peakDate	最高日	Date	Case表	按日聚合后取MAX	仅按日统计时显示
+summary_peakValue	最高值	Number	Case表	MAX(daily_count)	对应最高日的病例数
+数据表格区字段
+字段ID	字段名称	字段类型	数据源	说明
+table_date	日期/周/月	Text	-	根据统计维度显示
+table_disease1Count	疾病1病例数	Number	Case表	动态列，根据选择的疾病生成
+table_disease2Count	疾病2病例数	Number	Case表	动态列
+table_diseaseNCount	疾病N病例数	Number	Case表	动态列
+table_totalCount	合计	Number	-	横向求和
+PF-5.5.2 病原微生物统计页面 (Pathogen Statistics Page)
+查询条件区字段（与疾病统计类似）
+字段ID	字段名称	字段类型	是否必填	数据源	说明
+query_dateStart	时间范围（开始）	Date Picker	是	-	-
+query_dateEnd	时间范围（结束）	Date Picker	是	-	-
+query_pathogenTypes	病原体类型	Multi-Select Checkbox	否	Pathogen	病毒/细菌/真菌/寄生虫/其他
+query_regionIds	地区范围	Cascader	否	Region	-
+query_testResultFilter	检测结果筛选	Radio Button	是	-	仅阳性/全部
+分类统计结果字段
+字段ID	字段名称	字段类型	数据源	映射关系	说明
+stat_pathogenName	病原体名称	Text	Pathogen	TestRecord.pathogenDetected → Pathogen.pathogenName	-
+stat_pathogenType	病原体类型	Text	Pathogen	Pathogen.pathogenType	-
+stat_caseCount	病例数	Number	TestRecord + Case	COUNT(DISTINCT caseId)	去重计数
+stat_testCount	检测数	Number	TestRecord	COUNT(*)	-
+stat_positiveRate	阳性率	Percentage	TestRecord	COUNT(testResult='阳性')/COUNT(*) * 100%	-
+stat_percentage	占比	Percentage	-	本病原体病例数/总病例数 * 100%	用于饼图
+地区统计结果字段（矩阵表格）
+字段ID	字段名称	字段类型	数据源	说明
+matrix_regionName	地区名称	Text	Region	行标题
+matrix_pathogen1Count	病原体1病例数	Number	TestRecord + Case + Region	动态列
+matrix_pathogen2Count	病原体2病例数	Number	TestRecord + Case + Region	动态列
+matrix_pathogenNCount	病原体N病例数	Number	TestRecord + Case + Region	动态列
+matrix_totalCount	合计	Number	-	横向求和
+PF-5.5.3 移动轨迹展示页面 (Trajectory Map Page)
+查询条件区字段
+字段ID	字段名称	字段类型	是否必填	说明
+query_dateStart	时间范围（开始）	Date Picker	是	-
+query_dateEnd	时间范围（结束）	Date Picker	是	-
+query_diseaseIds	疾病类型	Multi-Select	否	可多选
+query_regionIds	地区范围	Cascader	否	限定地图显示范围
+query_caseIds	指定个案	Multi-Select	否	可选择特定个案
+地图展示区字段
+字段ID	字段名称	字段类型	数据源	映射关系	说明
+map_baseLayer	地图底图	Map Component	-	-	使用地图API（如高德/百度）
+map_trajectoryPoints	轨迹点	Marker Array	TrackingRecord	TrackingRecord.longitude/latitude	每个追踪记录一个点
+map_trajectoryLines	轨迹连线	Polyline Array	TrackingRecord	按时间顺序连接	同一个案的轨迹点连线
+map_caseLabel	个案标签	Label	Case	Case.caseNo	显示在轨迹起点
+map_timeLabel	时间标签	Label	TrackingRecord	TrackingRecord.trackingDate	显示在轨迹点上
+map_colorLegend	颜色图例	Legend	-	-	不同颜色区分不同个案
+map_playbackControl	轨迹回放控制	Control	-	-	播放/暂停/速度调节
+轨迹详情面板字段
+字段ID	字段名称	字段类型	数据源	说明
+detail_caseNo	个案编号	Text (Link)	Case	点击跳转个案详情
+detail_patientName	患者姓名	Text	Case	脱敏显示
+detail_trackingList	追踪记录列表	List	TrackingRecord	按时间排序
+detail_trackingDate	追踪日期	Date	TrackingRecord	-
+detail_locationDescription	地点描述	Text	TrackingRecord	-
+detail_riskAssessment	风险评估	Badge	TrackingRecord	高/中/低
+PF-5.5.4 统计报表保存与导出字段
+保存为模板字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	说明
+template_name	模板名称	Text Input	是	-	长度2-50
+template_queryConditions	查询条件	JSON	-	-	自动保存当前查询条件
+template_chartType	图表类型	Text	-	-	自动保存
+template_isPublic	是否公开	Checkbox	否	-	公开后其他用户可使用
+action_save	保存	Button	-	-	保存模板
+导出配置字段
+字段ID	字段名称	字段类型	是否必填	说明
+export_format	导出格式	Radio Button	是	Excel/PDF/图片
+export_includeChart	包含图表	Checkbox	否	是否包含可视化图表
+export_includeTable	包含数据表	Checkbox	否	是否包含数据表格
+export_includeConditions	包含查询条件	Checkbox	否	是否包含查询条件说明
+export_title	报告标题	Text Input	否	自定义报告标题
+action_export	导出	Button	-	执行导出
+PF-5.6 Group E - 基础数据管理页面字段定义
+PF-5.6.1 疾病编码管理页面 (Disease Code Management)
+列表页字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+list_diseaseCode	疾病编码	Text	DiseaseCode	DiseaseCode.diseaseCode	-
+list_diseaseName	疾病名称	Text	DiseaseCode	DiseaseCode.diseaseName	-
+list_diseaseCategory	疾病类别	Badge	DiseaseCode	DiseaseCode.diseaseCategory	甲类/乙类/丙类/其他
+list_icdCode	ICD编码	Text	DiseaseCode	DiseaseCode.icdCode	-
+list_riskLevel	风险等级	Badge	DiseaseCode	DiseaseCode.riskLevel	高/中/低
+list_isQuarantine	是否检疫传染病	Icon	DiseaseCode	DiseaseCode.isQuarantine	✓/✗
+list_isActive	是否启用	Switch	DiseaseCode	DiseaseCode.isActive	开关控制
+list_actions	操作	Button Group	-	-	查看/编辑/删除
+新增/编辑表单字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	验证规则	说明
+form_diseaseCode	疾病编码	Text Input	是	DiseaseCode.diseaseCode	唯一性校验	系统唯一
+form_diseaseName	疾病名称	Text Input	是	DiseaseCode.diseaseName	长度2-200	-
+form_diseaseCategory	疾病类别	Dropdown	是	DiseaseCode.diseaseCategory	必选	甲类/乙类/丙类/其他
+form_icdCode	ICD编码	Text Input	否	DiseaseCode.icdCode	ICD格式	国际疾病分类编码
+form_description	疾病描述	Textarea	否	DiseaseCode.description	长度0-1000	-
+form_riskLevel	风险等级	Radio Button	是	DiseaseCode.riskLevel	必选	高/中/低
+form_isQuarantine	是否检疫传染病	Checkbox	否	DiseaseCode.isQuarantine	-	默认false
+form_isActive	是否启用	Switch	否	DiseaseCode.isActive	-	默认true
+form_relatedPathogens	关联病原体	Multi-Select	否	DiseasePathogenMapping	-	多选病原体
+action_save	保存	Button	-	-	-	保存编码
+action_cancel	取消	Button	-	-	-	取消操作
+PF-5.6.2 病原微生物管理页面 (Pathogen Management)
+列表页字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+list_pathogenCode	病原体编码	Text	Pathogen	Pathogen.pathogenCode	-
+list_pathogenName	病原体名称	Text	Pathogen	Pathogen.pathogenName	-
+list_pathogenType	病原体类型	Badge	Pathogen	Pathogen.pathogenType	病毒/细菌/真菌/寄生虫/其他
+list_scientificName	学名	Text	Pathogen	Pathogen.scientificName	-
+list_biosafettyLevel	生物安全等级	Badge	Pathogen	Pathogen.biosafettyLevel	BSL-1/2/3/4
+list_isActive	是否启用	Switch	Pathogen	Pathogen.isActive	-
+list_actions	操作	Button Group	-	-	查看/编辑/删除
+新增/编辑表单字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	验证规则	说明
+form_pathogenCode	病原体编码	Text Input	是	Pathogen.pathogenCode	唯一性校验	系统唯一
+form_pathogenName	病原体名称	Text Input	是	Pathogen.pathogenName	长度2-200	-
+form_pathogenType	病原体类型	Dropdown	是	Pathogen.pathogenType	必选	病毒/细菌/真菌/寄生虫/其他
+form_scientificName	学名	Text Input	否	Pathogen.scientificName	长度0-200	-
+form_associatedDiseases	相关疾病	Textarea	否	Pathogen.associatedDiseases	长度0-1000	可引发的疾病列表
+form_description	病原体描述	Textarea	否	Pathogen.description	长度0-1000	-
+form_biosafettyLevel	生物安全等级	Dropdown	是	Pathogen.biosafettyLevel	必选	BSL-1/BSL-2/BSL-3/BSL-4
+form_isActive	是否启用	Switch	否	Pathogen.isActive	-	默认true
+action_save	保存	Button	-	-	-	保存病原体
+action_cancel	取消	Button	-	-	-	取消操作
+PF-5.7 Group F - 系统管理页面字段定义
+PF-5.7.1 用户管理页面 (User Management)
+列表页字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+list_username	用户名	Text	User	User.username	-
+list_fullName	姓名	Text	User	User.fullName	-
+list_orgName	所属机构	Text	Organization	Organization.orgName	关联查询
+list_roleType	角色类型	Badge	User	User.roleType	业务人员/管理员
+list_phone	联系电话	Text	User	User.phone	脱敏显示
+list_email	邮箱	Text	User	User.email	-
+list_isActive	是否启用	Switch	User	User.isActive	-
+list_lastLoginAt	最后登录时间	DateTime	User	User.lastLoginAt	-
+list_actions	操作	Button Group	-	-	查看/编辑/重置密码/停用
+新增/编辑用户表单字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	验证规则	说明
+form_username	用户名	Text Input	是	User.username	唯一性校验	仅新增时填写
+form_fullName	姓名	Text Input	是	User.fullName	长度2-100	-
+form_idCardNo	身份证号	Text Input	是	User.idCardNo	身份证格式	-
+form_phone	联系电话	Text Input	是	User.phone	手机号格式	-
+form_email	邮箱	Text Input	否	User.email	邮箱格式	-
+form_orgId	所属机构	Cascader	是	User.orgId	必选	组织树选择
+form_roleType	角色类型	Radio Button	是	User.roleType	必选	业务人员/管理员
+form_password	初始密码	Password Input	是	-	长度8-20	仅新增时填写
+form_isActive	是否启用	Switch	否	User.isActive	-	默认true
+action_save	保存	Button	-	-	-	保存用户
+action_cancel	取消	Button	-	-	-	取消操作
+PF-5.7.2 系统配置页面 (System Configuration)
+配置列表页字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+list_configKey	配置键	Text	SystemConfig	SystemConfig.configKey	-
+list_configType	配置类型	Badge	SystemConfig	SystemConfig.configType	系统参数/接口配置/业务规则/预警规则
+list_configCategory	配置分类	Text	SystemConfig	SystemConfig.configCategory	-
+list_configValue	配置值	Text	SystemConfig	SystemConfig.configValue	敏感信息脱敏显示
+list_description	说明	Text	SystemConfig	SystemConfig.description	折叠显示
+list_isActive	是否启用	Switch	SystemConfig	SystemConfig.isActive	-
+list_modifiedBy	最后修改人	Text	User	User.fullName	关联查询
+list_modifiedAt	最后修改时间	DateTime	SystemConfig	SystemConfig.modifiedAt	-
+list_actions	操作	Button Group	-	-	编辑/历史记录
+配置编辑表单字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	说明
+form_configKey	配置键	Text (Display)	-	SystemConfig.configKey	不可修改
+form_configValue	配置值	Text Input / Textarea	是	SystemConfig.configValue	根据配置类型显示
+form_description	说明	Textarea (Display)	-	SystemConfig.description	只读显示
+form_isActive	是否启用	Switch	否	SystemConfig.isActive	-
+form_confirmPassword	确认密码	Password Input	是	-	敏感配置需二次确认
+action_save	保存	Button	-	-	保存配置
+action_cancel	取消	Button	-	-	取消操作
+PF-5.7.3 接口监控页面 (Interface Monitoring)
+接口状态监控字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+monitor_systemName	外部系统	Text	InterfaceMonitor	InterfaceMonitor.systemName	Lab/Emergency/EpiSys/Portal/DataHub
+monitor_interfaceName	接口名称	Text	InterfaceMonitor	InterfaceMonitor.interfaceName	-
+monitor_interfaceUrl	接口地址	Text	InterfaceMonitor	InterfaceMonitor.interfaceUrl	-
+monitor_monitorStatus	监控状态	Badge	InterfaceMonitor	InterfaceMonitor.monitorStatus	正常/异常/维护中/已停用
+monitor_lastCheckAt	最后检查时间	DateTime	InterfaceMonitor	InterfaceMonitor.lastCheckAt	-
+monitor_lastSuccessAt	最后成功时间	DateTime	InterfaceMonitor	InterfaceMonitor.lastSuccessAt	-
+monitor_lastFailureAt	最后失败时间	DateTime	InterfaceMonitor	InterfaceMonitor.lastFailureAt	-
+monitor_availabilityRate	可用性率	Percentage	InterfaceMonitor	InterfaceMonitor.availabilityRate	-
+monitor_avgResponseTime	平均响应时间	Number	InterfaceMonitor	InterfaceMonitor.avgResponseTime	单位：ms
+monitor_maxResponseTime	最大响应时间	Number	InterfaceMonitor	InterfaceMonitor.maxResponseTime	单位：ms
+monitor_actions	操作	Button Group	-	-	手动检查/查看日志/配置告警
+接口调用日志字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+log_systemName	外部系统	Text	ExternalSystemLog	ExternalSystemLog.systemName	-
+log_interfaceType	接口类型	Text	ExternalSystemLog	ExternalSystemLog.interfaceType	推送/拉取/查询/回调
+log_businessType	业务类型	Text	ExternalSystemLog	ExternalSystemLog.businessType	个案推送/预警推送/检测推送/数据同步/认证
+log_requestMethod	请求方法	Text	ExternalSystemLog	ExternalSystemLog.requestMethod	GET/POST/PUT/DELETE
+log_requestedAt	请求时间	DateTime	ExternalSystemLog	ExternalSystemLog.requestedAt	-
+log_responseStatus	响应状态码	Number	ExternalSystemLog	ExternalSystemLog.responseStatus	HTTP状态码
+log_isSuccess	是否成功	Icon	ExternalSystemLog	ExternalSystemLog.isSuccess	✓/✗
+log_executionDuration	执行时长	Number	ExternalSystemLog	ExternalSystemLog.executionDuration	单位：ms
+log_errorMessage	错误信息	Text	ExternalSystemLog	ExternalSystemLog.errorMessage	失败时显示
+log_actions	操作	Button	-	-	查看详情/重试
+PF-5.7.4 操作日志页面 (Operation Log)
+日志查询条件字段
+字段ID	字段名称	字段类型	是否必填	映射实体属性	说明
+filter_operatedAtStart	操作时间（开始）	DateTime Picker	否	OperationLog.operatedAt	范围查询
+filter_operatedAtEnd	操作时间（结束）	DateTime Picker	否	OperationLog.operatedAt	范围查询
+filter_userId	操作人员	Select	否	OperationLog.userId	用户下拉选择
+filter_operationType	操作类型	Dropdown	否	OperationLog.operationType	新增/编辑/删除/查询/导出/登录/登出
+filter_moduleName	功能模块	Dropdown	否	OperationLog.moduleName	个案管理/预警管理/统计分析等
+filter_responseStatus	操作结果	Dropdown	否	OperationLog.responseStatus	成功/失败
+filter_targetEntityType	目标实体类型	Dropdown	否	OperationLog.targetEntityType	Case/UnknownCase/AlertEvent等
+filter_targetEntityId	目标实体ID	Text Input	否	OperationLog.targetEntityId	精确查询
+action_query	查询	Button	-	-	执行查询
+action_reset	重置	Button	-	-	重置条件
+日志详情字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+detail_logNo	日志编号	Text (Display)	OperationLog	OperationLog.logNo	-
+detail_operatedAt	操作时间	DateTime (Display)	OperationLog	OperationLog.operatedAt	-
+detail_userName	操作人员	Text (Display)	User	User.fullName	-
+detail_operationDetail	操作详情	Textarea (Display)	OperationLog	OperationLog.operationDetail	-
+detail_requestParams	请求参数	Code Block	OperationLog	OperationLog.requestParams	JSON格式展示
+detail_errorMessage	错误信息	Textarea (Display)	OperationLog	OperationLog.errorMessage	失败时显示
+detail_userAgent	用户代理	Text (Display)	OperationLog	OperationLog.userAgent	浏览器信息
+PF-5.8 Group G - 通用组件页面字段定义
+PF-5.8.1 首页工作台 (Dashboard)
+关键指标卡片字段
+字段ID	字段名称	字段类型	数据源	计算方式	说明
+metric_monthNewCases	本月新增个案	Number	Case表	COUNT(*) WHERE reportDate BETWEEN 本月1日 AND 今天	-
+metric_monthTrend	环比趋势	Percentage + Icon	Case表	(本月-上月)/上月 * 100%	↑↓图标
+metric_pendingCases	待核实个案	Number	Case表	COUNT(*) WHERE caseStatus='新建'	-
+metric_pendingAction	待核实操作	Button	-	-	点击跳转待核实列表
+metric_processingCases	处理中个案	Number	Case表	COUNT(*) WHERE caseStatus IN ('已核实','处理中')	-
+metric_processingAction	处理中操作	Button	-	-	点击跳转处理中列表
+metric_monthAlerts	本月预警事件	Number	AlertEvent表	COUNT(*) WHERE detectedDate BETWEEN 本月1日 AND 今天	-
+metric_alertAction	预警操作	Button	-	-	点击跳转预警列表
+待办事项字段
+字段ID	字段名称	字段类型	数据源	说明
+todo_pendingCasesCount	待核实个案数量	Number	Case表	COUNT(*) WHERE caseStatus='新建'
+todo_pendingCasesList	待核实个案列表	List	Case表	显示前3条
+todo_caseNo	个案编号	Text (Link)	Case	点击跳转详情
+todo_patientName	患者姓名	Text	Case	脱敏显示
+todo_diseaseName	疾病类型	Text	DiseaseCode	关联查询
+todo_reportDate	报告日期	Date	Case	-
+todo_pendingTestsCount	待确认检测数量	Number	TestRecord表	COUNT(*) WHERE testStatus='待确认'
+todo_pendingTestsList	待确认检测列表	List	TestRecord表	显示前2条
+todo_testNo	检测编号	Text (Link)	TestRecord	点击跳转
+todo_testCaseNo	关联个案	Text (Link)	Case	点击跳转个案
+todo_testType	检测类型	Text	TestRecord	-
+todo_pendingAlertsCount	待处理预警数量	Number	AlertEvent表	COUNT(*) WHERE alertStatus='待处理'
+todo_pendingAlertsList	待处理预警列表	List	AlertEvent表	显示前2条
+todo_alertNo	预警编号	Text (Link)	AlertEvent	点击跳转详情
+todo_alertType	预警类型	Badge	AlertEvent	-
+todo_alertRegion	发生地区	Text	Region	关联查询
+todo_alertLevel	预警等级	Badge	AlertEvent	-
+最近访问字段
+字段ID	字段名称	字段类型	数据源	说明
+recent_type	访问类型	Icon + Text	-	个案/病例/预警/报表
+recent_id	记录ID	Text (Link)	-	点击跳转
+recent_title	标题	Text	-	如个案编号、病例编号
+recent_accessTime	访问时间	DateTime	-	相对时间显示（如"5分钟前"）
+快捷入口字段
+字段ID	字段名称	字段类型	目标页面	说明
+shortcut_addCase	新增个案	Button (Large)	新增个案表单	带图标
+shortcut_addUnknownCase	新增不明病例	Button (Large)	新增不明病例表单	带图标
+shortcut_diseaseStats	疾病统计	Button (Large)	疾病统计页面	带图标
+shortcut_exportReport	导出报告	Button (Large)	统计分析页面	带图标
+PF-5.8.2 消息中心 (Message Center)
+消息列表字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	说明
+msg_isRead	已读状态	Icon	Notification表	Notification.isRead	未读显示红点
+msg_msgType	消息类型	Icon + Text	Notification表	Notification.msgType	预警/任务/系统通知
+msg_title	消息标题	Text (Link)	Notification表	Notification.title	点击查看详情
+msg_content	消息内容	Text	Notification表	Notification.content	折叠显示
+msg_relatedId	关联对象ID	Text (Link)	Notification表	Notification.relatedId	点击跳转
+msg_createdAt	接收时间	DateTime	Notification表	Notification.createdAt	相对时间显示
+msg_actions	操作	Button Group	-	-	标记已读/删除
+消息筛选字段
+字段ID	字段名称	字段类型	说明
+filter_msgType	消息类型	Tab	全部/预警/任务/系统通知
+filter_isRead	已读状态	Tab	全部/未读/已读
+action_markAllRead	全部标记已读	Button	批量操作
+action_deleteRead	删除已读	Button	批量删除
+PF-5.8.3 个人中心 (Personal Center)
+个人信息字段
+字段ID	字段名称	字段类型	数据源	映射实体属性	是否可编辑
+profile_avatar	头像	Image	User	-	是
+profile_username	用户名	Text (Display)	User	User.username	否
+profile_fullName	姓名	Text Input	User	User.fullName	是
+profile_idCardNo	身份证号	Text (Display)	User	User.idCardNo	否
+profile_phone	联系电话	Text Input	User	User.phone	是
+profile_email	邮箱	Text Input	User	User.email	是
+profile_orgName	所属机构	Text (Display)	Organization	Organization.orgName	否
+profile_roleType	角色类型	Text (Display)	User	User.roleType	否
+profile_lastLoginAt	最后登录时间	DateTime (Display)	User	User.lastLoginAt	否
+action_save	保存	Button	-	-	-
+修改密码字段
+字段ID	字段名称	字段类型	是否必填	验证规则	说明
+pwd_oldPassword	原密码	Password Input	是	-	验证原密码正确性
+pwd_newPassword	新密码	Password Input	是	长度8-20，包含字母+数字	-
+pwd_confirmPassword	确认新密码	Password Input	是	与新密码一致	-
+action_changePassword	修改密码	Button	-	-	提交修改
+操作偏好设置字段
+字段ID	字段名称	字段类型	默认值	说明
+pref_language	界面语言	Dropdown	中文	中文/English
+pref_theme	主题风格	Radio Button	浅色	浅色/深色/自动
+pref_pageSize	列表每页条数	Dropdown	10	10/20/50/100
+pref_enableNotification	启用桌面通知	Switch	true	浏览器通知
+pref_enableSound	启用消息提示音	Switch	true	-
+pref_autoSaveDraft	自动保存草稿	Switch	true	表单自动保存
+pref_autoSaveInterval	自动保存间隔	Number Input	5	单位：分钟
+action_savePreferences	保存设置	Button	-	-
+PF-5.9 字段映射汇总表
+核心实体字段映射统计
+实体名称	表名	映射字段数	涉及页面数	备注
+Case	Case	25	8	个案核心实体
+UnknownCase	UnknownCase	18	4	不明原因病例
+FollowUp	FollowUp	10	2	随访记录
+Treatment	Treatment	12	2	治疗记录
+TestRecord	TestRecord	15	4	检测记录
+TrackingRecord	TrackingRecord	14	3	追踪记录
+AlertEvent	AlertEvent	18	4	预警事件
+DiseaseCode	DiseaseCode	10	6	疾病编码
+Pathogen	Pathogen	9	5	病原微生物
+User	User	12	10	用户
+Organization	Organization	8	8	组织机构
+Region	Region	7	8	地区
+OperationLog	OperationLog	14	2	操作日志
+ExternalSystemLog	ExternalSystemLog	13	2	外部系统日志
+InterfaceMonitor	InterfaceMonitor	11	1	接口监控
+SystemConfig	SystemConfig	8	1	系统配置
+PF-5.10 字段验证规则汇总
+通用验证规则
+规则类型	规则名称	验证逻辑	适用字段
+格式验证			
+身份证号	idCardFormat	18位身份证号格式	idCardNo
+手机号	phoneFormat	11位手机号格式	phone
+邮箱	emailFormat	邮箱格式	email
+日期	dateFormat	YYYY-MM-DD	所有日期字段
+日期时间	dateTimeFormat	YYYY-MM-DD HH:mm:ss	所有日期时间字段
+长度验证			
+短文本	shortText	2-50字符	姓名、编码类字段
+中文本	mediumText	2-200字符	标题、名称类字段
+长文本	longText	10-1000字符	描述、详情类字段
+范围验证			
+年龄	ageRange	0-150	age
+体温	temperatureRange	35.0-42.0	temperature
+百分比	percentageRange	0-100	各种百分比字段
+唯一性验证			
+编码唯一	codeUnique	数据库唯一性检查	caseNo, diseaseCode, pathogenCode等
+身份证唯一	idCardUnique	同一疾病不重复	idCardNo (个案)
+逻辑验证			
+日期先后	dateSequence	开始日期 ≤ 结束日期	所有日期范围字段
+日期不晚于今天	dateNotFuture	日期 ≤ 今天	reportDate, symptomOnsetDate等
+日期不早于基准	dateNotBefore	诊断日期 ≥ 症状开始日期	diagnosisDate
+必填验证			
+必填	required	不能为空	所有标注"是否必填=是"的字段
+条件必填	conditionalRequired	满足条件时必填	如选择"是"后的详情字段
+PF-5.11 字段状态与权限控制
+字段编辑权限矩阵
+字段类型	新增时	编辑时	详情查看	列表查看	说明
+系统生成字段					
+ID类	自动生成	不可编辑	可查看	可查看	如caseId, caseNo
+时间戳	自动生成	自动更新	可查看	可查看	如createdAt, updatedAt
+操作人	自动填充	不可编辑	可查看	可查看	如createdBy, reportUserId
+业务字段					
+基本信息	可编辑	可编辑	可查看	可查看	如姓名、性别、年龄
+敏感信息	可编辑	可编辑	脱敏显示	脱敏显示	如身份证号、手机号
+状态字段	初始值	根据状态机	可查看	可查看	如caseStatus, alertStatus
+关联字段					
+外键	可选择	可修改	显示关联名称	显示关联名称	如diseaseId → diseaseName
+字段显示权限（按角色）
+字段敏感度	系统管理员	省级人员	市级人员	县级人员	说明
+公开字段	✓	✓	✓	✓	如疾病编码、病例编号
+业务字段	✓	✓	✓	✓	如症状描述、诊断信息
+敏感字段	✓	✓ (脱敏)	✓ (脱敏)	✓ (脱敏)	如身份证号、详细地址
+管理字段	✓	✓ (只读)	✗	✗	如系统配置、用户管理
