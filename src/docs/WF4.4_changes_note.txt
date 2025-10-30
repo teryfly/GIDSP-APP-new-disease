@@ -1,0 +1,4 @@
+变更摘要（针对 API-06/AtrCaseNo01/异步导入）：
+1) API-06 修正：当使用 CREATE_AND_UPDATE 创建新的 enrollment 时，不再提供 enrollment 字段（由服务器生成）。若需要同时创建调查事件，使用 enrollment.events 级联创建。
+2) AtrCaseNo01：因元数据配置 generated=true，Enrollment attributes 不再传递 AtrCaseNo01 空字符串。若极端旧环境报错仍提示必须赋值，保留 retryEnrollmentCaseNoOnError 兜底，在第二次请求时注入随机 CaseNo。
+3) 异步导入：所有 /api/tracker 导入均统一指定 async=false，避免返回 “Tracker job added” 但服务端尚未落库的情况，确保同步返回 bundleReport，便于获取对象UID并进行后续跳转。

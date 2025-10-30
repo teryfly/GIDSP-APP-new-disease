@@ -1,0 +1,87 @@
+---- 原型开始---
+### WF-4.1
+
+---- 原型结束---
+--- API 文档开始 ---
+WF-4.1
+
+
+--- API 文档结束 ---
+
+--- The File Structure and Source Code of this Project（已实现静态高保真，基于这个代码修改） BEGIN---
+** 注意： 此项目是多人协同开发，由其他人开发的代码，若有关联需求，请说明理由，要求我在回复中提供完整代码 **
+Project Name: src
+
+Project Structure:
+src/
+├── components
+│   ├── forms
+│   │   ├── DiseaseCodeForm.tsx 
+│   │   ├── FollowUpForm.tsx
+│   │   ├── PathogenForm.tsx
+│   │   ├── TestRecordForm.tsx
+│   │   ├── TrackingRecordForm.tsx
+│   │   ├── TreatmentForm.tsx
+│   │   └── UnknownCaseForm.tsx
+│   ├── NewCase （此目录下的文件由其他人开发）
+│   │   ├── Step1Form.tsx
+│   │   ├── Step2Form.tsx
+│   │   ├── Step3Form.tsx
+│   │   └── Step4Confirm.tsx
+│   ├── PushCaseFlow.tsx
+│   └── TrajectoryMap.tsx
+├── data
+│   ├── alerts.ts
+│   ├── cases.ts
+│   ├── dashboard.ts
+│   ├── diseaseCodes.ts
+│   ├── followUps.ts
+│   ├── pathogens.ts
+│   ├── testRecords.ts
+│   ├── trackingRecords.ts
+│   ├── treatments.ts
+│   └── unknownCases.ts
+├── layouts
+│   └── GlobalLayout.tsx
+├── pages
+│   ├── records
+│   │   ├── EditCase.tsx
+│   │   ├── EditDiseaseCode.tsx
+│   │   ├── EditFollowUp.tsx
+│   │   ├── EditPathogen.tsx
+│   │   ├── EditTestRecord.tsx
+│   │   ├── EditTrackingRecord.tsx
+│   │   ├── EditTreatment.tsx
+│   │   ├── EditUnknownCase.tsx
+│   │   ├── NewDiseaseCode.tsx
+│   │   ├── NewFollowUp.tsx
+│   │   ├── NewPathogen.tsx
+│   │   ├── NewTestRecord.tsx
+│   │   ├── NewTrackingRecord.tsx
+│   │   ├── NewTreatment.tsx
+│   │   └── NewUnknownCase.tsx
+│   ├── AlertDetail.tsx （此文件由他人开发）
+│   ├── AlertList.tsx （此文件由他人开发）
+│   ├── CaseDetail.tsx
+│   ├── CaseList.tsx
+│   ├── Dashboard.tsx  （此文件由他人开发）
+│   ├── DiseaseCodeList.tsx （此文件由他人开发）
+│   ├── EditRecordPage.tsx
+│   ├── NewCase.tsx
+│   ├── NewRecordPage.tsx
+│   ├── PathogenList.tsx
+│   ├── Statistics.tsx
+│   ├── UnknownCaseDetail.tsx （此文件由他人开发）
+│   └── UnknownCaseList.tsx （此文件由他人开发）
+├── router 
+│   └── index.tsx （此文件由他人开发）
+├── types
+│   └── forms.ts
+├── App.tsx
+├── index.css
+└── main.tsx
+
+--- Source Code BEGINE ---
+File Contents:
+
+--- Source Code END ---

@@ -1,0 +1,6 @@
+WF-4.6 Unknown Case Detail with Push Flow
+- 新增 services/unknownCase/details.ts: 加载TEI详情、分页实验室事件、变更日志
+- 新增 services/unknownCase/push.ts: API-10/11/12/13/14 推送流程与前置校验、辅助工具
+- 新增 hooks/useUnknownCaseDetails.ts: 页面业务Hook, 管理加载、推送进度、日志
+- 更新 pages/UnknownCaseDetail.tsx: 接入真实API、实现推送确认、进度提示、成功后跳转入口
+- 备注：病原体→疾病映射 PATHOGEN_TO_DISEASE_MAP 需按环境调整；应急/流调推送不在本合同处理范围，仅展示进度。

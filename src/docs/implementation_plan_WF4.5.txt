@@ -1,0 +1,14 @@
+总目标：基于“API Contract 5 - Unknown Case List (WF-4.5)”完善前端“/unknown-cases”列表页的全部功能，直接调用 DHIS2 Core（Basic Auth，读取 config.json），不经代理。
+
+总实现步骤（Y=1）：
+1) 完整实现 UnknownCaseList 页的最终版本
+- 目的：严格按合同实现筛选、分页、状态与紧急度展示、每行懒加载最新实验室事件（PsLabTest01）以推导病例状态与紧急度、导出 CSV、操作按钮显隐（查看/编辑/上报/推送），并与现有服务层 unknownCaseService.ts、mappers 适配。
+- 关键点：
+  a. 初始化：加载 OsUnkStat01 选项集；加载当前用户默认 OU（/api/me）；将默认 OU 写入筛选表单。
+  b. 列表查询（API-04）：使用 /api/tracker/trackedEntities，参数 program=PrgUnknown1，orgUnits=me.ou，orgUnitMode=DESCENDANTS，fields 按合同指定；支持筛选：病例编号（AtrUnkNo001:ilike）、患者姓名（AtrFullNm01:ilike）、报告日期（enrollmentEnrolledAfter/Before）；状态筛选字段暂忽略（状态由事件 DE 派生）。
+  c. 懒加载实验室事件（API-05）：列表每行（可见页）根据 enrollmentUid 请求 /api/tracker/events?program=PrgUnknown1&programStage=PsLabTest01&page=1&pageSize=1&order=occurredAt:desc，解析 dataValues 中 DeUnkStat01（病例状态代码）与 DeUnkTstRst（检测结果）推断状态与紧急度（阳性=高，否则=中）。将状态代码映射为名称（使用 OsUnkStat01）。
+  d. 列表列：病例编号、患者、报告日期、病例状态（颜色：🟡待检测/🔵检测中/🟢已确诊/⚪已排除）、紧急度（红/橙/绿），操作列按钮根据状态显示：待检测/检测中→查看/编辑/上报；已确诊→查看/推送；已排除→仅查看。
+  e. 导出（API-08）：使用 /api/tracker/trackedEntities，Accept:text/csv，保持同筛选条件；前端直接下载 Blob。
+  f. 分页、排序：分页使用 pager；排序采用 createdAt 升/降（映射到表头报告日期列的排序事件）；跳页/每页大小变化时重新查询。
+  g. 高亮高紧急度行：可在渲染中使用 Tag color=‘red’ 或额外样式强调。
+- 预期输出：pages/UnknownCaseList.tsx 最终版本（≤200 行），整合现有 unknownCaseService 与 mappers，不新建额外服务文件。
