@@ -1,0 +1,7 @@
+{
+  "dhis2": {
+    "baseUrl": "http://192.168.120.227:8080",
+    "username": "admin",
+    "password": "district"
+  }
+}
