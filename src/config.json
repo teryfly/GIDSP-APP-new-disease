@@ -1,10 +1,11 @@
 {
   "dhis2": {
-    "baseUrl": "http://192.168.120.227:8080",
+    "baseUrl": "http://10.241.5.145:8089",
     "username": "admin",
-    "password": "district"
+    "password": "district",
+    "useUrlIs": false
   },
   "tracker": {
-    "debug": true
+    "debug": false
   }
 }
