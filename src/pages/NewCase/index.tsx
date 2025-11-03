@@ -50,7 +50,7 @@ export default function NewCase() {
       caseSourceName: ctx.caseSrcOpts.find(o => o.value === d.caseSourceCode)?.label,
       caseStatusName: ctx.caseStatOpts.find(o => o.value === d.caseStatusCode)?.label,
     };
-  }, [ctx.formBasic, ctx.formEpi, ctx.formDiag, ctx.diseaseOpts, ctx.caseSrcOpts, ctx.caseStatOpts]);
+  }, [ctx.formBasic, ctx.formEpi, ctx.formDiag, ctx.diseaseOpts, ctx.caseSrcOpts, ctx.caseStatOpts, ctx.current]);
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
