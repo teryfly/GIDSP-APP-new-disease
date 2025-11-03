@@ -1,589 +1,596 @@
-# API Contract 1 – Dashboard Page (WF-4.1)
+# API Contract 1 – Dashboard Page (WF-4.1) 
 
 ## 1. Page Description
 
-The Dashboard (工作台) serves as the landing page, providing an overview of key metrics, pending tasks, recent activity, and quick access to common functions. It displays: (1) Key indicator cards showing counts and trends for current month cases, pending verification cases, in-progress cases, and current month alerts; (2) To-do list grouped by priority (pending verification cases, pending test confirmations, pending alerts); (3) Recent access history; (4) Quick entry shortcuts for creating new cases/unknown cases and viewing statistics. Data is aggregated from Programs 1, 2, and the Alert system.
+Dashboard is the landing page after user login, providing an overview of key metrics, pending tasks, recent activities, and quick action shortcuts. It displays aggregated statistics for **case management** and **unknown disease surveillance**, along with actionable items requiring user attention.
 
 ## 2. Required DHIS2 APIs
 
-| #    | Endpoint                                      | Method   | Description                                                  | Key Parameters                                               | Expected Response / Data Type               |
-| ---- | --------------------------------------------- | -------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------- |
-| 1    | `/api/me`                                     | GET      | Get current user context (org units, authorities, display name) | `fields=id,username,displayName,organisationUnits[id,name,level],dataViewOrganisationUnits[id],authorities` | User object                                 |
-| 2    | `/api/tracker/trackedEntities`                | GET      | Count new cases this month (Program 1)                       | `program=PrgCaseMgt1&orgUnits={userOuId}&orgUnitMode=CAPTURE&enrollmentEnrolledAfter={monthStart}&enrollmentEnrolledBefore={monthEnd}&fields=none&pageSize=1&totalPages=true` | Pager with total count                      |
-| 3    | `/api/tracker/trackedEntities`                | GET      | Count cases from previous month for trend comparison         | `program=PrgCaseMgt1&orgUnits={userOuId}&orgUnitMode=CAPTURE&enrollmentEnrolledAfter={prevMonthStart}&enrollmentEnrolledBefore={prevMonthEnd}&fields=none&pageSize=1&totalPages=true` | Pager with total count                      |
-| 4    | `/api/tracker/events`                         | GET      | Count pending verification cases (Stage 1 Investigation with status=NEW) | `program=PrgCaseMgt1&orgUnit={userOuId}&orgUnitMode=CAPTURE&programStage=PsInvestig1&filter=DeCaseStat1:eq:OptNew00001&fields=event&pageSize=50` | { pager, events[] } for display list        |
-| 5    | `/api/tracker/events`                         | GET      | Count in-progress cases (Stage 1 Investigation with status=IN_PROGRESS) | `program=PrgCaseMgt1&orgUnit={userOuId}&orgUnitMode=CAPTURE&programStage=PsInvestig1&filter=DeCaseStat1:eq:OptInProg10&fields=event,enrollment,dataValues[dataElement,value]&pageSize=50` | { pager, events[] }                         |
-| 6    | `/api/tracker/trackedEntities`                | GET      | Count current month alerts                                   | `trackedEntityType=TetAlertEvt&program=PrgAlertMgt&orgUnits={userOuId}&orgUnitMode=ACCESSIBLE&enrollmentEnrolledAfter={monthStart}&fields=none&pageSize=1&totalPages=true` | Pager with total count                      |
-| 7    | `/api/tracker/trackedEntities`                | GET      | Count pending alerts (status=PENDING or IN_PROGRESS)         | `trackedEntityType=TetAlertEvt&program=PrgAlertMgt&orgUnits={userOuId}&orgUnitMode=ACCESSIBLE&filter=AtrAlertSts:in:[PENDING,IN_PROGRESS]&fields=trackedEntity,attributes[attribute,value]&pageSize=50` | { pager, trackedEntities[] } for to-do list |
-| 8    | `/api/tracker/events`                         | GET      | List pending test confirmations (Stage 4 Test Records with status=PENDING_CONFIRMATION) | `program=PrgCaseMgt1&orgUnit={userOuId}&orgUnitMode=CAPTURE&programStage=PsTest00001&filter=DeTestStat1:eq:OptPendCnf1&fields=event,enrollment,trackedEntity,occurredAt,dataValues[dataElement,value]&order=occurredAt:desc&pageSize=50` | { pager, events[] }                         |
-| 9    | `/api/dataStore/userActivity/recent-{userId}` | GET      | Fetch user's recent access history (last 10 items)           | N/A                                                          | { items: [{type, uid, name, timestamp}] }   |
-| 10   | `/api/dataStore/userActivity/recent-{userId}` | POST/PUT | Store user's access history when navigating to detail pages  | Recent activity item object                                  | Success response                            |
-| 11   | `/api/analytics`                              | GET      | Get aggregated case count trend (monthly time series for chart) | `dimension=pe:LAST_12_MONTHS;dx:{indicatorId};ou:{userOuId}&displayProperty=NAME` | Analytics response with data values         |
-| 12   | `/api/indicators`                             | GET      | Load indicator definitions for dashboard metrics             | `filter=name:ilike:case&fields=id,name,numerator,denominator` | Indicator list                              |
-| 13   | `/api/organisationUnits/{ouId}`               | GET      | Get org unit hierarchy path for breadcrumb display           | `fields=id,name,level,path,parent[id,name]`                  | OrganisationUnit object                     |
-| 14   | `/api/tracker/trackedEntities`                | GET      | Fetch pending verification case details for to-do list       | `trackedEntity={teiUid}&program=PrgCaseMgt1&fields=trackedEntity,attributes[attribute,value],enrollments[enrollment,enrolledAt]` | TrackedEntity object                        |
-| 15   | `/api/programs`                               | GET      | Load Program 1 and 2 metadata for quick entry validation     | `filter=id:in:[PrgCaseMgt1,PrgUnknown1]&fields=id,name,access[data[write]]` | Program list                                |
+| #    | Endpoint                                      | Method | Description                                      | Key Parameters                                               | Expected Response / Data Type         |
+| ---- | --------------------------------------------- | ------ | ------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------- |
+| 1    | `/api/me`                                     | GET    | Get current user information                     | fields=id,username,firstName,surname,organisationUnits[id,name],teiSearchOrganisationUnits[id,name],userRoles[id,name,authorities] | User object with assigned org units   |
+| 2    | `/api/tracker/events`                         | GET    | Count **today's new cases** (Program 1)          | program=PrgCaseMgt1, programStage=PsInvestig1, orgUnitMode=ACCESSIBLE, occurredAfter={todayStart}, occurredBefore={todayEnd}, pageSize=1, totalPages=true | `pager.total` as count                |
+| 3    | `/api/tracker/events`                         | GET    | Count **this month's new cases** (Program 1)     | program=PrgCaseMgt1, programStage=PsInvestig1, orgUnitMode=ACCESSIBLE, occurredAfter={monthStart}, pageSize=1, totalPages=true | `pager.total` as count                |
+| 4    | `/api/tracker/events`                         | GET    | Count **pending verification cases**             | program=PrgCaseMgt1, programStage=PsInvestig1, orgUnitMode=ACCESSIBLE, filter=DeCaseStat1:eq:NEW, pageSize=1, totalPages=true | `pager.total` as count                |
+| 5    | `/api/tracker/events`                         | GET    | Count **cases in progress**                      | program=PrgCaseMgt1, programStage=PsInvestig1, orgUnitMode=ACCESSIBLE, filter=DeCaseStat1:eq:IN_PROGRESS, pageSize=1, totalPages=true | `pager.total` as count                |
+| 6    | `/api/tracker/events`                         | GET    | Retrieve **pending verification case list**      | program=PrgCaseMgt1, programStage=PsInvestig1, orgUnitMode=ACCESSIBLE, filter=DeCaseStat1:eq:NEW, fields=event,trackedEntity,enrollment,occurredAt, pageSize=10, order=occurredAt:desc | Events with trackedEntity references  |
+| 7    | `/api/tracker/trackedEntities`                | GET    | Batch retrieve **case details for pending list** | trackedEntity={UID1,UID2,...}, program=PrgCaseMgt1, fields=trackedEntity,attributes[attribute,value,displayName],enrollments[enrollment,enrolledAt] | TrackedEntities with attributes       |
+| 8    | `/api/tracker/events`                         | GET    | Count **pending test confirmations**             | program=PrgCaseMgt1, programStage=PsTest00001, orgUnitMode=ACCESSIBLE, filter=DeTestStat1:eq:PENDING_CONFIRMATION, pageSize=1, totalPages=true | `pager.total` as count                |
+| 9    | `/api/tracker/events`                         | GET    | Retrieve **pending test list**                   | program=PrgCaseMgt1, programStage=PsTest00001, orgUnitMode=ACCESSIBLE, filter=DeTestStat1:eq:PENDING_CONFIRMATION, fields=event,enrollment,trackedEntity,dataValues[dataElement,value], pageSize=5, order=updatedAt:desc | Events with test data                 |
+| 10   | `/api/tracker/events`                         | GET    | Count **today's unknown disease cases**          | program=PrgUnknown1, programStage=PsRegister1, orgUnitMode=ACCESSIBLE, occurredAfter={todayStart}, occurredBefore={todayEnd}, pageSize=1, totalPages=true | `pager.total` as count                |
+| 11   | `/api/tracker/events`                         | GET    | Count **this month's unknown disease cases**     | program=PrgUnknown1, programStage=PsRegister1, orgUnitMode=ACCESSIBLE, occurredAfter={monthStart}, pageSize=1, totalPages=true | `pager.total` as count                |
+| 12   | `/api/tracker/events`                         | GET    | Count **this month's alerts** (预留接口)         | program={AlertProgram}, orgUnitMode=ACCESSIBLE, occurredAfter={monthStart}, pageSize=1, totalPages=true | `pager.total` as count (future use)   |
+| 13   | `/api/dataStore/userActivity/recent-{userId}` | GET    | Retrieve **recent access records**               | N/A                                                          | JSON array of recent case/event IDs   |
+| 14   | `/api/organisationUnits/{ouId}`               | GET    | Get org unit details for display                 | fields=id,name,level                                         | OrganisationUnit object               |
+| 15   | `/api/optionSets/OsDiseasCd1`                 | GET    | Get **disease code options** (for case display)  | fields=options[code,name]                                    | OptionSet with disease options        |
+| 16   | `/api/optionSets/OsUnkStat01`                 | GET    | Get **unknown case status options**              | fields=options[code,name]                                    | OptionSet with unknown disease status |
+| 17   | `/api/tracker/events`                         | GET    | Count **last month's new cases** (for trend)     | program=PrgCaseMgt1, programStage=PsInvestig1, orgUnitMode=ACCESSIBLE, occurredAfter={lastMonthStart}, occurredBefore={lastMonthEnd}, pageSize=1, totalPages=true | `pager.total` for comparison          |
+| 18   | `/api/tracker/events`                         | GET    | Count **yesterday's new cases** (for trend)      | program=PrgCaseMgt1, programStage=PsInvestig1, orgUnitMode=ACCESSIBLE, occurredAfter={yesterdayStart}, occurredBefore={yesterdayEnd}, pageSize=1, totalPages=true | `pager.total` for daily trend         |
+
+------
 
 ## 3. Notes
 
-### Indicator Cards (关键指标概览)
+### 3.1 API Dependencies
 
-**Card 1: 本月新增个案 (New Cases This Month)**
-
-- **Primary data**: API-2 (current month count)
-- **Trend calculation**: `((currentMonth - previousMonth) / previousMonth) * 100`
-- **API-3** provides previous month count for trend
-- Display: `156` with trend indicator `↑15%` in green (increase) or red (decrease based on context)
-
-**Card 2: 待核实个案 (Pending Verification Cases)**
-
-- **Primary data**: API-4 count
-- Use filter: `DeCaseStat1:eq:OptNew00001` (Status=新建)
-- Display count with [查看] button linking to Case List with pre-applied filter
-- Badge color: Yellow/Warning
-
-**Card 3: 处理中个案 (In-Progress Cases)**
-
-- **Primary data**: API-5 count
-- Use filter: `DeCaseStat1:eq:OptInProg10` (Status=处理中)
-- Display count with [查看] button
-- Badge color: Blue/Info
-
-**Card 4: 本月预警事件 (Current Month Alerts)**
-
-- **Primary data**: API-6 count
-- Use filter: Enrollment date within current month
-- Display count with [处理] button linking to Alert List
-- Badge color: Red if any PENDING alerts exist, otherwise Gray
-
-### To-Do List (待办事项)
-
-**Section 1: 待核实个案 (Pending Verification - Priority P0)**
-
-- **Data source**: API-4 results (up to 3 items shown, expandable)
-
-- Display format:
-
-  ```
-  ☐ CAS-2024-156 | 李四 | 新冠肺炎 | 2024-01-15
-  ```
-
-- Clicking item navigates to Case Details (WF-4.3)
-
-- Show "查看全部 X 条" link if count > 3
-
-**Section 2: 待确认检测 (Pending Test Confirmations - Priority P0)**
-
-- **Data source**: API-8 results (up to 5 items shown)
-
-- Display format:
-
-  ```
-  ☐ TEST-2024-089 | CAS-2024-150 | 核酸检测
-  ```
-
-- Clicking item navigates to Case Details Test Records tab
-
-- Filter: `DeTestStat1:eq:OptPendCnf1` (Test Status=待确认)
-
-**Section 3: 待处理预警 (Pending Alerts - Priority P0)**
-
-- **Data source**: API-7 results (up to 2 items shown)
-
-- Display format:
-
-  ```
-  ☐ ALT-2024-012 | 病例聚集 | 北京市 | 高风险
-  ```
-
-- Clicking item navigates to Alert Details
-
-- Filter: `AtrAlertSts:in:[PENDING,IN_PROGRESS]`
-
-### Recent Access (最近访问 - Priority P1)
-
-- **Data source**: API-9 (DataStore-based user activity log)
-
-- DataStore namespace: `userActivity`
-
-- DataStore key format: `recent-{userId}` (e.g., `recent-UserChgd001`)
-
-- JSON structure:
-
-  ```json
-  {  "items": [    {"type": "CASE", "uid": "CAS-2024-156", "name": "张三", "timestamp": "2024-01-15T14:30:00Z"},    {"type": "UNKNOWN_CASE", "uid": "UNK-2024-021", "name": "王五", "timestamp": "2024-01-15T10:00:00Z"},    {"type": "ALERT", "uid": "ALT-2024-012", "name": "病例聚集预警", "timestamp": "2024-01-14T16:00:00Z"}  ]}
-  ```
-
-- Store activity via API-10 when user accesses detail pages
-
-- Display last 4 items in dashboard
-
-- Clicking item navigates to corresponding detail page
-
-### Quick Entry (快捷入口 - Priority P1)
-
-- **Data source**: API-15 (check user write access to programs)
-- Buttons:
-  - `[➕ 新增个案]` → Navigate to New Case Form (WF-4.4) if `PrgCaseMgt1.access.data.write=true`
-  - `[➕ 新增不明病例]` → Navigate to New Unknown Case Form if `PrgUnknown1.access.data.write=true`
-  - `[📊 疾病统计]` → Navigate to Statistical Analysis (WF-4.8)
-  - `[📥 导出报告]` → Trigger report export dialog (not covered in this contract)
-- Disable buttons if user lacks write access
-
-### Date Range Calculations
-
-All date filters use current user's timezone from API-1.
-
-```javascript
-// Current month range
-const now = new Date();
-const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
-
-// Previous month range (for trend)
-const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
-const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
+```
+API-01 (Get User Info)
+  ↓
+[Parallel Execution Group 1: Statistics]
+├─ API-02 (Today's cases)
+├─ API-03 (Month's cases) 
+├─ API-04 (Pending verification)
+├─ API-05 (In progress)
+├─ API-08 (Pending tests)
+├─ API-10 (Today's unknown)
+├─ API-11 (Month's unknown)
+├─ API-17 (Last month for trend)
+└─ API-18 (Yesterday for trend)
+  ↓
+[Sequential Execution Group 2: Detail Lists]
+API-06 (Pending case events) 
+  ↓
+API-07 (Batch get TrackedEntity details)
+  ↓
+API-09 (Pending test events)
+  ↓
+[Parallel Execution Group 3: Metadata & User Data]
+├─ API-13 (Recent access - optional)
+├─ API-14 (Org unit details)
+├─ API-15 (Disease codes)
+└─ API-16 (Unknown status codes)
 ```
 
-### Organisation Unit Scope
+### 3.2 Key Parameters
 
-- Use `orgUnitMode=CAPTURE` for case-related queries (APIs 2-5, 8)
-- Use `orgUnitMode=ACCESSIBLE` for alert queries (APIs 6-7) since alerts may have `accessLevel=AUDITED`
-- `{userOuId}` obtained from API-1 `organisationUnits[0].id` (user's primary org unit)
+#### 3.2.1 Date Range Calculation
 
-### Performance Optimization
+**Today's Range**:
 
-- **Parallel API calls**: APIs 2-8 can be executed in parallel for faster page load
+```javascript
+const todayStart = new Date().setHours(0,0,0,0);  // "2024-11-02T00:00:00.000Z"
+const todayEnd = new Date().setHours(23,59,59,999); // "2024-11-02T23:59:59.999Z"
+```
 
-- Caching
+**This Month's Range**:
 
-  :
+```javascript
+const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+// "2024-11-01T00:00:00.000Z"
+```
 
-  - Cache API-1 (user context) for session duration
-  - Cache API-15 (program metadata) for 5 minutes
-  - Do not cache count APIs (2-8) to ensure real-time data
+**Last Month's Range** (for trend comparison):
 
-- Pagination
+```javascript
+const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1);
+const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0, 23, 59, 59);
+```
 
-  :
+#### 3.2.2 DHIS2 Query Parameters
 
-  - For to-do lists, fetch `pageSize=50` initially
-  - Use `fields=none` for count-only queries (APIs 2, 3, 6) to minimize response size
-  - Use minimal `fields` for list items (only display-relevant fields)
+- **orgUnitMode=ACCESSIBLE**: Uses user's **search scope** (`teiSearchOrganisationUnits`). Do NOT combine with explicit `orgUnits` parameter
+- **filter=DeCaseStat1:eq:NEW**: Filters by data element value (Data Element filters work in Events API)
+- **pageSize=1 & totalPages=true**: For count-only queries (only `pager.total` is used)
+- **occurredAfter / occurredBefore**: ISO-8601 datetime format, filters by Event's `occurredAt` field
 
-### Error Handling
+### 3.3 Metadata Dependencies
 
-- If any indicator card API fails, display `--` with error icon
-- If to-do list API fails, show empty state with retry button
-- If recent access API fails (DataStore not configured), hide section gracefully
+#### Programs & Stages
 
-### Access Control
+| Metadata Type | ID          | Name             | Description                     |
+| ------------- | ----------- | ---------------- | ------------------------------- |
+| Program       | PrgCaseMgt1 | 已知疾病个案管理 | Confirmed disease case program  |
+| ProgramStage  | PsInvestig1 | 个案调查         | Case investigation stage        |
+| ProgramStage  | PsTest00001 | 检测记录         | Test record stage               |
+| Program       | PrgUnknown1 | 不明原因疾病管理 | Unknown disease program         |
+| ProgramStage  | PsRegister1 | 不明病例登记     | Unknown case registration stage |
 
-- All queries respect user's org unit scope (capture/accessible)
-- To-do items only show data user has read access to (sharing + ownership)
-- Quick entry buttons respect program write permissions
+#### Data Elements
+
+| ID          | Name         | Description         | Stage Used  |
+| ----------- | ------------ | ------------------- | ----------- |
+| DeCaseStat1 | 个案状态     | Case status         | PsInvestig1 |
+| DeTestStat1 | 检测状态     | Test status         | PsTest00001 |
+| DeUnkStat01 | 不明病例状态 | Unknown case status | PsRegister1 |
+
+#### Option Sets
+
+| ID          | Name         | Options                                    |
+| ----------- | ------------ | ------------------------------------------ |
+| OsDiseasCd1 | 疾病编码     | A01:鼠疫, A02:霍乱, B03:新冠肺炎 etc.      |
+| OsCaseStat1 | 个案状态     | NEW, VERIFIED, IN_PROGRESS, CLOSED         |
+| OsUnkStat01 | 不明病例状态 | PENDING_TEST, TESTING, CONFIRMED, EXCLUDED |
+
+### 3.4 Performance Considerations
+
+#### Caching Strategy
+
+| API Type            | Cache Duration | Invalidation Trigger  |
+| ------------------- | -------------- | --------------------- |
+| `/api/me`           | Session        | User logout           |
+| `/api/optionSets/*` | 1 hour         | Metadata update       |
+| Statistics APIs     | 5 minutes      | New data import       |
+| Detail lists        | No cache       | Real-time requirement |
+
+#### Optimization Tips
+
+1. **Parallel Execution**: Execute all statistics APIs (API-02 to API-11, API-17, API-18) in parallel
+2. **Batch Processing**: API-07 supports comma-separated UIDs (max 50 per request)
+3. **Field Selection**: Only request needed fields to reduce payload size
+4. **Pagination**: Use `pageSize=1` for count-only queries
+
+### 3.5 Error Handling
+
+| Error Code | Description                        | Fallback Strategy                                |
+| ---------- | ---------------------------------- | ------------------------------------------------ |
+| 403        | Permission denied                  | Show "无权限访问" message                        |
+| 404        | Metadata not found                 | Check metadata UIDs in deployment                |
+| E1003      | Invalid filter parameter           | Verify Data Element ID in ProgramStage           |
+| Timeout    | API response > 10s                 | Show loading indicator, retry once               |
+| Empty      | orgUnitMode=ACCESSIBLE returns [ ] | Fallback to orgUnitMode=CAPTURE or show "无数据" |
+
+### 3.6 Trend Calculation Logic
+
+**Month-over-Month Growth**:
+
+```javascript
+const thisMonth = API-03 result (pager.total)
+const lastMonth = API-17 result (pager.total)
+const growth = lastMonth === 0 ? 0 : ((thisMonth - lastMonth) / lastMonth * 100).toFixed(1)
+// Display: "↑15%" or "↓5%" or "0%"
+```
+
+**Day-over-Day Growth** (for today's cases):
+
+```javascript
+const today = API-02 result (pager.total)
+const yesterday = API-18 result (pager.total)
+const growth = yesterday === 0 ? 0 : ((today - yesterday) / yesterday * 100).toFixed(1)
+```
+
+------
 
 ## 4. Example Request & Response
 
-### API-01: Get Current User Context
+### API-01: Get Current User Information
 
-**请求:**
+**Request:**
 
 ```http
-GET /api/me?fields=id,username,displayName,organisationUnits[id,name,level],dataViewOrganisationUnits[id],authorities
+GET /api/me?fields=id,username,firstName,surname,organisationUnits[id,name,level],teiSearchOrganisationUnits[id,name],userRoles[id,name,authorities]
 ```
 
-**响应:**
+**Response:**
 
 ```json
 {
-  "id": "UserChgd001",
+  "id": "xE7jOejl9FI",
   "username": "chengdu_cdc_001",
-  "displayName": "李娜",
+  "firstName": "李",
+  "surname": "娜",
   "organisationUnits": [
     {
       "id": "OuChengdu01",
-      "name": "成都市疾控中心",
+      "name": "成都市",
       "level": 2
     }
   ],
-  "dataViewOrganisationUnits": [
-    {"id": "OuChengdu01"}
+  "teiSearchOrganisationUnits": [
+    {
+      "id": "OuChengdu01",
+      "name": "成都市"
+    },
+    {
+      "id": "OuWuhou0001",
+      "name": "武侯区"
+    }
   ],
-  "authorities": [
-    "F_TRACKED_ENTITY_INSTANCE_SEARCH",
-    "F_TRACKED_ENTITY_INSTANCE_ADD",
-    "F_PROGRAM_ENROLLMENT"
+  "userRoles": [
+    {
+      "id": "UrCityStf01",
+      "name": "市级疾控业务人员",
+      "authorities": [
+        "F_TRACKED_ENTITY_INSTANCE_SEARCH",
+        "F_PROGRAM_ENROLLMENT",
+        "F_VIEW_EVENT_ANALYTICS"
+      ]
+    }
   ]
 }
 ```
 
-### API-02: Count New Cases This Month
+------
 
-**请求:**
+### API-02: Count Today's New Cases
+
+**Request:**
 
 ```http
-GET /api/tracker/trackedEntities?program=PrgCaseMgt1&orgUnits=OuChengdu01&orgUnitMode=CAPTURE&enrollmentEnrolledAfter=2024-01-01T00:00:00.000&enrollmentEnrolledBefore=2024-01-31T23:59:59.999&fields=none&pageSize=1&totalPages=true
+GET /api/tracker/events?program=PrgCaseMgt1&programStage=PsInvestig1&orgUnitMode=ACCESSIBLE&occurredAfter=2024-11-02T00:00:00.000Z&occurredBefore=2024-11-02T23:59:59.999Z&pageSize=1&totalPages=true
 ```
 
-**响应:**
+**Response:**
 
 ```json
 {
   "pager": {
     "page": 1,
     "pageSize": 1,
-    "total": 156,
-    "pageCount": 156
-  }
+    "total": 23
+  },
+  "events": []
 }
 ```
 
-### API-03: Count Cases Previous Month (for Trend)
+> **Usage**: Display "23" in "今日新增个案" metric card.
 
-**请求:**
+------
+
+### API-03: Count This Month's New Cases
+
+**Request:**
 
 ```http
-GET /api/tracker/trackedEntities?program=PrgCaseMgt1&orgUnits=OuChengdu01&orgUnitMode=CAPTURE&enrollmentEnrolledAfter=2023-12-01T00:00:00.000&enrollmentEnrolledBefore=2023-12-31T23:59:59.999&fields=none&pageSize=1&totalPages=true
+GET /api/tracker/events?program=PrgCaseMgt1&programStage=PsInvestig1&orgUnitMode=ACCESSIBLE&occurredAfter=2024-11-01T00:00:00.000Z&pageSize=1&totalPages=true
 ```
 
-**响应:**
+**Response:**
 
 ```json
 {
   "pager": {
     "page": 1,
     "pageSize": 1,
-    "total": 135,
-    "pageCount": 135
-  }
+    "total": 156
+  },
+  "events": []
 }
 ```
 
-**Trend calculation:** `((156 - 135) / 135) * 100 = 15.56%` → Display as `↑15%`
+> **Usage**: Display "156" in "本月新增个案" card. Combine with API-17 result to calculate "↑15%" trend.
 
-### API-04: List Pending Verification Cases (To-Do Item)
+------
 
-**请求:**
+### API-04: Count Pending Verification Cases
+
+**Request:**
 
 ```http
-GET /api/tracker/events?program=PrgCaseMgt1&orgUnit=OuChengdu01&orgUnitMode=CAPTURE&programStage=PsInvestig1&filter=DeCaseStat1:eq:OptNew00001&fields=event,enrollment,trackedEntity,occurredAt,dataValues[dataElement,value]&order=occurredAt:desc&pageSize=3
+GET /api/tracker/events?program=PrgCaseMgt1&programStage=PsInvestig1&orgUnitMode=ACCESSIBLE&filter=DeCaseStat1:eq:NEW&pageSize=1&totalPages=true
 ```
 
-**响应:**
+**Response:**
 
 ```json
 {
   "pager": {
     "page": 1,
-    "pageSize": 3,
+    "pageSize": 1,
+    "total": 3
+  },
+  "events": []
+}
+```
+
+> **Usage**: Display "3" in "待核实个案" card with "[查看]" link.
+
+------
+
+### API-06: Retrieve Pending Verification Case Events
+
+**Request:**
+
+```http
+GET /api/tracker/events?program=PrgCaseMgt1&programStage=PsInvestig1&orgUnitMode=ACCESSIBLE&filter=DeCaseStat1:eq:NEW&fields=event,trackedEntity,enrollment,occurredAt&pageSize=10&order=occurredAt:desc
+```
+
+**Response:**
+
+```json
+{
+  "pager": {
+    "page": 1,
+    "pageSize": 10,
     "total": 3
   },
   "events": [
     {
-      "event": "evtInv156",
-      "enrollment": "enr156",
+      "event": "ZwwuwNp6gVd",
       "trackedEntity": "Kj6vYde4LHh",
-      "occurredAt": "2024-01-15T14:30:00.000",
-      "dataValues": [
-        {"dataElement": "DeCaseStat1", "value": "OptNew00001"}
-      ]
+      "enrollment": "MNWZ6hnuhSw",
+      "occurredAt": "2024-01-15T08:30:00.000"
     },
     {
-      "event": "evtInv155",
-      "enrollment": "enr155",
-      "trackedEntity": "PQfMcpmXeFE",
-      "occurredAt": "2024-01-15T10:45:00.000",
-      "dataValues": [
-        {"dataElement": "DeCaseStat1", "value": "OptNew00001"}
-      ]
-    },
-    {
-      "event": "evtInv154",
-      "enrollment": "enr154",
+      "event": "XwwuwNp6gVE",
       "trackedEntity": "Gjaiu3ea38E",
-      "occurredAt": "2024-01-14T16:20:00.000",
-      "dataValues": [
-        {"dataElement": "DeCaseStat1", "value": "OptNew00001"}
-      ]
-    }
-  ]
-}
-```
-
-**Note:** To display case number and patient name, need to fetch TEI details via API-14:
-
-### API-14: Fetch TEI Details for To-Do List Display
-
-**请求:**
-
-```http
-GET /api/tracker/trackedEntities/Kj6vYde4LHh?program=PrgCaseMgt1&fields=trackedEntity,attributes[attribute,value],enrollments[enrollment,enrolledAt]
-```
-
-**响应:**
-
-```json
-{
-  "trackedEntity": "Kj6vYde4LHh",
-  "attributes": [
-    {"attribute": "AtrCaseNo01", "value": "CASE-20240115-0156"},
-    {"attribute": "AtrFullNm01", "value": "李四"},
-    {"attribute": "AtrDiseaCd1", "value": "OptDiseaB30"}
-  ],
-  "enrollments": [
-    {
-      "enrollment": "enr156",
-      "enrolledAt": "2024-01-15T00:00:00.000"
-    }
-  ]
-}
-```
-
-**Aggregated To-Do Display:**
-
-```
-☐ 待核实个案 (3)
-  ├ CASE-20240115-0156 | 李四 | 新冠肺炎 | 2024-01-15
-  ├ CASE-20240115-0155 | 王五 | 霍乱 | 2024-01-15
-  └ CASE-20240114-0154 | 赵六 | 鼠疫 | 2024-01-14
-```
-
-### API-08: List Pending Test Confirmations
-
-**请求:**
-
-```http
-GET /api/tracker/events?program=PrgCaseMgt1&orgUnit=OuChengdu01&orgUnitMode=CAPTURE&programStage=PsTest00001&filter=DeTestStat1:eq:OptPendCnf1&fields=event,enrollment,trackedEntity,occurredAt,dataValues[dataElement,value]&order=occurredAt:desc&pageSize=5
-```
-
-**响应:**
-
-```json
-{
-  "pager": {
-    "page": 1,
-    "pageSize": 5,
-    "total": 5
-  },
-  "events": [
-    {
-      "event": "evTest089",
-      "enrollment": "enr150",
-      "trackedEntity": "tei150",
-      "occurredAt": "2024-01-15T09:00:00.000",
-      "dataValues": [
-        {"dataElement": "DeTestNo001", "value": "TEST-2024-089"},
-        {"dataElement": "DeTestType1", "value": "NAT"},
-        {"dataElement": "DeTestStat1", "value": "OptPendCnf1"}
-      ]
+      "enrollment": "RtySG82BKE6",
+      "occurredAt": "2024-01-15T09:00:00.000"
     },
     {
-      "event": "evTest088",
-      "enrollment": "enr149",
-      "trackedEntity": "tei149",
-      "occurredAt": "2024-01-14T16:30:00.000",
-      "dataValues": [
-        {"dataElement": "DeTestNo001", "value": "TEST-2024-088"},
-        {"dataElement": "DeTestType1", "value": "ANTIBODY"},
-        {"dataElement": "DeTestStat1", "value": "OptPendCnf1"}
-      ]
+      "event": "YxxuxNp7gVF",
+      "trackedEntity": "LzkvYde5MIi",
+      "enrollment": "SuzTH93CLE7",
+      "occurredAt": "2024-01-14T14:20:00.000"
     }
   ]
 }
 ```
 
-**Display format:**
+> **Next Step**: Extract `trackedEntity` UIDs → `["Kj6vYde4LHh", "Gjaiu3ea38E", "LzkvYde5MIi"]` → Pass to API-07
 
-```
-☐ 待确认检测 (5)
-  ├ TEST-2024-089 | CAS-2024-150 | 核酸检测
-  └ TEST-2024-088 | CAS-2024-149 | 抗体检测
-  └ [查看全部 5 条]
-```
+------
 
-### API-07: List Pending Alerts
+### API-07: Batch Retrieve TrackedEntity Details
 
-**请求:**
+**Request:**
 
 ```http
-GET /api/tracker/trackedEntities?trackedEntityType=TetAlertEvt&program=PrgAlertMgt&orgUnits=OuChengdu01&orgUnitMode=ACCESSIBLE&filter=AtrAlertSts:in:[PENDING,IN_PROGRESS]&fields=trackedEntity,attributes[attribute,value]&order=createdAt:desc&pageSize=2
+GET /api/tracker/trackedEntities?trackedEntity=Kj6vYde4LHh,Gjaiu3ea38E,LzkvYde5MIi&program=PrgCaseMgt1&fields=trackedEntity,attributes[attribute,value,displayName],enrollments[enrollment,enrolledAt]
 ```
 
-**响应:**
+**Response:**
 
 ```json
 {
-  "pager": {
-    "page": 1,
-    "pageSize": 2,
-    "total": 2
-  },
   "trackedEntities": [
     {
-      "trackedEntity": "altTE012",
+      "trackedEntity": "Kj6vYde4LHh",
       "attributes": [
-        {"attribute": "AtrAlertNo", "value": "ALT-2024-012"},
-        {"attribute": "AtrAlertTyp", "value": "CASE_CLUSTER"},
-        {"attribute": "AtrAlertRgn", "value": "OuChengdu01"},
-        {"attribute": "AtrAlertLvl", "value": "LEVEL_1"},
-        {"attribute": "AtrAlertSts", "value": "PENDING"}
+        {
+          "attribute": "AtrFullNm01",
+          "displayName": "姓名",
+          "value": "李四"
+        },
+        {
+          "attribute": "AtrDiseaCd1",
+          "displayName": "疾病编码",
+          "value": "B03"
+        }
+      ],
+      "enrollments": [
+        {
+          "enrollment": "MNWZ6hnuhSw",
+          "enrolledAt": "2024-01-15T08:30:00.000"
+        }
       ]
     },
     {
-      "trackedEntity": "altTE011",
+      "trackedEntity": "Gjaiu3ea38E",
       "attributes": [
-        {"attribute": "AtrAlertNo", "value": "ALT-2024-011"},
-        {"attribute": "AtrAlertTyp", "value": "ABNORMAL_SYMPTOM"},
-        {"attribute": "AtrAlertRgn", "value": "OuMianyang1"},
-        {"attribute": "AtrAlertLvl", "value": "LEVEL_2"},
-        {"attribute": "AtrAlertSts", "value": "IN_PROGRESS"}
+        {
+          "attribute": "AtrFullNm01",
+          "displayName": "姓名",
+          "value": "王五"
+        },
+        {
+          "attribute": "AtrDiseaCd1",
+          "displayName": "疾病编码",
+          "value": "A02"
+        }
+      ],
+      "enrollments": [
+        {
+          "enrollment": "RtySG82BKE6",
+          "enrolledAt": "2024-01-15T09:00:00.000"
+        }
       ]
     }
   ]
 }
 ```
 
-**Display format:**
+> **Usage**: Combine with API-06 results to display:
+>
+> ```
+> ☐ 待核实个案 (3)
+>   ├ CAS-2024-156 | 李四 | 新冠肺炎 | 2024-01-15
+>   ├ CAS-2024-155 | 王五 | 霍乱     | 2024-01-15
+>   └ CAS-2024-154 | 赵六 | 鼠疫     | 2024-01-14
+> ```
 
-```
-☐ 待处理预警 (2)
-  ├ ALT-2024-012 | 病例聚集 | 北京市 | 高风险
-  └ ALT-2024-011 | 异常症状 | 上海市 | 中风险
-```
+------
 
-### API-09: Fetch Recent Access History
+### API-10: Count Today's Unknown Disease Cases
 
-**请求:**
+**Request:**
 
 ```http
-GET /api/dataStore/userActivity/recent-UserChgd001
+GET /api/tracker/events?program=PrgUnknown1&programStage=PsRegister1&orgUnitMode=ACCESSIBLE&occurredAfter=2024-11-02T00:00:00.000Z&occurredBefore=2024-11-02T23:59:59.999Z&pageSize=1&totalPages=true
 ```
 
-**响应:**
+**Response:**
 
 ```json
 {
-  "items": [
-    {
-      "type": "CASE",
-      "uid": "CASE-20240115-0156",
-      "teiUid": "Kj6vYde4LHh",
-      "name": "张三 (新冠肺炎)",
-      "timestamp": "2024-01-15T14:30:00.000Z"
-    },
-    {
-      "type": "CASE",
-      "uid": "CASE-20240115-0150",
-      "teiUid": "tei150",
-      "name": "李明 (霍乱)",
-      "timestamp": "2024-01-15T11:20:00.000Z"
-    },
-    {
-      "type": "ALERT",
-      "uid": "ALT-2024-012",
-      "teiUid": "altTE012",
-      "name": "病例聚集预警",
-      "timestamp": "2024-01-14T16:00:00.000Z"
-    },
-    {
-      "type": "REPORT",
-      "uid": "RPT-2024-STAT",
-      "name": "疾病统计报表",
-      "timestamp": "2024-01-14T10:00:00.000Z"
-    }
+  "pager": {
+    "page": 1,
+    "pageSize": 1,
+    "total": 5
+  },
+  "events": []
+}
+```
+
+> **Usage**: Display "5" in "今日不明原因病例" metric card (new requirement).
+
+------
+
+### API-11: Count This Month's Unknown Disease Cases
+
+**Request:**
+
+```http
+GET /api/tracker/events?program=PrgUnknown1&programStage=PsRegister1&orgUnitMode=ACCESSIBLE&occurredAfter=2024-11-01T00:00:00.000Z&pageSize=1&totalPages=true
+```
+
+**Response:**
+
+```json
+{
+  "pager": {
+    "page": 1,
+    "pageSize": 1,
+    "total": 23
+  },
+  "events": []
+}
+```
+
+> **Usage**: Display "23" in "本月不明原因病例" card.
+
+------
+
+### API-15: Get Disease Code Options
+
+**Request:**
+
+```http
+GET /api/optionSets/OsDiseasCd1?fields=options[code,name]
+```
+
+**Response:**
+
+```json
+{
+  "options": [
+    { "code": "B03", "name": "新型冠状病毒肺炎(COVID-19)" },
+    { "code": "A01", "name": "鼠疫" },
+    { "code": "A02", "name": "霍乱" },
+    { "code": "A03", "name": "黄热病" }
   ]
 }
 ```
 
-**Display format:**
+> **Usage**: Map disease codes to display names:
+>
+> - "B03" → "新冠肺炎"
+> - "A02" → "霍乱"
 
-```
-最近访问 (P1)
-• CASE-20240115-0156 (张三)
-• CASE-20240115-0150 (李明)
-• ALT-2024-012 (病例聚集预警)
-• 疾病统计报表
-```
+------
 
-### API-10: Store Recent Access (When User Navigates to Case Details)
+### API-17: Count Last Month's Cases (for Trend)
 
-**请求:**
+**Request:**
 
 ```http
-PUT /api/dataStore/userActivity/recent-UserChgd001
-Content-Type: application/json
-
-{
-  "items": [
-    {
-      "type": "CASE",
-      "uid": "CASE-20240115-0157",
-      "teiUid": "newTeiUid",
-      "name": "新病例 (新冠肺炎)",
-      "timestamp": "2024-01-15T15:00:00.000Z"
-    },
-    {
-      "type": "CASE",
-      "uid": "CASE-20240115-0156",
-      "teiUid": "Kj6vYde4LHh",
-      "name": "张三 (新冠肺炎)",
-      "timestamp": "2024-01-15T14:30:00.000Z"
-    }
-  ]
-}
+GET /api/tracker/events?program=PrgCaseMgt1&programStage=PsInvestig1&orgUnitMode=ACCESSIBLE&occurredAfter=2024-10-01T00:00:00.000Z&occurredBefore=2024-10-31T23:59:59.999Z&pageSize=1&totalPages=true
 ```
 
-**响应:**
+**Response:**
 
 ```json
 {
-  "httpStatus": "OK",
-  "httpStatusCode": 200,
-  "status": "OK",
-  "message": "Key 'recent-UserChgd001' updated."
+  "pager": {
+    "page": 1,
+    "pageSize": 1,
+    "total": 135
+  },
+  "events": []
 }
 ```
 
-**Note:** Limit to last 10 items; older items are dropped. Implement client-side deduplication.
+> **Usage**: Calculate month-over-month trend:
+>
+> ```javascript
+> const growth = ((156 - 135) / 135 * 100).toFixed(1); // "15.6%"
+> // Display: "↑15%" in "本月新增个案" card
+> ```
 
-### API-15: Check Program Write Access for Quick Entry Buttons
+------
 
-**请求:**
+## 5. Additional Considerations
 
-```http
-GET /api/programs?filter=id:in:[PrgCaseMgt1,PrgUnknown1]&fields=id,name,access[data[write]]
-```
+### 5.1 Dashboard Layout Mapping
 
-**响应:**
+| UI Card          | API(s) Used | Display Logic                                  |
+| ---------------- | ----------- | ---------------------------------------------- |
+| 今日新增个案     | API-02, 18  | `API-02 total` with trend from `API-18`        |
+| 本月新增个案     | API-03, 17  | `API-03 total` with trend "↑15%" from `API-17` |
+| 待核实个案       | API-04      | `API-04 total` with "[查看]" button            |
+| 处理中个案       | API-05      | `API-05 total` with "[查看]" button            |
+| 今日不明原因病例 | API-10      | `API-10 total`                                 |
+| 本月不明原因病例 | API-11      | `API-11 total`                                 |
+| 本月预警事件     | API-12      | `API-12 total` (future implementation)         |
 
-```json
-{
-  "programs": [
-    {
-      "id": "PrgCaseMgt1",
-      "name": "已知疾病个案管理",
-      "access": {
-        "data": {
-          "write": true
-        }
-      }
-    },
-    {
-      "id": "PrgUnknown1",
-      "name": "不明原因疾病管理",
-      "access": {
-        "data": {
-          "write": false
-        }
-      }
-    }
-  ]
-}
-```
+### 5.2 Real-time Updates
 
-**UI Logic:**
+**Polling Strategy**:
 
-- "新增个案" button: **Enabled** (PrgCaseMgt1.access.data.write = true)
-- "新增不明病例" button: **Disabled** with tooltip "无权限" (PrgUnknown1.access.data.write = false)
+- Statistics APIs (API-02 to API-11): Poll every **60 seconds**
+- Detail lists (API-06, API-09): Poll every **30 seconds**
+- Metadata (API-15, API-16): No polling (cached 1 hour)
 
+**WebSocket Alternative** (future enhancement):
+
+- Subscribe to `/topic/newCases` for push notifications
+- Requires DHIS2 messaging extension or custom middleware
+
+### 5.3 Accessibility Compliance
+
+- **Metric Cards**: Add `aria-label="本月新增个案156例，较上月增长15%"`
+- **Pending Lists**: Use `role="list"` and `aria-live="polite"` for dynamic updates
+- **Trend Indicators**: Include `aria-hidden="true"` on ↑/↓ symbols, describe in `aria-label`
+
+### 5.4 Mobile Responsiveness
+
+For mobile view (WF-4.9):
+
+- **Metric Cards**: 2-column grid on mobile (4 cards visible, scroll for more)
+- **Pending Lists**: Collapse to show only count + "[查看全部]" button
+- **Quick Actions**: Fixed bottom nav bar (5 icons)
+
+------
+
+## 6. Testing Checklist
+
+- [ ] Verify `teiSearchOrganisationUnits` is not empty in API-01 response
+- [ ] Confirm Data Element `DeCaseStat1` exists in ProgramStage `PsInvestig1`
+- [ ] Test with **zero results** scenario (e.g., new deployment with no data)
+- [ ] Test with **large dataset** (>1000 cases) to verify pagination performance
+- [ ] Validate date range calculations across time zones (use UTC consistently)
+- [ ] Test permission scenarios:
+  - User with only **Capture** scope (no search scope)
+  - User with **Read-only** access (cannot modify cases)
+  - User with **Super User** authority (should see orgUnitMode=ALL option)
+- [ ] Verify trend calculation handles division by zero (last month = 0 cases)
+- [ ] Test error handling for timeout, 403, 404 responses
+
+------
+
+## 7. Migration from Old API Contract
+
+**Breaking Changes**:
+
+1. **API-02 to API-05**: Changed from `/api/tracker/trackedEntities` to `/api/tracker/events` (filter on Data Element now works)
+2. **API-06 + API-07**: Split into 2-step process (get events → get TrackedEntity details)
+3. **New APIs**: API-10, API-11, API-17, API-18 (unknown disease cases + trend calculation)
+
+**Backward Compatibility**:
+
+- Metadata UIDs remain unchanged
+- User permission model unchanged
+- DataStore structure unchanged (API-13)
+
+------
+
+**Document Version**: 2.0 (Revised 2025-11-02)

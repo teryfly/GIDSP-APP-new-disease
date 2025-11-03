@@ -1,0 +1,479 @@
+{
+  "projectName": "新发传染病监测管理系统 (Emerging Infectious Disease Surveillance System)",
+  "dhis2Version": "2.41+",
+  "features": [
+    {
+      "featureId": "F001",
+      "featureName": "疾病编码管理 (Disease Code Management)",
+      "description": "Enable CRUD operations for quarantine infectious disease codes, including import/export capabilities and mapping to DHIS2 OptionSets",
+      "relatedUseCases": ["UC01"],
+      "relatedMetadata": [
+        "OptionSet: OsDiseasCd1",
+        "Options: OptDiseaA10-OptDiseaH30"
+      ],
+      "dependencies": [],
+      "priority": "High",
+      "ownerRole": "System Administrator",
+      "businessValue": "Foundation metadata for all case management operations"
+    },
+    {
+      "featureId": "F002",
+      "featureName": "病原微生物目录管理 (Pathogen Catalog Management)",
+      "description": "Manage pathogen microorganism catalog with CRUD operations, type classification (virus/bacteria), and disease-pathogen mapping through OptionGroups",
+      "relatedUseCases": ["UC02"],
+      "relatedMetadata": [
+        "OptionSet: OsPathogen1",
+        "Options: OptPathV010-OptPathU001",
+        "OptionGroups: Disease-specific pathogen groups"
+      ],
+      "dependencies": ["F001"],
+      "priority": "High",
+      "ownerRole": "System Administrator",
+      "businessValue": "Essential for laboratory test result mapping and epidemiological analysis"
+    },
+    {
+      "featureId": "F003",
+      "featureName": "预警消息推送 (Alert Notification Push)",
+      "description": "Push alert messages to emergency command system when predefined thresholds are met (case clusters, abnormal symptoms, new diseases)",
+      "relatedUseCases": ["UC03"],
+      "relatedMetadata": [
+        "State Machine: SM-2.1 (Alert Event Status Flow)",
+        "External System: Emergency Command System"
+      ],
+      "dependencies": ["F004", "F010"],
+      "priority": "Critical",
+      "ownerRole": "Public Health Specialist",
+      "businessValue": "Real-time epidemic response capability"
+    },
+    {
+      "featureId": "F004",
+      "featureName": "个案调查管理 (Case Investigation Management)",
+      "description": "Manage case investigation forms including epidemiological data (exposure history, contact history, travel history), status transitions, and push to epidemiological investigation system",
+      "relatedUseCases": ["UC04"],
+      "relatedMetadata": [
+        "Program: PrgCaseMgt1",
+        "ProgramStage: PsInvestig1",
+        "DataElements: DeInitDiag1, DeConfDiag1, DeCaseStat1, DeExposHst1, DeContHst01, DeTravHst01",
+        "State Machine: SM-1.1 (Case Status Flow)"
+      ],
+      "dependencies": ["F001", "F002"],
+      "priority": "Critical",
+      "ownerRole": "Epidemiologist",
+      "businessValue": "Core case management and epidemiological data collection"
+    },
+    {
+      "featureId": "F005",
+      "featureName": "随访记录管理 (Follow-up Record Management)",
+      "description": "Record and manage multiple follow-up visits with health status tracking, temperature monitoring, treatment compliance, and automated status updates (e.g., death triggers case closure)",
+      "relatedUseCases": ["UC05"],
+      "relatedMetadata": [
+        "ProgramStage: PsFollowUp1",
+        "DataElements: DeFlwUpMthd, DeHlthStat1, DeTemp00001, DeSymptoms1, DeTrtCompl1, DeNxtFlwDt1",
+        "ProgramRules: PR1.2a (Death status handling), PR2.3 (Temperature validation)"
+      ],
+      "dependencies": ["F004"],
+      "priority": "High",
+      "ownerRole": "Health Worker",
+      "businessValue": "Continuous monitoring of patient health status"
+    },
+    {
+      "featureId": "F006",
+      "featureName": "治疗记录管理 (Treatment Record Management)",
+      "description": "Manage treatment records including treatment type, hospital/department, diagnosis, treatment plan, medications, and outcome tracking with automatic case closure on death",
+      "relatedUseCases": ["UC06"],
+      "relatedMetadata": [
+        "ProgramStage: PsTreatmnt1",
+        "DataElements: DeTrtType01, DeHospNm001, DeDeptNm001, DeDocNm0001, DeDiagnos01, DeTrtPlan01, DeMedicat01, DeTrtOutcm1, DeDiscDt001",
+        "ProgramRules: PR1.2b (Treatment death handling), PR4.2 (Discharge date validation)"
+      ],
+      "dependencies": ["F004"],
+      "priority": "High",
+      "ownerRole": "Medical Professional",
+      "businessValue": "Clinical treatment tracking and outcome management"
+    },
+    {
+      "featureId": "F007",
+      "featureName": "检测记录管理 (Laboratory Test Management)",
+      "description": "Manage laboratory test records with sample collection, test types, results, pathogen detection, and push to laboratory system. Includes auto-generated test numbers and status confirmation workflow",
+      "relatedUseCases": ["UC07"],
+      "relatedMetadata": [
+        "ProgramStage: PsTest00001",
+        "DataElements: DeTestNo001, DeSmplColDt, DeSmplType1, DeTestType1, DeTestOrg01, DeTestDt001, DeTestRslt1, DeRsltDtl01, DePathogen1, DeTestStat1, DePushLab01",
+        "ProgramRules: PR5.2 (Push to lab button), P7MandPath1 (Pathogen mandatory for positive results)"
+      ],
+      "dependencies": ["F002", "F004"],
+      "priority": "Critical",
+      "ownerRole": "Laboratory Technician",
+      "businessValue": "Laboratory confirmation and pathogen identification"
+    },
+    {
+      "featureId": "F008",
+      "featureName": "追踪记录管理 (Epidemiological Tracking Management)",
+      "description": "Track travel history, contact history, item/place exposure with geographic data, risk assessment, and push to epidemiological investigation system. Includes map visualization of movement trajectories",
+      "relatedUseCases": ["UC08", "UC12"],
+      "relatedMetadata": [
+        "ProgramStage: PsTracking1",
+        "DataElements: DeTrackTp01, DeStartDt01, DeEndDt0001, DeLocDesc01, DeRelRgn001, DeContPrsn1, DeExpDtl001, DeRiskAsmt1, DeTrkPshEpi",
+        "ProgramRules: PR4.3 (Date range validation), P14WrnHiRsk (High risk warning)"
+      ],
+      "dependencies": ["F004"],
+      "priority": "High",
+      "ownerRole": "Epidemiologist",
+      "businessValue": "Contact tracing and exposure mapping for outbreak control"
+    },
+    {
+      "featureId": "F009",
+      "featureName": "不明原因病例登记 (Unknown Disease Case Registration)",
+      "description": "Register cases with unknown etiology including clinical symptoms, suspected pathogen, and status management (pending test, testing, confirmed, excluded)",
+      "relatedUseCases": ["UC09"],
+      "relatedMetadata": [
+        "Program: PrgUnknown1",
+        "ProgramStage: PsRegister1",
+        "TrackedEntityAttributes: AtrUnkNo001, AtrUnkSymp1, AtrUnkPath1",
+        "DataElements: DeUnkStat01, DePushCase1, DePushEmg01, DeUnkPshEpi",
+        "State Machine: SM-1.2 (Unknown Case Status Flow)"
+      ],
+      "dependencies": ["F001"],
+      "priority": "Critical",
+      "ownerRole": "Public Health Specialist",
+      "businessValue": "Early detection system for emerging infectious diseases"
+    },
+    {
+      "featureId": "F010",
+      "featureName": "病例信息推送 (Case Information Push)",
+      "description": "Push confirmed unknown disease cases to case management program (UC04), including automatic enrollment creation, test record copying, and multi-system notification (emergency, epidemiology)",
+      "relatedUseCases": ["UC10"],
+      "relatedMetadata": [
+        "API: POST /api/tracker/enrollments",
+        "Attribute: AtrCaseSrc1 (value: '不明原因转入')",
+        "ProgramRules: PR7.4 (Push button display), P19ShwPshCs"
+      ],
+      "dependencies": ["F004", "F009", "F011"],
+      "priority": "Critical",
+      "ownerRole": "System",
+      "businessValue": "Seamless transition from unknown to known disease management"
+    },
+    {
+      "featureId": "F011",
+      "featureName": "不明病例检测管理 (Unknown Case Laboratory Test)",
+      "description": "Manage laboratory tests for unknown disease cases with pathogen confirmation, disease name mapping, and automatic status updates triggering case push workflow",
+      "relatedUseCases": ["UC11"],
+      "relatedMetadata": [
+        "ProgramStage: PsLabTest01",
+        "DataElements: DeUnkTstNo1, DeUnkSmplDt, DeUnkSmplTp, DeUnkTstTp1, DeUnkTstRst, DeConfPath1, DeConfDis01, DeUnkTstSt1",
+        "ProgramRules: PR7.2 (Confirmed status update), P21MndDisNm (Disease name mandatory)"
+      ],
+      "dependencies": ["F002", "F009"],
+      "priority": "Critical",
+      "ownerRole": "Laboratory Technician",
+      "businessValue": "Pathogen identification for emerging diseases"
+    },
+    {
+      "featureId": "F012",
+      "featureName": "移动轨迹展示 (Movement Trajectory Visualization)",
+      "description": "Display patient movement trajectories on map with timeline, location details, duration, and risk assessment based on tracking records",
+      "relatedUseCases": ["UC12"],
+      "relatedMetadata": [
+        "DataElements from PsTracking1",
+        "Geometry fields",
+        "Analytics: Location-based queries"
+      ],
+      "dependencies": ["F008"],
+      "priority": "Medium",
+      "ownerRole": "Epidemiologist",
+      "businessValue": "Visual outbreak source tracing"
+    },
+    {
+      "featureId": "F013",
+      "featureName": "疾病统计可视化 (Disease Statistics Visualization)",
+      "description": "Visualize disease statistics with charts (line, bar, pie), trend analysis by date/region, and data table display with export capabilities",
+      "relatedUseCases": ["UC13", "UC14"],
+      "relatedMetadata": [
+        "ProgramIndicators: PiCaseNewCt, PiCaseByDis, PiCaseBySts",
+        "Analytics API: Event analytics",
+        "OrganisationUnits: Hierarchical structure"
+      ],
+      "dependencies": ["F004"],
+      "priority": "High",
+      "ownerRole": "Data Analyst",
+      "businessValue": "Epidemic trend monitoring and decision support"
+    },
+    {
+      "featureId": "F014",
+      "featureName": "病原微生物统计 (Pathogen Statistics)",
+      "description": "Statistical analysis of pathogens by type and geographic distribution with chart switching and trend analysis",
+      "relatedUseCases": ["UC15", "UC16"],
+      "relatedMetadata": [
+        "ProgramIndicators: PTestPosCt1, PTestByPath",
+        "DataElement: DePathogen1",
+        "Analytics API: Event data aggregation"
+      ],
+      "dependencies": ["F002", "F007"],
+      "priority": "High",
+      "ownerRole": "Public Health Specialist",
+      "businessValue": "Pathogen surveillance and resistance monitoring"
+    },
+    {
+      "featureId": "F015",
+      "featureName": "统计数据通用查询 (Generic Statistical Query)",
+      "description": "Provide flexible query interface for statistical data with date range, region, disease type filters and multiple aggregation dimensions",
+      "relatedUseCases": ["UC17"],
+      "relatedMetadata": [
+        "Analytics API: /api/analytics",
+        "All ProgramIndicators",
+        "All DataElements"
+      ],
+      "dependencies": ["F013", "F014"],
+      "priority": "Medium",
+      "ownerRole": "Data Analyst",
+      "businessValue": "Ad-hoc analysis capability"
+    },
+    {
+      "featureId": "F016",
+      "featureName": "统计结果导出 (Statistical Report Export)",
+      "description": "Export statistical results in multiple formats (Excel, PDF, CSV) with configurable content (summary, detail, charts) and export history management",
+      "relatedUseCases": ["UC18"],
+      "relatedMetadata": [
+        "API: Analytics export endpoints",
+        "Report templates"
+      ],
+      "dependencies": ["F013", "F014", "F015"],
+      "priority": "Medium",
+      "ownerRole": "Report User",
+      "businessValue": "Official reporting and data sharing"
+    },
+    {
+      "featureId": "F017",
+      "featureName": "单点登录认证 (SSO Authentication)",
+      "description": "Integrate with SSO portal for unified authentication across CDC portal systems",
+      "relatedUseCases": ["UC19"],
+      "relatedMetadata": [
+        "External System: SSO Portal",
+        "UserRoles: UrProvStf01, UrCityStf01, UrCntyStf01, UrSuperusr1"
+      ],
+      "dependencies": [],
+      "priority": "High",
+      "ownerRole": "System Administrator",
+      "businessValue": "Unified user access management"
+    },
+    {
+      "featureId": "F018",
+      "featureName": "数据共享对接 (Data Hub Integration)",
+      "description": "Bi-directional data exchange with central data hub for cross-system data sharing",
+      "relatedUseCases": ["UC20"],
+      "relatedMetadata": [
+        "External System: Data Hub",
+        "API: DHIS2 Tracker Import/Export"
+      ],
+      "dependencies": [],
+      "priority": "Medium",
+      "ownerRole": "Integration Specialist",
+      "businessValue": "Cross-platform data interoperability"
+    },
+    {
+      "featureId": "F019",
+      "featureName": "系统配置管理 (System Configuration Management)",
+      "description": "Manage system-wide configurations including basic settings, permission settings, interface settings, and notification settings",
+      "relatedUseCases": ["UC21"],
+      "relatedMetadata": [
+        "SystemSettings",
+        "UserGroups: UgProvStf01, UgCityStf01, UgCntyStf01",
+        "Sharing settings"
+      ],
+      "dependencies": [],
+      "priority": "High",
+      "ownerRole": "System Administrator",
+      "businessValue": "System customization and governance"
+    },
+    {
+      "featureId": "F020",
+      "featureName": "接口监控维护 (Interface Monitoring)",
+      "description": "Monitor and maintain external system interfaces with real-time status display, success rate tracking, response time monitoring, and call log management",
+      "relatedUseCases": ["UC22"],
+      "relatedMetadata": [
+        "External Systems: Laboratory, Epidemiology, Emergency",
+        "Logging framework"
+      ],
+      "dependencies": ["F003", "F004", "F007", "F008", "F010"],
+      "priority": "Medium",
+      "ownerRole": "System Administrator",
+      "businessValue": "System reliability and troubleshooting"
+    },
+    {
+      "featureId": "F021",
+      "featureName": "用户管理 (User Management)",
+      "description": "Manage system users with CRUD operations, role assignment, organization unit assignment, and user group management",
+      "relatedUseCases": ["Implicit in access control"],
+      "relatedMetadata": [
+        "Users: UserProv001, UserChgd001, UserWuhou01, UserAdmin01",
+        "UserRoles: UrProvStf01, UrCityStf01, UrCntyStf01",
+        "UserGroups: UgProvStf01, UgCityStf01, UgCntyStf01"
+      ],
+      "dependencies": ["F017"],
+      "priority": "High",
+      "ownerRole": "System Administrator",
+      "businessValue": "User access control foundation"
+    },
+    {
+      "featureId": "F022",
+      "featureName": "组织单位层级管理 (Organisation Unit Hierarchy)",
+      "description": "Manage 3-level organisation unit hierarchy (Province-City-County) with CDC type classification",
+      "relatedUseCases": ["Foundational"],
+      "relatedMetadata": [
+        "OrganisationUnits: OuSichuan10, OuChengdu01, OuMianyang1, etc.",
+        "OrganisationUnitLevels: OulProvLvl1, OulCityLvl1, OulCntyLvl1",
+        "OrganisationUnitGroups: OugProvCdc1, OugCityCdc1, OugCntyCdc0"
+      ],
+      "dependencies": [],
+      "priority": "Critical",
+      "ownerRole": "System Administrator",
+      "businessValue": "Geographic-based data segmentation and access control"
+    },
+    {
+      "featureId": "F023",
+      "featureName": "预警规则引擎 (Alert Rule Engine)",
+      "description": "Background service to detect alert conditions (case clusters, abnormal symptom patterns, new disease emergence) and generate alert events",
+      "relatedUseCases": ["UC03 - Implicit"],
+      "relatedMetadata": [
+        "State Machine: SM-2.1",
+        "Analytics aggregations",
+        "ProgramRules for validation"
+      ],
+      "dependencies": ["F004", "F005", "F006", "F007", "F009", "F011"],
+      "priority": "Critical",
+      "ownerRole": "System Architect",
+      "businessValue": "Automated epidemic early warning"
+    },
+    {
+      "featureId": "F024",
+      "featureName": "预警处理工作流 (Alert Handling Workflow)",
+      "description": "Manage alert lifecycle from pending to closed with investigation task creation, false alarm marking, and report export",
+      "relatedUseCases": ["UC03"],
+      "relatedMetadata": [
+        "State Machine: SM-2.1",
+        "UI: WF-4.17 (Alert detail page)"
+      ],
+      "dependencies": ["F023"],
+      "priority": "High",
+      "ownerRole": "Public Health Specialist",
+      "businessValue": "Structured outbreak response process"
+    },
+    {
+      "featureId": "F025",
+      "featureName": "Tracker搜索与列表 (Tracker Search & List)",
+      "description": "Search and list tracked entities, enrollments, events with advanced filtering, sorting, pagination, and multi-criteria search",
+      "relatedUseCases": ["UC04-UC11 - Implicit"],
+      "relatedMetadata": [
+        "API: GET /api/tracker/trackedEntities",
+        "API: GET /api/tracker/enrollments",
+        "API: GET /api/tracker/events",
+        "UI: WF-4.2 (Case list), WF-4.5 (Unknown case list)"
+      ],
+      "dependencies": ["F022"],
+      "priority": "Critical",
+      "ownerRole": "Frontend Developer",
+      "businessValue": "Core data access functionality"
+    },
+    {
+      "featureId": "F026",
+      "featureName": "程序规则引擎集成 (Program Rules Engine)",
+      "description": "Execute DHIS2 program rules for field visibility, mandatory fields, data validation, calculated values, and side effects (notifications)",
+      "relatedUseCases": ["All tracker UCs"],
+      "relatedMetadata": [
+        "ProgramRules: All PR* rules in metadata",
+        "ProgramNotificationTemplates: NtfHighRsk1, NtfPosTst01, NtfNewDis01"
+      ],
+      "dependencies": ["F004", "F005", "F006", "F007", "F008", "F009", "F011"],
+      "priority": "Critical",
+      "ownerRole": "Business Analyst",
+      "businessValue": "Business logic enforcement and automation"
+    },
+    {
+      "featureId": "F027",
+      "featureName": "数据导入导出 (Data Import/Export)",
+      "description": "Bulk import/export of tracker data via CSV/JSON with validation, error handling, and async job tracking",
+      "relatedUseCases": ["UC04-UC11 - Implicit"],
+      "relatedMetadata": [
+        "API: POST /api/tracker (import)",
+        "API: GET /api/tracker/* (export)",
+        "API: GET /api/tracker/jobs/{uid}"
+      ],
+      "dependencies": ["F025"],
+      "priority": "High",
+      "ownerRole": "Data Manager",
+      "businessValue": "Batch data migration and backup"
+    },
+    {
+      "featureId": "F028",
+      "featureName": "关系管理 (Relationship Management)",
+      "description": "Create and manage relationships between tracker objects (tracked entity-to-tracked entity, enrollment-to-enrollment, event-to-event)",
+      "relatedUseCases": ["Implicit in tracker model"],
+      "relatedMetadata": [
+        "RelationshipTypes",
+        "API: POST /api/tracker (relationships)",
+        "API: GET /api/tracker/relationships"
+      ],
+      "dependencies": ["F004", "F009"],
+      "priority": "Medium",
+      "ownerRole": "Epidemiologist",
+      "businessValue": "Contact network analysis"
+    },
+    {
+      "featureId": "F029",
+      "featureName": "Notes记录 (Notes Recording)",
+      "description": "Add notes to enrollments and events for supplementary information logging with audit trail",
+      "relatedUseCases": ["UC04-UC11"],
+      "relatedMetadata": [
+        "Notes structure in Enrollment/Event",
+        "UI: Notes section in detail pages"
+      ],
+      "dependencies": ["F004", "F005", "F006", "F007", "F008", "F009", "F011"],
+      "priority": "Low",
+      "ownerRole": "Health Worker",
+      "businessValue": "Contextual information capture"
+    },
+    {
+      "featureId": "F030",
+      "featureName": "工作台仪表板 (Dashboard Workbench)",
+      "description": "Display key indicators, pending tasks, recent access, and quick action shortcuts on homepage",
+      "relatedUseCases": ["UI-Centric"],
+      "relatedMetadata": [
+        "UI: WF-4.1",
+        "ProgramIndicators: Various counts and summaries",
+        "Analytics aggregations"
+      ],
+      "dependencies": ["F004", "F009", "F023"],
+      "priority": "Medium",
+      "ownerRole": "Frontend Developer",
+      "businessValue": "User efficiency and situation awareness"
+    },
+    {
+      "featureId": "F031",
+      "featureName": "移动端适配 (Mobile Responsive Design)",
+      "description": "Responsive UI design for mobile devices with touch-friendly interactions and offline capability",
+      "relatedUseCases": ["UI-Centric"],
+      "relatedMetadata": [
+        "UI: WF-4.9",
+        "DHIS2 Android SDK (optional)"
+      ],
+      "dependencies": ["F025", "F030"],
+      "priority": "Medium",
+      "ownerRole": "Mobile Developer",
+      "businessValue": "Field data collection capability"
+    },
+    {
+      "featureId": "F032",
+      "featureName": "变更日志审计 (Change Log Auditing)",
+      "description": "Track and display change history for tracked entity attributes and event data values",
+      "relatedUseCases": ["Compliance & Audit"],
+      "relatedMetadata": [
+        "API: GET /api/tracker/trackedEntities/{uid}/changeLogs",
+        "API: GET /api/tracker/events/{uid}/changeLogs"
+      ],
+      "dependencies": ["F004", "F007"],
+      "priority": "Medium",
+      "ownerRole": "Compliance Officer",
+      "businessValue": "Data integrity and accountability"
+    }
+  ]
+}
