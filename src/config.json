@@ -1,6 +1,6 @@
 {
   "dhis2": {
-    "baseUrl": "http://10.241.5.145:8089",
+    "baseUrl": "http://192.168.120.233:8080",
     "username": "admin",
     "password": "district",
     "useUrlIs": false

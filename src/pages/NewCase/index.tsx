@@ -2,11 +2,11 @@ import { useMemo } from 'react';
 import { Steps, Button, Card, Space, Row, Col, Typography, Alert } from 'antd';
 import dayjs from 'dayjs';
 import appConfig from '../../config.json';
-import StepBasicInfo from '../../components/newcase/StepBasicInfo';
-import StepEpiInfo from '../../components/newcase/StepEpiInfo';
-import StepDiagnosis from '../../components/newcase/StepDiagnosis';
-import StepConfirm from '../../components/newcase/StepConfirm';
-import SubmitDebugger from '../../components/newcase/SubmitDebugger';
+import StepBasicInfo from '../../components/NewCase/StepBasicInfo';
+import StepEpiInfo from '../../components/NewCase/StepEpiInfo';
+import StepDiagnosis from '../../components/NewCase/StepDiagnosis';
+import StepConfirm from '../../components/NewCase/StepConfirm';
+import SubmitDebugger from '../../components/NewCase/SubmitDebugger';
 import { useNewCase } from './useNewCase';
 
 const { Step } = Steps;
@@ -20,15 +20,33 @@ export default function NewCase() {
     const b = ctx.formBasic.getFieldsValue(true);
     const e = ctx.formEpi.getFieldsValue(true);
     const d = ctx.formDiag.getFieldsValue(true);
+    
+    // 处理流行病学信息
+    let exposureText = '无';
+    if (e?.hasExposure && e?.exposure) {
+      exposureText = e.exposure;
+    }
+    
+    let contactText = '无';
+    if (e?.hasContact && e?.contact) {
+      contactText = e.contact;
+    }
+    
+    let travelText = '无';
+    if (e?.hasTravel && e?.travel) {
+      travelText = e.travel;
+    }
+    
     return {
       ...b,
+      ...d,
       diseaseName: ctx.diseaseOpts.find(o => o.value === b.diseaseCode)?.label,
       reportDate: b.reportDate ? dayjs(b.reportDate).format('YYYY-MM-DD') : undefined,
       symptomOnsetDate: b.symptomOnsetDate ? dayjs(b.symptomOnsetDate).format('YYYY-MM-DD') : undefined,
       diagnosisDate: d.diagnosisDate ? dayjs(d.diagnosisDate).format('YYYY-MM-DD') : undefined,
-      exposure: e?.hasExposure ? e.exposure : undefined,
-      contact: e?.hasContact ? e.contact : undefined,
-      travel: e?.hasTravel ? e.travel : undefined,
+      exposure: exposureText,
+      contact: contactText,
+      travel: travelText,
       caseSourceName: ctx.caseSrcOpts.find(o => o.value === d.caseSourceCode)?.label,
       caseStatusName: ctx.caseStatOpts.find(o => o.value === d.caseStatusCode)?.label,
     };
