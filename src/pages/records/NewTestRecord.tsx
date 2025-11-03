@@ -7,10 +7,10 @@ import type { TestRecordFormData } from '../../types/forms';
 const NewTestRecord = () => {
     const [form] = Form.useForm<TestRecordFormData>();
     const navigate = useNavigate();
-    const { caseId, unknownCaseId } = useParams<{ caseId?: string; unknownCaseId?: string }>();
+    const { caseId } = useParams<{ caseId?: string }>();
 
-    const parentId = caseId || unknownCaseId;
-    const parentType = caseId ? 'case' : 'unknownCase';
+    const parentId = caseId;
+    const parentType = 'case';
 
     if (!parentId) {
         message.error('缺少关联病例ID，无法新增检测记录。');
@@ -24,7 +24,7 @@ const NewTestRecord = () => {
             // In a real app, send values to API
             console.log('New Test Record Data:', values);
             message.success('检测记录创建成功!');
-            navigate(caseId ? `/cases/${caseId}` : `/unknown-cases/${unknownCaseId}`); // Navigate back to parent detail
+            navigate(caseId ? `/cases/${caseId}` : '/cases'); // Navigate back to parent detail
         } catch (errorInfo) {
             console.log('Failed:', errorInfo);
             message.error('请检查表单填写项。');
@@ -32,7 +32,7 @@ const NewTestRecord = () => {
     };
 
     const handleCancel = () => {
-        navigate(caseId ? `/cases/${caseId}` : `/unknown-cases/${unknownCaseId}`); // Navigate back to parent detail
+        navigate(caseId ? `/cases/${caseId}` : '/cases'); // Navigate back to parent detail
     };
 
     return (

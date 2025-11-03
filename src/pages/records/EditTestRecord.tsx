@@ -9,38 +9,41 @@ import moment from 'moment';
 const EditTestRecord = () => {
     const [form] = Form.useForm<TestRecordFormData>();
     const navigate = useNavigate();
-    const { caseId, unknownCaseId, id } = useParams<{ caseId?: string; unknownCaseId?: string; id: string }>();
+    const { caseId, id } = useParams<{ caseId?: string; id: string }>();
     const [loading, setLoading] = useState(true);
     const [initialData, setInitialData] = useState<TestRecordFormData | undefined>(undefined);
 
-    const parentId = caseId || unknownCaseId;
-    const parentType = caseId ? 'case' : 'unknownCase';
+    const parentId = caseId;
+    const parentType = 'case';
 
     useEffect(() => {
         if (id && parentId) {
             // Simulate fetching data
-            const record = testRecords.find(tr => tr.id === id && (tr.caseId === caseId || tr.unknownCaseId === unknownCaseId));
+            const record = testRecords.find(tr => tr.id === id && tr.caseId === caseId);
             if (record) {
-                setInitialData({
-                    ...record,
-                    sampleCollectionDate: moment(record.collectionTime), // Use 'collectionTime' for sampleCollectionDate
-                    testDate: record.testStatus === '已确认' ? moment(record.collectionTime) : undefined, // Mock testDate if confirmed
-                });
-                form.setFieldsValue({
-                    ...record,
+                const initialFormData: TestRecordFormData = {
+                    caseId: record.caseId,
                     sampleCollectionDate: moment(record.collectionTime),
-                    testDate: record.testStatus === '已确认' ? moment(record.collectionTime) : undefined,
-                });
+                    sampleType: record.sampleType,
+                    testType: record.testType,
+                    testOrgName: record.lab,
+                    testResult: record.result,
+                    pathogenDetected: record.pathogen,
+                    testStatus: record.testStatus,
+                    testDate: record.testStatus === '已确认' ? moment(record.collectionTime) : undefined, // Mock testDate if confirmed
+                };
+                setInitialData(initialFormData);
+                form.setFieldsValue(initialFormData);
             } else {
                 message.error('未找到该检测记录。');
-                navigate(caseId ? `/cases/${caseId}` : `/unknown-cases/${unknownCaseId}`);
+                navigate(caseId ? `/cases/${caseId}` : '/cases');
             }
             setLoading(false);
         } else {
             message.error('缺少必要的ID，无法编辑检测记录。');
             navigate('/cases');
         }
-    }, [id, caseId, unknownCaseId, navigate, form, parentId]);
+    }, [id, caseId, navigate, form, parentId]);
 
     const handleSubmit = async () => {
         try {
@@ -48,7 +51,7 @@ const EditTestRecord = () => {
             // In a real app, send values to API
             console.log('Updated Test Record Data:', values);
             message.success('检测记录更新成功!');
-            navigate(caseId ? `/cases/${caseId}` : `/unknown-cases/${unknownCaseId}`); // Navigate back to parent detail
+            navigate(caseId ? `/cases/${caseId}` : '/cases'); // Navigate back to parent detail
         } catch (errorInfo) {
             console.log('Failed:', errorInfo);
             message.error('请检查表单填写项。');
@@ -56,7 +59,7 @@ const EditTestRecord = () => {
     };
 
     const handleCancel = () => {
-        navigate(caseId ? `/cases/${caseId}` : `/unknown-cases/${unknownCaseId}`); // Navigate back to parent detail
+        navigate(caseId ? `/cases/${caseId}` : '/cases'); // Navigate back to parent detail
     };
 
     if (loading) {

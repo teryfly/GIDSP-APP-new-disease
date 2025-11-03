@@ -14,9 +14,6 @@ const NewRecordPage = () => {
             case 'treatment': return '新增治疗记录';
             case 'test-record': return '新增检测记录';
             case 'tracking-record': return '新增追踪记录';
-            case 'unknown-case': return '新增不明原因病例';
-            case 'disease-code': return '新增疾病编码';
-            case 'pathogen': return '新增病原体';
             default: return '新增记录';
         }
     };
@@ -24,7 +21,6 @@ const NewRecordPage = () => {
     const getReturnPath = (recordType: string | undefined) => {
         switch (recordType) {
             case 'case':
-            case 'unknown-case':
                 return `/${recordType}s`;
             case 'follow-up':
             case 'treatment':
@@ -34,8 +30,6 @@ const NewRecordPage = () => {
                 // This generic page doesn't have it, so we'll just go to cases list for now.
                 // In a real app, the parent ID would be passed or derived.
                 return '/cases'; 
-            case 'disease-code': return '/disease-codes';
-            case 'pathogen': return '/pathogens';
             default: return '/';
         }
     }

@@ -14,9 +14,6 @@ const EditRecordPage = () => {
             case 'treatment': return '编辑治疗记录';
             case 'test-record': return '编辑检测记录';
             case 'tracking-record': return '编辑追踪记录';
-            case 'unknown-case': return '编辑不明原因病例';
-            case 'disease-code': return '编辑疾病编码';
-            case 'pathogen': return '编辑病原体';
             default: return '编辑记录';
         }
     };
@@ -24,7 +21,6 @@ const EditRecordPage = () => {
     const getReturnPath = (recordType: string | undefined, recordId: string | undefined) => {
         switch (recordType) {
             case 'case': return `/cases/${recordId}`;
-            case 'unknown-case': return `/unknown-cases/${recordId}`;
             case 'follow-up':
             case 'treatment':
             case 'test-record':
@@ -34,8 +30,6 @@ const EditRecordPage = () => {
                 // In a real app, the parent ID would be passed in the URL (e.g., /cases/:caseId/follow-ups/:id/edit)
                 // and we would navigate back to /cases/:caseId
                 return '/cases'; 
-            case 'disease-code': return '/disease-codes';
-            case 'pathogen': return '/pathogens';
             default: return '/';
         }
     }
