@@ -1,0 +1,635 @@
+一：个案管理架构设计
+- **个案管理** (已知疾病): 管理已确认的检疫传染病个案 → 可推送至实验室检测信息管理或流调系统
+---
+### 用例图-总图
+
+```
+@startuml
+title 新发传染病监测管理系统 - 用例图
+
+rectangle "新发传染病监测管理系统" {
+
+  ' ===== 个案管理(已知疾病) =====
+  package "个案管理\n(已知检疫传染病)" #LightGreen {
+    usecase "UC04\n管理个案调查表" as UC04
+    usecase "UC05\n管理随访信息" as UC05
+    usecase "UC06\n管理治疗信息" as UC06
+    usecase "UC07\n管理病例检测" as UC07
+    usecase "UC08\n管理病例追踪" as UC08
+  }
+}
+
+' ===== 疾控业务人员关系 =====
+User --> UC04
+
+' ===== 外部系统交互 =====
+UC04 -right-> EpiSys : 推送流调
+
+' ===== 用例包含关系(认证) =====
+UC04 ..> UC19 : <<include>>
+```
+
+## 用例清单
+
+| 用例编号                       | 用例名称             | 主要参与者              | 外部系统交互          |
+| ------------------------------ | -------------------- | ----------------------- | --------------------- |
+| **个案管理(已知疾病)**         |                      |                         |                       |
+| UC04                           | 管理个案调查表       | 疾控业务人员            | 流调系统              |
+---
+
+#### Activity-1.2-个案调查表管理流程 (UC04)
+
+```
+@startuml
+title 个案调查表管理流程（UC04）活动图 v1.0
+
+|疾控业务人员|
+start
+:登录系统（单点认证）;
+:进入“个案管理”模块;
+:选择疾病类型或个案来源;
+:点击“个案调查表管理”;
+
+:查看个案列表;
+if (是否新增个案?) then (是)
+  :点击“新增个案”;
+  :填写基本信息（姓名、性别、年龄、报告单位、症状起始时间等）;
+  :填写流行病学信息（暴露史、接触史、旅行史等）;
+  :填写初步诊断信息;
+  :提交保存请求;
+else (否)
+  :选择既有个案;
+  if (是否编辑?) then (是)
+    :修改个案调查表信息;
+    :提交更新请求;
+  else (否)
+    if (是否删除?) then (是)
+      :确认删除操作;
+      :提交删除请求;
+    else (否)
+      :查看个案详细信息;
+    endif
+  endif
+endif
+
+|系统|
+:验证用户权限（include: 单点登录认证）;
+:检查表单数据完整性与必填字段;
+if (数据校验通过?) then (是)
+  :写入或更新个案数据库记录;
+  :生成个案编号;
+  :返回操作成功消息;
+else (否)
+  :返回错误提示（缺失字段或格式错误）;
+endif
+
+|疾控业务人员|
+:查看操作结果提示;
+
+if (是否需要推送流调系统?) then (是)
+  |系统|
+  :封装个案数据包;
+  :调用“流调系统”接口;
+  |流调系统|
+  :接收并确认个案数据;
+  |系统|
+  :记录推送状态与时间戳;
+  |疾控业务人员|
+  :查看推送结果;
+endif
+
+stop
+@enduml
+```
+
+二：个案管理用户故事
+---
+### 用户故事总结表
+
+| 编号   | 用户故事                 | 关联用例   | 优先级 | 复杂度 |
+| ------ | ------------------------ | ---------- | ------ | ------ |
+| US-4.1 | 管理不明原因病例         | UC09       | 高     | 高     |
+| US-4.2 | 录入不明原因病例检测信息 | UC11       | 高     | 中     |
+| US-4.3 | 推送确诊病例至个案管理   | UC10       | 高     | 高     |
+---
+
+### 不明原因疾病管理模块（新发疾病）
+
+#### US-4.1 管理不明原因病例
+
+**用户故事：**
+作为一名疾控业务人员，我希望能够管理未知病原体的不明原因病例，以便及时发现和应对新发传染病。
+
+**角色：** 疾控业务人员
+
+**前置条件：**
+
+- 用户已登录
+- 发现疑似新发传染病病例
+
+**触发条件：**
+
+- 患者症状不符合已知疾病
+- 常规检测无法确诊
+- 出现异常临床表现
+
+**预期结果：**
+
+- 创建不明原因病例记录
+- 记录临床症状和疑似病原体
+- 可上报应急响应系统和流调系统
+
+**验收标准：**
+
+1. 自动生成不明原因病例编号（unknownCaseNo）
+2. 必填字段：患者基本信息、症状起始日期、临床症状
+3. 病例状态：待检测/检测中/已确诊/排除
+4. 记录疑似病原体信息
+5. 支持上报应急指挥系统
+6. 支持推送流调系统
+7. 确诊后可转入个案管理（UC10）
+
+---
+
+#### US-4.2 录入不明原因病例检测信息
+
+**用户故事：**
+作为一名疾控业务人员，我希望能够录入不明原因病例的实验室检测信息，以便确认病原体和疾病类型。
+
+**角色：** 疾控业务人员
+
+**前置条件：**
+
+- 不明原因病例记录已存在
+- 样本已送检
+
+**触发条件：**
+
+- 收到实验室检测结果
+- 需要补充检测信息
+
+**预期结果：**
+
+- 记录检测信息
+- 更新病例状态
+- 确诊后触发病例推送流程
+
+**验收标准：**
+
+1. 当前版本支持手工录入
+2. 预留实验室系统接口
+3. 检测结果为"阳性"且确认病原体时，更新状态为"已确诊"
+4. 检测结果为"阴性"时，可更新状态为"排除"
+5. 记录确诊疾病名称
+6. 自动触发数据校验（检查重复病例）
+
+---
+
+#### US-4.3 推送确诊病例至个案管理
+
+**用户故事：**
+作为一名疾控业务人员，当不明原因病例确诊后，我希望能够将其推送至个案管理模块，以便进行标准化的病例管理。
+
+**角色：** 疾控业务人员
+
+**前置条件：**
+
+- 不明原因病例状态为"已确诊"
+- 已确认病原体和疾病类型
+- 数据校验通过（无重复病例）
+
+**触发条件：**
+
+- 用户点击"病例推送"按钮
+
+**预期结果：**
+
+- 自动生成个案记录
+- 数据从UnknownCase映射到Case
+- 同步推送至应急系统和流调系统
+- 更新不明原因病例状态为"已推送"
+
+**验收标准：**
+
+1. 数据映射完整（患者信息、检测结果）
+2. 个案来源标识为"不明原因转入"
+3. 生成新的caseNo
+4. 复制检测记录到Case关联表
+5. 推送至应急指挥系统成功
+6. 推送至流调系统成功
+7. 记录推送日志
+8. 事务完整性（失败时回滚）
+
+---
+
+三：低保真原型
+### WF-4.3 个案详情页
+
+#### 线框图
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ [Logo] 新发传染病监测管理系统                                           │
+│ ─────────────────────────────────────────────────────────────────────  │
+│ 首页 | 个案管理 | 不明原因疾病 | 预警管理 | 统计分析 | 基础数据         │
+│                                              [搜索框]  [🔔3]  [用户▼]   │
+└────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────┬──────────────────────────────────────────────────────────┐
+│             │ 首页 > 个案管理 > 个案列表 > 个案详情 (CAS-2024-156)       │
+│  个案管理    │                                                           │
+│  不明原因    │ ┌─────────────────────────────────────────────────────┐ │
+│  预警管理    │ │ 个案编号: CAS-2024-156        状态: 🟡 待核实         │ │
+│  统计分析    │ │ 患者姓名: 张三                疾病: 新冠肺炎          │ │
+│  基础数据    │ │ 报告日期: 2024-01-15          报告人: 李医生          │ │
+│  系统管理    │ │                                                       │ │
+│             │ │ [✏️ 编辑] [📤 推送流调] [🔒 结案] [返回列表]            │ │
+│             │ └─────────────────────────────────────────────────────┘ │
+│             │                                                           │
+│             │ ┌─────────────────────────────────────────────────────┐ │
+│             │ │ [基本信息] [流行病学] [随访记录] [治疗记录]           │ │
+│             │ │ [检测记录] [追踪记录] [操作日志]                      │ │
+│             │ ├─────────────────────────────────────────────────────┤ │
+│             │ │                                                       │ │
+│             │ │ 【基本信息】 (P0)                                     │ │
+│             │ │                                                       │ │
+│             │ │ 患者基本信息                                          │ │
+│             │ │ ─────────────────────────────────────────────────   │ │
+│             │ │ 姓名: 张三              性别: 男       年龄: 45岁     │ │
+│             │ │ 身份证号: 110101197901011234                         │ │
+│             │ │ 联系电话: 138****5678                                │ │
+│             │ │ 现住址: 北京市朝阳区XX街道XX小区XX号楼XX单元          │ │
+│             │ │                                                       │ │
+│             │ │ 报告信息                                              │ │
+│             │ │ ─────────────────────────────────────────────────   │ │
+│             │ │ 报告单位: 北京市朝阳区疾控中心                        │ │
+│             │ │ 报告人员: 李医生                                      │ │
+│             │ │ 报告日期: 2024-01-15 14:30                           │ │
+│             │ │ 症状开始: 2024-01-10                                 │ │
+│             │ │ 诊断日期: 2024-01-14                                 │ │
+│             │ │                                                       │ │
+│             │ │ 诊断信息                                              │ │
+│             │ │ ─────────────────────────────────────────────────   │ │
+│             │ │ 初步诊断: 疑似新冠肺炎                                │ │
+│             │ │ 确诊诊断: 新冠肺炎（待核实）                          │ │
+│             │ │ 个案来源: 主动监测                                    │ │
+│             │ │                                                       │ │
+│             │ └─────────────────────────────────────────────────────┘ │
+│             │                                                           │
+│             │ ┌─────────────────────────────────────────────────────┐ │
+│             │ │ 【流行病学信息】 (P0)                                 │ │
+│             │ │                                                       │ │
+│             │ │ 暴露史                                                │ │
+│             │ │ ─────────────────────────────────────────────────   │ │
+│             │ │ 近14天内有疫区旅居史，曾前往XX市XX区                  │ │
+│             │ │                                                       │ │
+│             │ │ 接触史                                                │ │
+│             │ │ ─────────────────────────────────────────────────   │ │
+│             │ │ 与确诊病例有密切接触史，接触时间2024-01-08            │ │
+│             │ │                                                       │ │
+│             │ │ 旅行史                                                │ │
+│             │ │ ─────────────────────────────────────────────────   │ │
+│             │ │ 2024-01-01至01-07期间前往XX省XX市                    │ │
+│             │ │                                                       │ │
+│             │ └─────────────────────────────────────────────────────┘ │
+└─────────────┴──────────────────────────────────────────────────────────┘
+```
+
+#### 随访记录Tab
+
+```
+│             │ ┌─────────────────────────────────────────────────────┐ │
+│             │ │ [基本信息] [流行病学] [随访记录] [治疗记录]           │ │
+│             │ │ [检测记录] [追踪记录] [操作日志]                      │ │
+│             │ ├─────────────────────────────────────────────────────┤ │
+│             │ │                                                       │ │
+│             │ │ 【随访记录】 (P1)              [➕ 新增随访记录]      │ │
+│             │ │                                                       │ │
+│             │ │ ┌───────────────────────────────────────────────┐   │ │
+│             │ │ │ 📅 2024-01-15 | 电话随访 | 李医生              │   │ │
+│             │ │ ├───────────────────────────────────────────────┤   │ │
+│             │ │ │ 健康状态: 好转                                 │   │ │
+│             │ │ │ 体温: 36.8°C                                  │   │ │
+│             │ │ │ 症状: 咳嗽减轻，无发热                         │   │ │
+│             │ │ │ 治疗依从性: 良好                               │   │ │
+│             │ │ │ 下次随访: 2024-01-18                          │   │ │
+│             │ │ │ 备注: 患者状况良好，继续居家隔离               │   │ │
+│             │ │ │                              [查看详情] [编辑] │   │ │
+│             │ │ └───────────────────────────────────────────────┘   │ │
+│             │ │                                                       │ │
+│             │ │ ┌───────────────────────────────────────────────┐   │ │
+│             │ │ │ 📅 2024-01-12 | 现场随访 | 王护士              │   │ │
+│             │ │ ├───────────────────────────────────────────────┤   │ │
+│             │ │ │ 健康状态: 异常                                 │   │ │
+│             │ │ │ 体温: 38.2°C                                  │   │ │
+│             │ │ │ 症状: 发热、咳嗽、乏力                         │   │ │
+│             │ │ │ 治疗依从性: 一般                               │   │ │
+│             │ │ │ 下次随访: 2024-01-15                          │   │ │
+│             │ │ │                              [查看详情] [编辑] │   │ │
+│             │ │ └───────────────────────────────────────────────┘   │ │
+│             │ │                                                       │ │
+│             │ │ ┌───────────────────────────────────────────────┐   │ │
+│             │ │ │ 📅 2024-01-10 | 电话随访 | 李医生              │   │ │
+│             │ │ │ ... (折叠)                                     │   │ │
+│             │ │ └───────────────────────────────────────────────┘   │ │
+│             │ │                                                       │ │
+│             │ │                            [加载更多...]              │ │
+│             │ └─────────────────────────────────────────────────────┘ │
+```
+
+#### 页面说明
+
+**布局结构：**
+
+- 顶部：个案摘要信息 + 主要操作按钮
+- Tab导航：7个信息类别
+- 主区：当前Tab内容
+- 底部：时间线视图（可选）
+
+**Tab内容组织：**
+
+1. **基本信息**：患者信息、报告信息、诊断信息
+2. **流行病学信息**：暴露史、接触史、旅行史
+3. **随访记录**：时间线卡片展示
+4. **治疗记录**：治疗历史列表
+5. **检测记录**：检测列表 + 推送状态
+6. **追踪记录**：追踪列表 + 地图展示
+7. **操作日志**：审计日志
+
+**交互说明：**
+
+- Tab切换加载对应内容
+- 卡片式展示支持展开/折叠
+- 每个子记录可独立编辑
+- 支持在详情页直接新增子记录
+
+---
+
+四：API字段
+# API Contract 3 – Case Details (WF-4.3)
+
+## 1. Page Description
+Displays a single confirmed disease case (Program: PrgCaseMgt1) with enrollment context and stage data. Tabs load: Basic Information (Program attributes + Stage 1: Investigation data elements), Epidemiology narrative (Stage 1 long text fields), Follow-up records (Stage 2 repeatable events), Treatment records (Stage 3 repeatable events), Test records (Stage 4 repeatable events), Tracking records (Stage 5 repeatable events), and Operation Logs (change logs). Page supports: edit case attributes, add/update repeatable stage events, push to epidemiology system flags, and close case (status changes via program rules/data element updates).
+
+## 2. Required DHIS2 APIs
+
+| #    | Endpoint                                         | Method | Description                                                  | Key Parameters                                               | Expected Response / Data Type               |
+| ---- | ------------------------------------------------ | ------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------- |
+| 1    | /api/programs/PrgCaseMgt1                        | GET    | Load program metadata, stages, and attributes to render tabs and forms | fields=id,name,trackedEntityType[id],programTrackedEntityAttributes[mandatory,trackedEntityAttribute[id,name,valueType,optionSet[id,name,options[id,code,name]]]],programStages[id,name,repeatable,programStageDataElements[dataElement[id,name,valueType,optionSet[id,name,options[id,code,name]]]]] | Program                                     |
+| 2    | /api/optionSets/{id}                             | GET    | Resolve option sets for dropdowns (if not included by API-01 or for caching) | fields=id,name,options[id,code,name]                         | OptionSet                                   |
+| 3    | /api/tracker/trackedEntities/{teiUid}            | GET    | Load TEI with enrollments and events for this program        | program=PrgCaseMgt1&fields=trackedEntity,trackedEntityType,orgUnit,attributes[attribute,value,displayName,valueType],enrollments[enrollment,program,status,orgUnit,enrolledAt,occurredAt,attributes[attribute,value],events[event,programStage,occurredAt,status,orgUnit,dataValues[dataElement,value]]] | TrackedEntity with nested Enrollment+Events |
+| 4    | /api/tracker/enrollments/{enrollmentUid}         | GET    | Load single enrollment details when deep-linking or refreshing one tab | fields=*,!relationships,!events,!attributes                  | Enrollment                                  |
+| 5    | /api/tracker/events                              | GET    | Load paginated repeatable events per stage tab (follow-up/treatment/test/tracking) | program=PrgCaseMgt1&enrollment={enrollmentUid}&programStage={stageUid}&order=occurredAt:desc&page={page}&pageSize={pageSize} | { pager, events[] }                         |
+| 6    | /api/tracker/events/{eventUid}                   | GET    | Load a single event for edit form                            | fields=event,program,programStage,enrollment,orgUnit,occurredAt,status,dataValues[dataElement,value] | Event                                       |
+| 7    | /api/tracker                                     | POST   | Create a new repeatable event (Stage 2/3/4/5)                | importStrategy=CREATE&atomicMode=OBJECT with payload events[] | Import summary                              |
+| 8    | /api/tracker                                     | POST   | Update an event’s data values or status                      | importStrategy=UPDATE&atomicMode=OBJECT with payload events[] (include non-collection fields) | Import summary                              |
+| 9    | /api/tracker                                     | POST   | Update TEI attributes in context of case (program attributes on TEI/enrollment as designed) | importStrategy=UPDATE&atomicMode=OBJECT with payload trackedEntities[] or enrollments[] attributes[] | Import summary                              |
+| 10   | /api/tracker                                     | POST   | Mark push-to-epidemiology flags on Investigation stage event | importStrategy=UPDATE&atomicMode=OBJECT with payload events[] dataValues[dataElement=DePushEpi01,DePushEpiDt] | Import summary                              |
+| 11   | /api/tracker                                     | POST   | Close case by setting Case Status in Stage 1 event (program rules may react) | importStrategy=UPDATE&atomicMode=OBJECT with payload events[] dataValues[dataElement=DeCaseStat1,value='CLOSED'] | Import summary                              |
+| 12   | /api/tracker/events/{eventUid}/changeLogs        | GET    | Load audit trail for event fields/data values (Operations Log tab) | order=createdAt:desc                                         | { pager, changeLogs[] }                     |
+| 13   | /api/tracker/trackedEntities/{teiUid}/changeLogs | GET    | Load audit trail for TEI attribute changes (Operations Log tab) | program=PrgCaseMgt1&order=createdAt:desc                     | { pager, changeLogs[] }                     |
+| 14   | /api/tracker/events                              | GET    | Filtered fetch for specific status or date range per tab     | program=PrgCaseMgt1&enrollment={enrollmentUid}&programStage={stageUid}&occurredAfter={from}&occurredBefore={to}&status={status} | { pager, events[] }                         |
+| 15   | /api/tracker/events/{eventUid}                   | GET    | Fetch latest single Investigation stage event to display epidemiology texts (exposure/contact/travel) | fields=event,occurredAt,dataValues[dataElement,value]        | Event                                       |
+
+## 3. Notes
+- Inter-API dependencies:
+  - API-01 should be loaded once and cached; it defines stage UIDs: PsInvestig1 (Investigation), PsFollowUp1, PsTreatmnt1, PsTest00001, PsTracking1; and data elements including DeCaseStat1, DeExposHst1, DeContHst01, DeTravHst01, DePushEpi01, DePushEpiDt etc.
+  - API-03 is the primary load for the page header and Basic/Epidemiology tabs; it returns TEI attributes (e.g., AtrCaseNo01, AtrFullNm01, AtrDiseaCd1, AtrRptDt001) and the enrollment with nested events for the program.
+  - Tabs with many events (follow-up, treatment, test, tracking) should use API-05 with pagination rather than relying solely on nested events in API-03.
+- Filtering/pagination:
+  - For list tabs use page/pageSize and order=occurredAt:desc; set totalPages=true when rendering pagers.
+  - For date filters per tab, use occurredAfter/occurredBefore; for status filters use status parameter.
+- Update semantics (Tracker v2.41):
+  - For updates via /api/tracker (API-08/09/10/11), include object non-collection fields (e.g., event, enrollment, orgUnit, programStage, occurredAt, status) even when only changing dataValues, per tracker importer requirements.
+  - To update TEI attributes owned by TEI, use trackedEntities[]; to update program attributes owned by enrollment, use enrollments[] attributes[] with enrollment UID.
+- Security and scopes:
+  - Reading/updating requires access to Program PrgCaseMgt1 (accessLevel=PROTECTED) and ownership within user capture scope; otherwise use break-the-glass flow outside this page (not covered).
+- Option sets:
+  - Disease code options (OsDiseasCd1), Case Status (OsCaseStat1), and others are available through API-01; only call API-02 if lazy-loading or cache-miss.
+- Status changes:
+  - Case closure is effected by writing DeCaseStat1='CLOSED' on the Investigation stage event (API-11). Program rules may also update via other stages.
+
+## 4. Example Request & Response
+
+API-03: 获取个案详情（TEI+Enrollment+Events）
+
+[请求地址]
+GET /api/tracker/trackedEntities/PQfMcpmXeFE?program=PrgCaseMgt1&fields=trackedEntity,trackedEntityType,orgUnit,attributes[attribute,value,displayName,valueType],enrollments[enrollment,program,status,orgUnit,enrolledAt,occurredAt,attributes[attribute,value],events[event,programStage,occurredAt,status,orgUnit,dataValues[dataElement,value]]]
+
+[返回消息体]
+{
+  "trackedEntity": "PQfMcpmXeFE",
+  "trackedEntityType": "TetPerson01",
+  "orgUnit": "OuChengdu01",
+  "attributes": [
+    { "attribute": "AtrCaseNo01", "displayName": "个案编号", "value": "CASE-20240115-0156" },
+    { "attribute": "AtrFullNm01", "displayName": "姓名", "value": "张三" },
+    { "attribute": "AtrDiseaCd1", "displayName": "疾病编码", "value": "OptDiseaB30" },
+    { "attribute": "AtrRptDt001", "displayName": "报告日期", "value": "2024-01-15" }
+  ],
+  "enrollments": [
+    {
+      "enrollment": "MNWZ6hnuhSw",
+      "program": "PrgCaseMgt1",
+      "status": "ACTIVE",
+      "orgUnit": "OuChengdu01",
+      "enrolledAt": "2024-01-15T00:00:00.000",
+      "events": [
+        {
+          "event": "evtInvestig01",
+          "programStage": "PsInvestig1",
+          "occurredAt": "2024-01-15T14:30:00.000",
+          "status": "ACTIVE",
+          "orgUnit": "OuChengdu01",
+          "dataValues": [
+            { "dataElement": "DeCaseStat1", "value": "VERIFIED" },
+            { "dataElement": "DeExposHst1", "value": "近14天内有疫区旅居史..." },
+            { "dataElement": "DeContHst01", "value": "与确诊病例有密切接触..." },
+            { "dataElement": "DeTravHst01", "value": "1月1日至1月7日前往XX市..." },
+            { "dataElement": "DePushEpi01", "value": "false" }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+API-05: 分页获取随访记录（Stage 2）
+
+[请求地址]
+GET /api/tracker/events?program=PrgCaseMgt1&enrollment=MNWZ6hnuhSw&programStage=PsFollowUp1&order=occurredAt:desc&page=1&pageSize=10&totalPages=true
+
+[返回消息体]
+{
+  "pager": { "page": 1, "pageSize": 10, "total": 23, "pageCount": 3 },
+  "events": [
+    {
+      "event": "evFlw001",
+      "program": "PrgCaseMgt1",
+      "programStage": "PsFollowUp1",
+      "enrollment": "MNWZ6hnuhSw",
+      "orgUnit": "OuChengdu01",
+      "occurredAt": "2024-01-15T00:00:00.000",
+      "status": "ACTIVE",
+      "dataValues": [
+        { "dataElement": "DeFlwUpMthd", "value": "PHONE" },
+        { "dataElement": "DeHlthStat1", "value": "NORMAL" },
+        { "dataElement": "DeTemp00001", "value": "36.8" },
+        { "dataElement": "DeSymptoms1", "value": "咳嗽减轻，无发热" },
+        { "dataElement": "DeTrtCompl1", "value": "GOOD" },
+        { "dataElement": "DeNxtFlwDt1", "value": "2024-01-18" }
+      ]
+    }
+  ]
+}
+
+API-07: 新增检测记录（Stage 4）
+
+[请求地址]
+POST /api/tracker?importStrategy=CREATE&atomicMode=OBJECT
+Content-Type: application/json
+
+{
+  "events": [
+    {
+      "program": "PrgCaseMgt1",
+      "programStage": "PsTest00001",
+      "enrollment": "MNWZ6hnuhSw",
+      "orgUnit": "OuChengdu01",
+      "status": "ACTIVE",
+      "occurredAt": "2024-01-16T09:00:00.000",
+      "dataValues": [
+        { "dataElement": "DeTestNo001", "value": "TEST-20240116-0101" },
+        { "dataElement": "DeSmplColDt", "value": "2024-01-15" },
+        { "dataElement": "DeSmplType1", "value": "THROAT_SWAB" },
+        { "dataElement": "DeTestType1", "value": "NAT" },
+        { "dataElement": "DeTestRslt1", "value": "POSITIVE" },
+        { "dataElement": "DeTestStat1", "value": "CONFIRMED" }
+      ]
+    }
+  ]
+}
+
+[返回消息体]
+{
+  "status": "OK",
+  "stats": { "created": 1, "updated": 0, "deleted": 0, "ignored": 0, "total": 1 },
+  "bundleReport": {
+    "typeReportMap": {
+      "EVENT": {
+        "stats": { "created": 1, "updated": 0, "deleted": 0, "ignored": 0, "total": 1 },
+        "objectReports": [ { "trackerType": "EVENT", "uid": "evTest001", "errorReports": [] } ]
+      }
+    }
+  }
+}
+
+API-10: 标记推送至流调系统（调查阶段事件）
+
+[请求地址]
+POST /api/tracker?importStrategy=UPDATE&atomicMode=OBJECT
+Content-Type: application/json
+
+{
+  "events": [
+    {
+      "event": "evtInvestig01",
+      "program": "PrgCaseMgt1",
+      "programStage": "PsInvestig1",
+      "enrollment": "MNWZ6hnuhSw",
+      "orgUnit": "OuChengdu01",
+      "status": "ACTIVE",
+      "occurredAt": "2024-01-15T14:30:00.000",
+      "dataValues": [
+        { "dataElement": "DePushEpi01", "value": "true" },
+        { "dataElement": "DePushEpiDt", "value": "2024-01-16T09:30:00.000" }
+      ]
+    }
+  ]
+}
+
+[返回消息体]
+{
+  "status": "OK",
+  "stats": { "created": 0, "updated": 1, "deleted": 0, "ignored": 0, "total": 1 }
+}
+
+API-11: 结案（设置个案状态为已关闭）
+
+[请求地址]
+POST /api/tracker?importStrategy=UPDATE&atomicMode=OBJECT
+Content-Type: application/json
+
+{
+  "events": [
+    {
+      "event": "evtInvestig01",
+      "program": "PrgCaseMgt1",
+      "programStage": "PsInvestig1",
+      "enrollment": "MNWZ6hnuhSw",
+      "orgUnit": "OuChengdu01",
+      "status": "ACTIVE",
+      "occurredAt": "2024-01-15T14:30:00.000",
+      "dataValues": [
+        { "dataElement": "DeCaseStat1", "value": "CLOSED" }
+      ]
+    }
+  ]
+}
+
+[返回消息体]
+{
+  "status": "OK",
+  "stats": { "created": 0, "updated": 1, "deleted": 0, "ignored": 0, "total": 1 }
+}
+
+API-12: 获取事件变更日志（操作日志Tab）
+
+[请求地址]
+GET /api/tracker/events/evtInvestig01/changeLogs?order=createdAt:desc
+
+[返回消息体]
+{
+  "pager": { "page": 1, "pageSize": 10 },
+  "changeLogs": [
+    {
+      "createdBy": { "uid": "UserChgd001", "username": "chengdu_cdc_001" },
+      "createdAt": "2024-01-16T09:30:10.000",
+      "type": "UPDATE",
+      "change": { "dataValue": { "dataElement": "DeCaseStat1", "previousValue": "VERIFIED", "currentValue": "CLOSED" } }
+    }
+  ]
+}
+
+API-09: 更新个案属性（如确诊日期 AtrDiagDt01）
+
+[请求地址]
+POST /api/tracker?importStrategy=UPDATE&atomicMode=OBJECT
+Content-Type: application/json
+
+{
+  "enrollments": [
+    {
+      "enrollment": "MNWZ6hnuhSw",
+      "program": "PrgCaseMgt1",
+      "trackedEntity": "PQfMcpmXeFE",
+      "orgUnit": "OuChengdu01",
+      "status": "ACTIVE",
+      "enrolledAt": "2024-01-15T00:00:00.000",
+      "attributes": [
+        { "attribute": "AtrDiagDt01", "value": "2024-01-14" }
+      ]
+    }
+  ]
+}
+
+[返回消息体]
+{
+  "status": "OK",
+  "stats": { "created": 0, "updated": 1, "deleted": 0, "ignored": 0, "total": 1 }
+}
+
+五：现有代码问题
+1.个案列表点击查看，数据绑定渲染不完全；
+2.个案查看中，点击“编辑”逻辑不正确，未能进入编辑；
+3.新增个案/查看个案，点击“取消”无作用。
