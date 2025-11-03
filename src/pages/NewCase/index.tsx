@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Steps, Button, Card, Space, Row, Col, Typography, Alert } from 'antd';
+import { LeftOutlined, RightOutlined, SaveOutlined, CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import appConfig from '../../config.json';
 import StepBasicInfo from '../../components/NewCase/StepBasicInfo';
@@ -21,7 +22,6 @@ export default function NewCase() {
     const e = ctx.formEpi.getFieldsValue(true);
     const d = ctx.formDiag.getFieldsValue(true);
     
-    // 处理流行病学信息
     let exposureText = '无';
     if (e?.hasExposure && e?.exposure) {
       exposureText = e.exposure;
@@ -52,6 +52,8 @@ export default function NewCase() {
     };
   }, [ctx.formBasic, ctx.formEpi, ctx.formDiag, ctx.diseaseOpts, ctx.caseSrcOpts, ctx.caseStatOpts, ctx.current]);
 
+  const stepTitles = ['基本信息', '流行病学信息', '诊断信息', '确认提交'];
+
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Row justify="space-between" align="middle">
@@ -60,9 +62,31 @@ export default function NewCase() {
         </Col>
         <Col>
           <Space>
-            <Button onClick={ctx.saveDraft} loading={ctx.loading}>保存草稿</Button>
-            <Button type="primary" onClick={ctx.handleSubmit} loading={ctx.loading}>提交</Button>
-            <Button danger onClick={ctx.handleCancel}>取消</Button>
+            <Button 
+              icon={<SaveOutlined />} 
+              onClick={ctx.saveDraft} 
+              loading={ctx.loading}
+              disabled={ctx.current === 3}
+            >
+              保存草稿
+            </Button>
+            <Button 
+              type="primary" 
+              icon={<CheckOutlined />}
+              onClick={ctx.handleSubmit} 
+              loading={ctx.loading}
+              disabled={ctx.current !== 3}
+            >
+              提交
+            </Button>
+            <Button 
+              danger 
+              icon={<CloseOutlined />}
+              onClick={ctx.handleCancel}
+              disabled={ctx.loading}
+            >
+              取消
+            </Button>
           </Space>
         </Col>
       </Row>
@@ -71,19 +95,21 @@ export default function NewCase() {
         <Alert
           type="info"
           showIcon
-          message="调试模式开启"
-          description="提交后将展示同步导入返回的 bundleReport。若出现 E1064（身份证重复），系统会自动切换为沿用已有人员并仅创建入组与调查事件。若出现 E1018（个案编号必填），将自动生成随机个案编号后重试。可在 config.json -> tracker.debug 关闭调试模式。"
+          message="调试模式已开启"
+          description="提交后将展示同步导入返回的 bundleReport。可在 config.json -> tracker.debug 关闭调试模式。"
+          closable
         />
       )}
 
       <Card>
-        <Steps current={ctx.current} items={[
-          { title: '基本信息' },
-          { title: '流行病学' },
-          { title: '诊断信息' },
-          { title: '确认提交' },
-        ]} />
-        <div style={{ marginTop: 24, minHeight: 400 }}>
+        <Steps 
+          current={ctx.current} 
+          items={stepTitles.map((title, idx) => ({ 
+            title, 
+            description: idx < ctx.current ? '已完成' : idx === ctx.current ? '进行中' : '待填写'
+          }))} 
+        />
+        <div style={{ marginTop: 32, minHeight: 450 }}>
           {ctx.current === 0 && (
             <StepBasicInfo
               form={ctx.formBasic}
@@ -94,15 +120,48 @@ export default function NewCase() {
           )}
           {ctx.current === 1 && <StepEpiInfo form={ctx.formEpi} />}
           {ctx.current === 2 && (
-            <StepDiagnosis form={ctx.formDiag} caseSourceOptions={ctx.caseSrcOpts} caseStatusOptions={ctx.caseStatOpts} />
+            <StepDiagnosis 
+              form={ctx.formDiag} 
+              caseSourceOptions={ctx.caseSrcOpts} 
+              caseStatusOptions={ctx.caseStatOpts} 
+            />
           )}
           {ctx.current === 3 && <StepConfirm data={previewData} />}
         </div>
-        <div style={{ marginTop: 24, textAlign: 'center' }}>
-          <Space>
-            {ctx.current > 0 && <Button onClick={ctx.prev}>上一步</Button>}
-            {ctx.current < 3 && <Button type="primary" onClick={ctx.next}>下一步</Button>}
-            {ctx.current === 3 && <Button type="primary" onClick={ctx.handleSubmit} loading={ctx.loading}>提交</Button>}
+        <div style={{ marginTop: 32, textAlign: 'center', borderTop: '1px solid #f0f0f0', paddingTop: 24 }}>
+          <Space size="large">
+            {ctx.current > 0 && (
+              <Button 
+                size="large"
+                icon={<LeftOutlined />}
+                onClick={ctx.prev}
+                disabled={ctx.loading}
+              >
+                上一步
+              </Button>
+            )}
+            {ctx.current < 3 && (
+              <Button 
+                type="primary" 
+                size="large"
+                icon={<RightOutlined />}
+                onClick={ctx.next}
+                disabled={ctx.loading}
+              >
+                下一步：{stepTitles[ctx.current + 1]}
+              </Button>
+            )}
+            {ctx.current === 3 && (
+              <Button 
+                type="primary" 
+                size="large"
+                icon={<CheckOutlined />}
+                onClick={ctx.handleSubmit} 
+                loading={ctx.loading}
+              >
+                确认提交
+              </Button>
+            )}
           </Space>
         </div>
       </Card>
@@ -114,14 +173,14 @@ export default function NewCase() {
         lastResponse={ctx.lastResponse}
         title="同步导入结果（调试）"
       />
-      <div style={{ textAlign: 'right' }}>
-        {ctx.debugOpen && (
+      {ctx.debugOpen && (
+        <Card>
           <Space>
-            <Button onClick={() => ctx.setDebugOpen(false)}>关闭</Button>
-            <Button type="primary" onClick={ctx.handleJumpToDetail}>继续跳转到详情</Button>
+            <Button onClick={() => ctx.setDebugOpen(false)}>关闭调试窗口</Button>
+            <Button type="primary" onClick={ctx.handleJumpToDetail}>跳转到个案详情</Button>
           </Space>
-        )}
-      </div>
+        </Card>
+      )}
     </Space>
   );
 }
