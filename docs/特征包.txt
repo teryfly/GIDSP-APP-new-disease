@@ -628,8 +628,3 @@ Content-Type: application/json
   "status": "OK",
   "stats": { "created": 0, "updated": 1, "deleted": 0, "ignored": 0, "total": 1 }
 }
-
-五：现有代码问题
-1.个案列表点击查看，数据绑定渲染不完全；
-2.个案查看中，点击“编辑”逻辑不正确，未能进入编辑；
-3.新增个案/查看个案，点击“取消”无作用。
