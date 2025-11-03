@@ -27,6 +27,5 @@ export interface OptionSet { id: string; name: string; options: Option[] }
 export interface MeResponse {
   id: string;
   username: string;
-  organisationUnits: Array<{ id: string; name:Step [1/3] - Refactor Plan for unknownCaseService
-Action: Create file
-File Path: docs/refactor_plan_unknownCaseService_WF4.5.txt
+  organisationUnits: Array<{ id: string; name: string }>;
+}

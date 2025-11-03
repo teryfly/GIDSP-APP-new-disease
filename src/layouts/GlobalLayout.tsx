@@ -101,7 +101,7 @@ const GlobalLayout = () => {
                 <Menu theme="dark" defaultSelectedKeys={['/']} mode="inline" items={menuItems} />
             </Sider>
             <Layout>
-                <Header style={{ padding: '0 16px', background: colorBgContainer, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {/* <Header style={{ padding: '0 16px', background: colorBgContainer, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <MenuFoldOutlined
                         className="trigger"
                         onClick={() => setCollapsed(!collapsed)}
@@ -115,7 +115,7 @@ const GlobalLayout = () => {
                             <Avatar style={{ backgroundColor: '#87d068' }} icon={<UserOutlined />} />
                         </Dropdown>
                     </Space>
-                </Header>
+                </Header> */}
                 <Content style={{ margin: '0 16px', display: 'flex', flexDirection: 'column' }}>
                     <Breadcrumb style={{ margin: '16px 0' }} items={[{ title: <Link to="/">首页</Link> }, ...breadcrumbItems]} />
                     <div

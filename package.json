@@ -5,16 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ant-design/charts": "^2.6.6",
     "@ant-design/icons": "^6.1.0",
     "@types/leaflet": "^1.9.21",
     "antd": "^5.27.6",
     "leaflet": "^1.9.4",
+    "moment": "^2.30.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-leaflet": "^5.0.0",

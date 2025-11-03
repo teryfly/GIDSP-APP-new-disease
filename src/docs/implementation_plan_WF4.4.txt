@@ -39,3 +39,16 @@
   - Enrollment AtrCaseNo01空值失败→重试使用随机字符串。
   - 保存草稿到 localStorage（按身份证号或临时键），切步/点保存时保存，提交成功后清除。
   - 提交后跳转 /cases/:teiUid，或至少提示成功（如无法拿到ID则回列表）。
+
+
+Human Modified:
+1) 新增个案第四步，表单数据绑定
+- 修复了 src/pages/NewCase/index.tsx 中的导入路径大小写问题，确保正确导入组件。
+- 改进了 previewData 的计算逻辑，确保所有表单数据（包括流行病学信息）能正确传递给 StepConfirm 组件：
+  正确处理了流行病学信息（暴露史、接触史、旅行史）
+  确保诊断信息能正确传递
+  保留了原有的数据转换逻辑
+- 优化了 src/components/NewCase/StepConfirm.tsx 组件：
+  改进了地址信息的显示逻辑
+  为所有字段添加了默认值显示（当数据为空时显示 -）
+  保持了流行病学信息的显示逻辑

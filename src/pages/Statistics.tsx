@@ -1,41 +1,6 @@
 import { Card, Col, DatePicker, Form, Row, Select, Space, Button, Checkbox, Radio } from 'antd';
-import { Line } from '@ant-design/charts';
 
 const { RangePicker } = DatePicker;
-
-const data = [
-    { date: '01-01', value: 7, disease: '新冠肺炎' },
-    { date: '01-02', value: 9, disease: '新冠肺炎' },
-    { date: '01-03', value: 10, disease: '新冠肺炎' },
-    { date: '01-04', value: 8, disease: '新冠肺炎' },
-    { date: '01-15', value: 18, disease: '新冠肺炎' },
-    { date: '01-22', value: 15, disease: '新冠肺炎' },
-    { date: '01-29', value: 12, disease: '新冠肺炎' },
-    { date: '01-01', value: 2, disease: '霍乱' },
-    { date: '01-02', value: 3, disease: '霍乱' },
-    { date: '01-03', value: 2, disease: '霍乱' },
-    { date: '01-04', value: 1, disease: '霍乱' },
-    { date: '01-15', value: 5, disease: '霍乱' },
-    { date: '01-22', value: 4, disease: '霍乱' },
-    { date: '01-29', value: 3, disease: '霍乱' },
-];
-
-const config = {
-    data,
-    xField: 'date',
-    yField: 'value',
-    seriesField: 'disease',
-    legend: {
-        position: 'top' as const,
-    },
-    smooth: true,
-    animation: {
-        appear: {
-            animation: 'path-in' as const,
-            duration: 5000,
-        },
-    },
-};
 
 const Statistics = () => {
     return (
@@ -92,7 +57,7 @@ const Statistics = () => {
                     </Space>
                 }
             >
-                <Line {...config} />
+                <div>图表功能已移除</div>
             </Card>
         </Space>
     );
