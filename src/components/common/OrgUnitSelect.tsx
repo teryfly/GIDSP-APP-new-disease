@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Select } from 'antd';
-import type { OrgUnit } from '../../services/caseService';
-import { getOrgUnitsByPath, getMe } from '../../services/caseService';
+import type { OrgUnit } from '../../services/caseService2';
+import { getOrgUnitsByPath, getMe } from '../../services/caseService2';
 
 interface Props {
   value?: string;

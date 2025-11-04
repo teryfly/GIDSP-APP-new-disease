@@ -6,6 +6,7 @@ export const TET_PERSON_ID = 'TetPerson01';
 export const OS_DISEASE_ID = 'OsDiseasCd1';
 export const OS_CASE_STATUS_ID = 'OsCaseStat1';
 
+// 核心TEI属性（用于列表/详情头部）
 export const ATR_CASE_NO = 'AtrCaseNo01';
 export const ATR_FULL_NAME = 'AtrFullNm01';
 export const ATR_DISEASE_CODE = 'AtrDiseaCd1';
@@ -13,9 +14,9 @@ export const ATR_RPT_DATE = 'AtrRptDt001';
 export const ATR_RPT_ORG = 'AtrRptOrg01';
 export const ATR_CASE_SRC = 'AtrCaseSrc1';
 
+// 调查阶段关键数据元素（详情操作）
 export const DE_PUSH_EPI = 'DePushEpi01';
 export const DE_CASE_STATUS = 'DeCaseStat1';
-
 
 export interface Option {
   id: string;
@@ -215,4 +216,16 @@ export async function batchPushToEpi(events: BatchPushEventInput[]): Promise<Tra
   };
   const res = await dhis2Client.post<TrackerImportReport>('/api/tracker', payload, params);
   return res;
+}
+
+/**
+ * 构建“关联地区”下拉框选项（基于当前用户第一个组织机构的父路径）
+ * 返回形如 { value, label } 的数组，可直接用于 Antd Select options
+ */
+export async function getRegionOptions(): Promise<Array<{ value: string; label: string }>> {
+  const me = await getMe();
+  const path = me.organisationUnits?.[0]?.path || '';
+  const parentPath = path.substring(0, path.lastIndexOf('/')) || path;
+  const ous = await getOrgUnitsByPath(parentPath);
+  return (ous || []).map((ou) => ({ value: ou.id, label: ou.name }));
 }

@@ -20,7 +20,6 @@ import {
   ATR_CASE_SRC,
 } from './caseDetailsConsts';
 
-// 透出常量给外部使用（避免其他模块直接依赖 consts 路径）
 export {
   PROGRAM_ID,
   PROGRAM_STAGE_INVESTIGATION_ID,
@@ -42,7 +41,6 @@ export {
   ATR_CASE_SRC,
 };
 
-// 通用类型
 export interface TrackerAttribute {
   attribute: string;
   value: string;
@@ -51,7 +49,7 @@ export interface TrackerAttribute {
 }
 export interface TrackerDataValue {
   dataElement: string;
-  value: string;
+  value: string | null;
 }
 export interface TrackerEvent {
   event: string;
@@ -81,7 +79,6 @@ export interface TrackedEntityDetails {
   enrollments: TrackerEnrollment[];
 }
 
-// Program Full 元数据加载（包含Stages及DataElements定义）
 export async function loadProgramFull() {
   const fields = buildFieldsParam([
     'id',
@@ -104,7 +101,6 @@ export async function getOptionSetCached(id: string): Promise<OptionSet> {
   return os;
 }
 
-// 个案详情：加载TEI + Enrollment + 嵌套Events
 export async function getCaseDetails(teiUid: string): Promise<TrackedEntityDetails> {
   const fields = buildFieldsParam([
     'trackedEntity,trackedEntityType,orgUnit',
@@ -118,10 +114,7 @@ export async function getCaseDetails(teiUid: string): Promise<TrackedEntityDetai
 }
 
 export async function getEnrollment(enrollmentUid: string) {
-  // API建议 fields=*,!relationships,!events,!attributes，可按需调整
-  return dhis2Client.get<any>(`/api/tracker/enrollments/${enrollmentUid}`, {
-    fields: '*',
-  });
+  return dhis2Client.get<any>(`/api/tracker/enrollments/${enrollmentUid}`, { fields: '*' });
 }
 
 export interface EventsListResponse {
@@ -139,17 +132,7 @@ export interface ListStageEventsParams {
   order?: 'occurredAt:desc' | 'occurredAt:asc';
 }
 export async function listStageEvents(params: ListStageEventsParams, signal?: AbortSignal): Promise<EventsListResponse> {
-  const {
-    enrollment,
-    programStage,
-    page = 1,
-    pageSize = 10,
-    occurredAfter,
-    occurredBefore,
-    status,
-    order = 'occurredAt:desc',
-  } = params;
-
+  const { enrollment, programStage, page = 1, pageSize = 10, occurredAfter, occurredBefore, status, order = 'occurredAt:desc' } = params;
   const query: Record<string, any> = {
     program: PROGRAM_ID,
     enrollment,
@@ -162,15 +145,11 @@ export async function listStageEvents(params: ListStageEventsParams, signal?: Ab
   if (occurredAfter) query.occurredAfter = occurredAfter;
   if (occurredBefore) query.occurredBefore = occurredBefore;
   if (status) query.status = status;
-
   return dhis2Client.get<EventsListResponse>('/api/tracker/events', query, signal);
 }
 
 export async function getEvent(eventUid: string) {
-  const fields = buildFieldsParam([
-    'event,program,programStage,enrollment,orgUnit,occurredAt,status',
-    'dataValues[dataElement,value]',
-  ]);
+  const fields = buildFieldsParam(['event,program,programStage,enrollment,orgUnit,occurredAt,status', 'dataValues[dataElement,value]']);
   return dhis2Client.get<any>(`/api/tracker/events/${eventUid}`, { fields });
 }
 
@@ -180,17 +159,14 @@ export interface ImportReport {
   bundleReport?: any;
 }
 
-// 新增事件
 export async function createEvents(events: Omit<TrackerEvent, 'event'>[]): Promise<ImportReport> {
   return dhis2Client.post<ImportReport>('/api/tracker', { events }, { importStrategy: 'CREATE', atomicMode: 'OBJECT' });
 }
 
-// 更新事件
 export async function updateEvents(events: TrackerEvent[]): Promise<ImportReport> {
   return dhis2Client.post<ImportReport>('/api/tracker', { events }, { importStrategy: 'UPDATE', atomicMode: 'OBJECT' });
 }
 
-// 更新TEI属性
 export async function updateTrackedEntities(payload: {
   trackedEntity: string;
   trackedEntityType: string;
@@ -200,7 +176,6 @@ export async function updateTrackedEntities(payload: {
   return dhis2Client.post<ImportReport>('/api/tracker', { trackedEntities: payload }, { importStrategy: 'UPDATE', atomicMode: 'OBJECT' });
 }
 
-// 更新Enrollment属性
 export async function updateEnrollments(payload: {
   enrollment: string;
   program: string;
@@ -210,20 +185,19 @@ export async function updateEnrollments(payload: {
   return dhis2Client.post<ImportReport>('/api/tracker', { enrollments: payload }, { importStrategy: 'UPDATE', atomicMode: 'OBJECT' });
 }
 
-// 推送至流调（更新调查事件标记）
 export async function pushToEpiFlag(params: {
   investigationEventUid: string;
   enrollment: string;
   orgUnit: string;
   occurredAt: string;
 }): Promise<ImportReport> {
-  const event: TrackerEvent = {
+  const event = {
     event: params.investigationEventUid,
     program: PROGRAM_ID,
     programStage: PROGRAM_STAGE_INVESTIGATION_ID,
     enrollment: params.enrollment,
     orgUnit: params.orgUnit,
-    status: 'ACTIVE',
+    status: 'ACTIVE' as const,
     occurredAt: params.occurredAt,
     dataValues: [
       { dataElement: DE_PUSH_EPI, value: 'true' },
@@ -233,35 +207,28 @@ export async function pushToEpiFlag(params: {
   return updateEvents([event]);
 }
 
-// 结案（设置个案状态为 CLOSED）
 export async function closeCase(params: {
   investigationEventUid: string;
   enrollment: string;
   orgUnit: string;
   occurredAt: string;
 }): Promise<ImportReport> {
-  const event: TrackerEvent = {
+  const event = {
     event: params.investigationEventUid,
     program: PROGRAM_ID,
     programStage: PROGRAM_STAGE_INVESTIGATION_ID,
     enrollment: params.enrollment,
     orgUnit: params.orgUnit,
-    status: 'ACTIVE',
+    status: 'ACTIVE' as const,
     occurredAt: params.occurredAt,
     dataValues: [{ dataElement: DE_CASE_STATUS, value: 'CLOSED' }],
   };
   return updateEvents([event]);
 }
 
-// 操作日志：事件日志
 export interface ChangeLogsResponse {
   pager?: { page: number; pageSize: number; total?: number; pageCount?: number };
-  changeLogs: Array<{
-    createdBy: { uid: string; username: string };
-    createdAt: string;
-    type: 'CREATE' | 'UPDATE' | 'DELETE';
-    change: any;
-  }>;
+  changeLogs: Array<{ createdBy: { uid: string; username: string }; createdAt: string; type: 'CREATE' | 'UPDATE' | 'DELETE'; change: any }>;
 }
 export async function getEventChangeLogs(eventUid: string, page = 1, pageSize = 20) {
   return dhis2Client.get<ChangeLogsResponse>(`/api/tracker/events/${eventUid}/changeLogs`, {
@@ -270,8 +237,6 @@ export async function getEventChangeLogs(eventUid: string, page = 1, pageSize = 
     pageSize,
   });
 }
-
-// 操作日志：TEI日志
 export async function getTeiChangeLogs(teiUid: string, page = 1, pageSize = 20) {
   return dhis2Client.get<ChangeLogsResponse>(`/api/tracker/trackedEntities/${teiUid}/changeLogs`, {
     program: PROGRAM_ID,

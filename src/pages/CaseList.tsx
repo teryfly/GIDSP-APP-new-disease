@@ -14,8 +14,8 @@ import {
   OS_DISEASE_ID,
   OS_CASE_STATUS_ID,
   DE_PUSH_EPI,
-} from '../services/caseService';
-import type { OptionSet } from '../services/caseService';
+} from '../services/caseService2';
+import type { OptionSet } from '../services/caseService2';
 import { mapTEIsToRows, type CaseRow } from '../services/mappers/caseMappers';
 import OrgUnitSelect from '../components/common/OrgUnitSelect';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
@@ -165,8 +165,8 @@ const CaseList = () => {
       render: (_, record) => (
         <Space size="middle">
           <Link to={`/cases/${record.trackedEntity}`}>查看</Link>
-          <a onClick={() => onDelete(record)}>删除</a>
-          <a onClick={() => onPush([record])}>推送</a>
+          <a onClick={(e) => { e.stopPropagation(); onDelete(record); }}>删除</a>
+          <a onClick={(e) => { e.stopPropagation(); onPush([record]); }}>推送</a>
         </Space>
       ),
     },
@@ -176,7 +176,6 @@ const CaseList = () => {
   const onTableChange = (pagination: TablePaginationConfig, _filters: any, sorter: any) => {
     const { current = 1, pageSize = pager.pageSize } = pagination;
     if (sorter?.field === 'reportDate') {
-      // API supports createdAt/updatedAt/enrolledAt ordering; we will keep createdAt mapping here
       setOrder(sorter.order === 'ascend' ? 'createdAt:asc' : 'createdAt:desc');
     }
     fetchData.current(current, pageSize);
@@ -184,9 +183,19 @@ const CaseList = () => {
 
   const onDelete = (record: CaseRow) => {
     Modal.confirm({
-      title: '确认删除该个案？',
-      content: `删除 TEI: ${record.trackedEntity} 将执行级联删除（需权限）。`,
-      okText: '删除',
+      title: '确认删除',
+      content: (
+        <div>
+          <p>您确定要删除以下个案吗？</p>
+          <p><strong>个案编号：</strong>{record.caseNo || '-'}</p>
+          <p><strong>患者姓名：</strong>{record.patientName || '-'}</p>
+          <p style={{ color: '#ff4d4f', marginTop: 12 }}>
+            ⚠️ 此操作将执行级联删除，删除该个案及其所有关联记录（随访、治疗、检测、追踪等），且无法恢复！
+          </p>
+        </div>
+      ),
+      okText: '确认删除',
+      cancelText: '取消',
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
@@ -201,14 +210,11 @@ const CaseList = () => {
   };
 
   const onPush = async (rows: CaseRow[]) => {
-    // Per contract, UPDATE events to set DePushEpi01=true. We don't have event IDs; we will perform a best-effort:
-    // As we only have enrollment here, construct events with minimal fields; DHIS2 requires event uid for UPDATE.
-    // If event uid unknown, this operation may fail per item. We will alert the user accordingly.
     const now = dayjs().toISOString();
     const events = rows
       .filter((r) => r.enrollment && r.trackedEntity && r.orgUnit)
       .map((r) => ({
-        event: r.enrollment as string, // NOTE: placeholder; ideally should be real event uid
+        event: r.enrollment as string,
         programStage: PROGRAM_STAGE_INVESTIGATION_ID,
         program: PROGRAM_ID,
         enrollment: r.enrollment!,
@@ -358,7 +364,11 @@ const CaseList = () => {
           loading={loading}
           rowSelection={rowSelection}
           onRow={(record) => ({
-            onClick: () => {
+            onClick: (e) => {
+              // 避免点击操作按钮时触发行选中
+              const target = e.target as HTMLElement;
+              if (target.tagName === 'A' || target.closest('a')) return;
+              
               setSelectedRowKeys((prev) => {
                 const exists = prev.includes(record.key);
                 if (exists) return prev.filter((k) => k !== record.key);

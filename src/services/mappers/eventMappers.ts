@@ -1,13 +1,6 @@
 import type { TrackerEvent } from '../caseDetailsService';
-import {
-  DE_EXPOSURE_HISTORY,
-  DE_CONTACT_HISTORY,
-  DE_TRAVEL_HISTORY,
-  DE_CASE_STATUS,
-  DE_PUSH_EPI,
-} from '../caseDetailsConsts';
+import { DE_INVEST, DE_FOLLOWUP, DE_TREAT, DE_TEST, DE_TRACK, readDV } from '../contractMapping';
 
-// 通用工具
 function dvMap(event: TrackerEvent): Map<string, string> {
   return new Map((event.dataValues || []).map((dv) => [dv.dataElement, String(dv.value)]));
 }
@@ -22,21 +15,21 @@ export interface InvestigationNarrative {
   event?: string;
 }
 
-export function mapInvestigationToEpiNarrative(event?: TrackerEvent | null): InvestigationNarrative | null {
+export function mapInvestigationToEpiNarrative(event?: TrackerEvent | null) {
   if (!event) return null;
   const m = dvMap(event);
+  const push = readDV(m, DE_INVEST.PUSH_EPI);
   return {
-    caseStatus: m.get(DE_CASE_STATUS),
-    exposureHistory: m.get(DE_EXPOSURE_HISTORY),
-    contactHistory: m.get(DE_CONTACT_HISTORY),
-    travelHistory: m.get(DE_TRAVEL_HISTORY),
-    pushEpi: (m.get(DE_PUSH_EPI) || '').toLowerCase() === 'true',
+    caseStatus: readDV(m, DE_INVEST.CASE_STATUS),
+    exposureHistory: readDV(m, DE_INVEST.EXPO_HIST),
+    contactHistory: readDV(m, DE_INVEST.CONT_HIST),
+    travelHistory: readDV(m, DE_INVEST.TRAVEL_HIST),
+    pushEpi: (push || '').toLowerCase() === 'true',
     occurredAt: event.occurredAt,
     event: event.event,
   };
 }
 
-// 随访记录映射
 export interface FollowUpItem {
   event: string;
   occurredAt: string;
@@ -51,32 +44,25 @@ export interface FollowUpItem {
   status: TrackerEvent['status'];
 }
 
-export function mapFollowUps(events: TrackerEvent[], codeMap?: Record<string, string>): FollowUpItem[] {
+export function mapFollowUps(events: TrackerEvent[]): FollowUpItem[] {
   return events.map((e) => {
     const m = dvMap(e);
-    const item: FollowUpItem = {
+    return {
       event: e.event,
       occurredAt: e.occurredAt,
-      method: m.get('DeFlwUpMthd'),
-      doctor: m.get('DeDoctor001') || m.get('DeFlwDoctor'),
-      healthStatus: m.get('DeHlthStat1'),
-      temperature: m.get('DeTemp00001'),
-      symptoms: m.get('DeSymptoms1'),
-      treatmentCompliance: m.get('DeTrtCompl1'),
-      nextFollowUpDate: m.get('DeNxtFlwDt1'),
-      notes: m.get('DeNotes0001'),
+      method: readDV(m, DE_FOLLOWUP.METHOD),
+      doctor: readDV(m, DE_TREAT.DOCTOR),
+      healthStatus: readDV(m, DE_FOLLOWUP.HEALTH_STATUS),
+      temperature: readDV(m, DE_FOLLOWUP.TEMP),
+      symptoms: readDV(m, DE_FOLLOWUP.SYMPTOMS),
+      treatmentCompliance: readDV(m, DE_FOLLOWUP.TREAT_COMPLIANCE),
+      nextFollowUpDate: readDV(m, DE_FOLLOWUP.NEXT_DATE),
+      notes: readDV(m, DE_FOLLOWUP.REMARKS),
       status: e.status,
     };
-    if (codeMap) {
-      if (item.healthStatus && codeMap[item.healthStatus]) item.healthStatus = codeMap[item.healthStatus];
-      if (item.method && codeMap[item.method]) item.method = codeMap[item.method];
-      if (item.treatmentCompliance && codeMap[item.treatmentCompliance]) item.treatmentCompliance = codeMap[item.treatmentCompliance];
-    }
-    return item;
   });
 }
 
-// 治疗记录映射
 export interface TreatmentItem {
   event: string;
   occurredAt: string;
@@ -91,31 +77,25 @@ export interface TreatmentItem {
   status: TrackerEvent['status'];
 }
 
-export function mapTreatments(events: TrackerEvent[], codeMap?: Record<string, string>): TreatmentItem[] {
+export function mapTreatments(events: TrackerEvent[]): TreatmentItem[] {
   return events.map((e) => {
     const m = dvMap(e);
-    const item: TreatmentItem = {
+    return {
       event: e.event,
       occurredAt: e.occurredAt,
-      type: m.get('DeTrtType001'),
-      hospital: m.get('DeHospital1'),
-      department: m.get('DeDept00001'),
-      doctor: m.get('DeDoctor001'),
-      diagnosis: m.get('DeDiag00001'),
-      plan: m.get('DePlan00001'),
-      outcome: m.get('DeOutcome01'),
-      dischargeDate: m.get('DeDischrgDt'),
+      type: readDV(m, DE_TREAT.TYPE),
+      hospital: readDV(m, DE_TREAT.HOSPITAL),
+      department: readDV(m, DE_TREAT.DEPT),
+      doctor: readDV(m, DE_TREAT.DOCTOR),
+      diagnosis: readDV(m, DE_TREAT.DIAGNOSIS),
+      plan: readDV(m, DE_TREAT.PLAN),
+      outcome: readDV(m, DE_TREAT.OUTCOME),
+      dischargeDate: readDV(m, DE_TREAT.DISCHARGE_DT),
       status: e.status,
     };
-    if (codeMap) {
-      if (item.type && codeMap[item.type]) item.type = codeMap[item.type];
-      if (item.outcome && codeMap[item.outcome]) item.outcome = codeMap[item.outcome];
-    }
-    return item;
   });
 }
 
-// 检测记录映射
 export interface TestItem {
   event: string;
   occurredAt: string;
@@ -131,35 +111,27 @@ export interface TestItem {
   status: TrackerEvent['status'];
 }
 
-export function mapTests(events: TrackerEvent[], codeMap?: Record<string, string>): TestItem[] {
+export function mapTests(events: TrackerEvent[]): TestItem[] {
   return events.map((e) => {
     const m = dvMap(e);
-    const item: TestItem = {
+    const pushed = readDV(m, DE_TEST.PUSH_LAB);
+    return {
       event: e.event,
       occurredAt: e.occurredAt,
-      testNo: m.get('DeTestNo001'),
-      sampleCollectionDate: m.get('DeSmplColDt'),
-      sampleType: m.get('DeSmplType1'),
-      testType: m.get('DeTestType1'),
-      result: m.get('DeTestRslt1'),
-      pathogen: m.get('DePathog001'),
-      lab: m.get('DeLabName01'),
-      testStatus: m.get('DeTestStat1'),
-      isPushedToLab: (m.get('DePushToLab') || '').toLowerCase() === 'true',
+      testNo: readDV(m, DE_TEST.TEST_NO),
+      sampleCollectionDate: readDV(m, DE_TEST.SAMPLE_DATE),
+      sampleType: readDV(m, DE_TEST.SAMPLE_TYPE),
+      testType: readDV(m, DE_TEST.TEST_TYPE),
+      result: readDV(m, DE_TEST.RESULT),
+      pathogen: readDV(m, DE_TEST.PATHOGEN),
+      lab: readDV(m, DE_TEST.ORG_NAME),
+      testStatus: readDV(m, DE_TEST.STATUS),
+      isPushedToLab: (pushed || '').toLowerCase() === 'true',
       status: e.status,
     };
-    if (codeMap) {
-      ['sampleType', 'testType', 'result', 'testStatus'].forEach((k) => {
-        const key = k as keyof TestItem;
-        const val = item[key] as string | undefined;
-        if (val && codeMap[val]) (item as any)[key] = codeMap[val];
-      });
-    }
-    return item;
   });
 }
 
-// 追踪记录映射
 export interface TrackingItem {
   event: string;
   occurredAt: string;
@@ -171,28 +143,28 @@ export interface TrackingItem {
   riskAssessment?: string;
   longitude?: number;
   latitude?: number;
+  regionId?: string;
   status: TrackerEvent['status'];
 }
 
-export function mapTrackings(events: TrackerEvent[], codeMap?: Record<string, string>): TrackingItem[] {
+export function mapTrackings(events: TrackerEvent[]): TrackingItem[] {
   return events.map((e) => {
     const m = dvMap(e);
-    const item: TrackingItem = {
+    const lng = m.get('DeLng');
+    const lat = m.get('DeLat');
+    return {
       event: e.event,
       occurredAt: e.occurredAt,
-      type: m.get('DeTrackType'),
-      location: m.get('DeLocation1'),
-      description: m.get('DeExpoDetails'),
-      startDate: m.get('DeStartDate'),
-      endDate: m.get('DeEndDate'),
-      riskAssessment: m.get('DeRiskAssess'),
-      longitude: m.get('DeLng') ? Number(m.get('DeLng')) : undefined,
-      latitude: m.get('DeLat') ? Number(m.get('DeLat')) : undefined,
+      type: readDV(m, DE_TRACK.TYPE),
+      location: readDV(m, DE_TRACK.LOC_DESC),
+      description: readDV(m, DE_TRACK.EXPOSURE_DETAIL),
+      startDate: readDV(m, DE_TRACK.START),
+      endDate: readDV(m, DE_TRACK.END),
+      riskAssessment: readDV(m, DE_TRACK.RISK_ASSESS),
+      longitude: lng ? Number(lng) : undefined,
+      latitude: lat ? Number(lat) : undefined,
+      regionId: readDV(m, DE_TRACK.REGION),
       status: e.status,
     };
-    if (codeMap && item.riskAssessment && codeMap[item.riskAssessment]) {
-      item.riskAssessment = codeMap[item.riskAssessment];
-    }
-    return item;
   });
 }
