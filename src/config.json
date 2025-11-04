@@ -6,6 +6,6 @@
     "useUrlIs": false
   },
   "tracker": {
-    "debug": true
+    "debug": false
   }
 }
