@@ -108,121 +108,176 @@ stop
 
 | 编号   | 用户故事                 | 关联用例   | 优先级 | 复杂度 |
 | ------ | ------------------------ | ---------- | ------ | ------ |
-| US-4.1 | 管理不明原因病例         | UC09       | 高     | 高     |
-| US-4.2 | 录入不明原因病例检测信息 | UC11       | 高     | 中     |
-| US-4.3 | 推送确诊病例至个案管理   | UC10       | 高     | 高     |
+| US-3.1 | 新增个案调查表           | UC04       | 高     | 高     |
+| US-3.2 | 编辑和更新个案信息       | UC04       | 高     | 中     |
+| US-3.3 | 查看个案完整档案         | UC04       | 中     | 中     |
 ---
 
-### 不明原因疾病管理模块（新发疾病）
-
-#### US-4.1 管理不明原因病例
+#### US-3.2 编辑和更新个案信息
 
 **用户故事：**
-作为一名疾控业务人员，我希望能够管理未知病原体的不明原因病例，以便及时发现和应对新发传染病。
+作为一名疾控业务人员，我希望能够编辑已有的个案信息，以便补充完善病例资料或更正错误信息。
+
+**角色：** 疾控业务人员
+
+**前置条件：**
+
+- 个案记录已存在
+- 用户具有编辑权限
+- 个案状态不是"已关闭"或允许关闭后编辑
+
+**触发条件：**
+
+- 获得新的病例信息
+- 发现录入错误
+- 诊断结果更新
+
+**预期结果：**
+
+- 成功更新个案信息
+- 保留修改历史（通过updatedAt字段）
+- 操作记录在审计日志中
+
+**验收标准：**
+
+1. 支持修改除caseId和caseNo外的所有字段
+2. 身份证号修改时重新检测重复
+3. 更新时间戳自动更新
+4. 修改后可重新推送至流调系统
+5. 关键字段修改需记录详细日志
+
+---
+
+#### US-3.3 查看个案完整档案
+
+**用户故事：**
+作为一名疾控业务人员，我希望能够查看个案的完整档案，包括所有相关的随访、治疗、检测和追踪记录，以便全面了解病例管理情况。
 
 **角色：** 疾控业务人员
 
 **前置条件：**
 
 - 用户已登录
-- 发现疑似新发传染病病例
+- 个案记录存在
+- 用户具有查看权限
 
 **触发条件：**
 
-- 患者症状不符合已知疾病
-- 常规检测无法确诊
-- 出现异常临床表现
+- 需要了解病例详情
+- 准备随访或治疗
+- 编写病例报告
 
 **预期结果：**
 
-- 创建不明原因病例记录
-- 记录临床症状和疑似病原体
-- 可上报应急响应系统和流调系统
+- 展示个案基本信息
+- 展示关联的所有子记录（随访/治疗/检测/追踪）
+- 按时间线排序展示病例进展
 
 **验收标准：**
 
-1. 自动生成不明原因病例编号（unknownCaseNo）
-2. 必填字段：患者基本信息、症状起始日期、临床症状
-3. 病例状态：待检测/检测中/已确诊/排除
-4. 记录疑似病原体信息
-5. 支持上报应急指挥系统
-6. 支持推送流调系统
-7. 确诊后可转入个案管理（UC10）
-
----
-
-#### US-4.2 录入不明原因病例检测信息
-
-**用户故事：**
-作为一名疾控业务人员，我希望能够录入不明原因病例的实验室检测信息，以便确认病原体和疾病类型。
-
-**角色：** 疾控业务人员
-
-**前置条件：**
-
-- 不明原因病例记录已存在
-- 样本已送检
-
-**触发条件：**
-
-- 收到实验室检测结果
-- 需要补充检测信息
-
-**预期结果：**
-
-- 记录检测信息
-- 更新病例状态
-- 确诊后触发病例推送流程
-
-**验收标准：**
-
-1. 当前版本支持手工录入
-2. 预留实验室系统接口
-3. 检测结果为"阳性"且确认病原体时，更新状态为"已确诊"
-4. 检测结果为"阴性"时，可更新状态为"排除"
-5. 记录确诊疾病名称
-6. 自动触发数据校验（检查重复病例）
-
----
-
-#### US-4.3 推送确诊病例至个案管理
-
-**用户故事：**
-作为一名疾控业务人员，当不明原因病例确诊后，我希望能够将其推送至个案管理模块，以便进行标准化的病例管理。
-
-**角色：** 疾控业务人员
-
-**前置条件：**
-
-- 不明原因病例状态为"已确诊"
-- 已确认病原体和疾病类型
-- 数据校验通过（无重复病例）
-
-**触发条件：**
-
-- 用户点击"病例推送"按钮
-
-**预期结果：**
-
-- 自动生成个案记录
-- 数据从UnknownCase映射到Case
-- 同步推送至应急系统和流调系统
-- 更新不明原因病例状态为"已推送"
-
-**验收标准：**
-
-1. 数据映射完整（患者信息、检测结果）
-2. 个案来源标识为"不明原因转入"
-3. 生成新的caseNo
-4. 复制检测记录到Case关联表
-5. 推送至应急指挥系统成功
-6. 推送至流调系统成功
-7. 记录推送日志
-8. 事务完整性（失败时回滚）
+1. 展示个案调查表完整内容
+2. 展示随访记录列表（按日期倒序）
+3. 展示治疗记录列表（含住院/门诊信息）
+4. 展示检测记录列表（含检测结果）
+5. 展示追踪记录列表（含地理位置）
+6. 支持导出完整病例档案
+7. 响应时间<2秒
 
 ---
 
 三：低保真原型
+### WF-4.2 个案列表页
+
+#### 线框图
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ [Logo] 新发传染病监测管理系统                                           │
+│ ─────────────────────────────────────────────────────────────────────  │
+│ 首页 | 个案管理 | 不明原因疾病 | 预警管理 | 统计分析 | 基础数据         │
+│                                              [搜索框]  [🔔3]  [用户▼]   │
+└────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────┬──────────────────────────────────────────────────────────┐
+│             │ 首页 > 个案管理 > 个案列表                                 │
+│  个案管理    │                                                           │
+│  ├ 个案列表  │ ┌─────────────────────────────────────────────────────┐ │
+│  │ ├ 全部    │ │         筛选条件 (P0)                                 │ │
+│  │ ├ 我的    │ ├─────────────────────────────────────────────────────┤ │
+│  │ ├ 待核实  │ │ 个案编号: [_________]  患者姓名: [_________]         │ │
+│  │ ├ 处理中  │ │                                                       │ │
+│  │ └ 已关闭  │ │ 疾病类型: [全部 ▼]     报告日期: [开始] ~ [结束]     │ │
+│  ├ 新增个案  │ │                                                       │ │
+│  ├ 批量导入  │ │ 个案状态: [全部 ▼]     报告单位: [全部 ▼]           │ │
+│  └ 个案统计  │ │                                                       │ │
+│             │ │ [查询] [重置] [高级筛选▼]                             │ │
+│  不明原因    │ └─────────────────────────────────────────────────────┘ │
+│  预警管理    │                                                           │
+│  统计分析    │ ┌─────────────────────────────────────────────────────┐ │
+│  基础数据    │ │ [➕ 新增个案] [📥 批量导入] [📤 导出Excel]  共156条   │ │
+│  系统管理    │ └─────────────────────────────────────────────────────┘ │
+│             │                                                           │
+│             │ ┌─────────────────────────────────────────────────────┐ │
+│             │ │          个案列表 (P0)                                 │ │
+│             │ ├──┬────────┬──────┬────────┬────────┬────────┬───────┤ │
+│             │ │☐│个案编号 │患者  │疾病类型│报告日期│个案状态│ 操作  │ │
+│             │ ├──┼────────┼──────┼────────┼────────┼────────┼───────┤ │
+│             │ │☐│CAS-2024│张三  │新冠肺炎│01-15   │🟡待核实│[查看] │ │
+│             │ │ │-156    │      │        │        │        │[编辑] │ │
+│             │ │ │        │      │        │        │        │[推送] │ │
+│             │ ├──┼────────┼──────┼────────┼────────┼────────┼───────┤ │
+│             │ │☐│CAS-2024│李四  │霍乱    │01-15   │🟡待核实│[查看] │ │
+│             │ │ │-155    │      │        │        │        │[编辑] │ │
+│             │ ├──┼────────┼──────┼────────┼────────┼────────┼───────┤ │
+│             │ │☐│CAS-2024│王五  │鼠疫    │01-14   │🔵处理中│[查看] │ │
+│             │ │ │-154    │      │        │        │        │[编辑] │ │
+│             │ ├──┼────────┼──────┼────────┼────────┼────────┼───────┤ │
+│             │ │☐│CAS-2024│赵六  │新冠肺炎│01-14   │🔵处理中│[查看] │ │
+│             │ │ │-153    │      │        │        │        │[编辑] │ │
+│             │ ├──┼────────┼──────┼────────┼────────┼────────┼───────┤ │
+│             │ │☐│CAS-2024│孙七  │霍乱    │01-13   │🟢已关闭│[查看] │ │
+│             │ │ │-152    │      │        │        │        │       │ │
+│             │ └──┴────────┴──────┴────────┴────────┴────────┴───────┘ │
+│             │                                                           │
+│             │ ┌─────────────────────────────────────────────────────┐ │
+│             │ │ [☐ 全选] [批量推送] [批量导出]                         │ │
+│             │ │                                                       │ │
+│             │ │         < 1 2 3 4 5 ... 16 >  [跳转到 __ 页]         │ │
+│             │ └─────────────────────────────────────────────────────┘ │
+└─────────────┴──────────────────────────────────────────────────────────┘
+```
+
+#### 页面说明
+
+**布局结构：**
+
+- 顶部：筛选条件区（可折叠）
+- 中部：操作按钮区
+- 主区：数据表格
+- 底部：批量操作 + 分页
+
+**筛选条件：**
+
+- 常用条件默认展示
+- 高级筛选折叠隐藏
+- 支持快速清空重置
+
+**列表表格：**
+
+- 复选框支持批量选择
+- 状态用颜色标识
+- 操作列固定右侧
+- 支持列排序
+
+**交互说明：**
+
+- 点击行可选中（高亮）
+- 双击行进入详情页
+- 悬停显示完整信息（Tooltip）
+- 状态颜色：🟡待核实 🔵处理中 🟢已关闭
+
+---
+
 ### WF-4.3 个案详情页
 
 #### 线框图
@@ -365,266 +420,335 @@ stop
 
 ---
 
+---
+
 四：API字段
-# API Contract 3 – Case Details (WF-4.3)
+API Contract 2 – Case List Page (WF-4.2)
+1. Page Description
+The Case List page displays a paginated, filterable table of confirmed disease cases (Program 1: "已知疾病个案管理"). Users can search and filter by case number, patient name, disease type, report date, case status, and reporting organization. The page supports sorting, batch operations, and navigation to case details. It retrieves data from DHIS2's Tracker Program 1 and presents tracked entities with their enrollment and case investigation stage data.
 
-## 1. Page Description
-Displays a single confirmed disease case (Program: PrgCaseMgt1) with enrollment context and stage data. Tabs load: Basic Information (Program attributes + Stage 1: Investigation data elements), Epidemiology narrative (Stage 1 long text fields), Follow-up records (Stage 2 repeatable events), Treatment records (Stage 3 repeatable events), Test records (Stage 4 repeatable events), Tracking records (Stage 5 repeatable events), and Operation Logs (change logs). Page supports: edit case attributes, add/update repeatable stage events, push to epidemiology system flags, and close case (status changes via program rules/data element updates).
+2. Required DHIS2 APIs
+#	Endpoint	Method	Description	Key Parameters	Expected Response / Data Type
+1	/api/programs	GET	Load Program 1 metadata for validation	filter=id:eq:PrgCaseMgt1&fields=id,name,programType,trackedEntityType,programTrackedEntityAttributes[id,mandatory,trackedEntityAttribute[id,name,valueType,optionSet[id,name]]]	Program metadata with attributes
+2	/api/optionSets/OsDiseasCd1	GET	Load disease code options for filter dropdown	fields=id,name,options[id,code,name]	OptionSet with disease options
+3	/api/optionSets/OsCaseStat1	GET	Load case status options for filter dropdown	fields=id,name,options[id,code,name]	OptionSet with status options
+4	/api/organisationUnits	GET	Load org units for filter (user's capture scope)	filter=path:like:${userOrgUnit}&fields=id,name,code,level	List of accessible org units
+5	/api/tracker/trackedEntities	GET	Query tracked entities matching filters	program=PrgCaseMgt1&orgUnits=${orgUnitId}&orgUnitMode=DESCENDANTS&programStatus=ACTIVE&fields=trackedEntity,trackedEntityType,createdAt,updatedAt,orgUnit,attributes[attribute,value,valueType],enrollments[enrollment,enrolledAt,status,attributes[attribute,value]]&page=${page}&pageSize=${pageSize}&order=createdAt:desc&filter=${attributeFilters}&enrollmentEnrolledAfter=${startDate}&enrollmentEnrolledBefore=${endDate}	Paginated tracked entities with enrollments and attributes
+6	/api/tracker/trackedEntities/{uid}	DELETE	Soft-delete a case (if user has F_TEI_CASCADE_DELETE authority)	N/A	Success/Error status
+7	/api/tracker	POST	Batch push selected cases to epidemiological system (update pushedToEpi flag)	importStrategy=UPDATE&atomicMode=OBJECT with payload containing events with updated DePushEpi01 data element	Import summary with stats
+3. Notes
+Dependencies
+API 1-4 must complete before API 5 to populate filter dropdowns and validate query parameters
+API 5 uses filter parameter for attribute-based searches (e.g., filter=AtrCaseNo01:like:CASE-2024, filter=AtrFullNm01:like:张)
+API 7 requires API 5 results to identify case UIDs for batch operations
+Pagination & Filtering
+Use page=1&pageSize=50 by default
+totalPages=true to get total count for pagination UI
+order parameter supports: createdAt, updatedAt, enrolledAt with :asc/:desc suffix
+Filter syntax: filter=AtrDiseaCd1:eq:${diseaseCode} for disease type dropdown
+DHIS2-Specific Parameters
+orgUnitMode=DESCENDANTS: Include all sub-org units in query scope
+programStatus=ACTIVE: Filter by enrollment status (maps to status in enrollment object)
+fields parameter uses field filter syntax to minimize response size
+Metadata Dependencies
+Requires Program 1 (PrgCaseMgt1) to be configured with Stage 1 (PsInvestig1)
+Requires TrackedEntityType Person (TetPerson01)
+Requires attributes: AtrCaseNo01 (case number), AtrFullNm01 (name), AtrDiseaCd1 (disease code), AtrRptDt001 (report date), AtrRptOrg01 (report org)
+Case status (DeCaseStat1) is a data element in Stage 1, not an enrollment attribute
+Security & Access Control
+All queries respect user's capture/search scope org units
+Sharing settings on Program 1 and TrackedEntityType determine visibility
+F_TRACKED_ENTITY_INSTANCE_SEARCH authority required for API 5
+F_TEI_CASCADE_DELETE authority required for API 6
+Performance Considerations
+Use fields parameter to request only necessary data (avoid fields=*)
+Consider caching API 1-4 results (metadata rarely changes)
+Implement debouncing for search input to avoid excessive API 5 calls
+4. Example Request & Response
+API-05: Query Tracked Entities with Filters
+Request:
 
-## 2. Required DHIS2 APIs
+GET /api/tracker/trackedEntities?program=PrgCaseMgt1&orgUnits=DiszpKrYNg8&orgUnitMode=DESCENDANTS&fields=trackedEntity,createdAt,updatedAt,orgUnit,attributes[attribute,value,displayName,valueType],enrollments[enrollment,enrolledAt,status,attributes[attribute,value]]&page=1&pageSize=50&order=createdAt:desc&filter=AtrDiseaCd1:eq:OptDiseaB30&enrollmentEnrolledAfter=2024-01-01&enrollmentEnrolledBefore=2024-12-31&totalPages=true
+Response:
 
-| #    | Endpoint                                         | Method | Description                                                  | Key Parameters                                               | Expected Response / Data Type               |
-| ---- | ------------------------------------------------ | ------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------- |
-| 1    | /api/programs/PrgCaseMgt1                        | GET    | Load program metadata, stages, and attributes to render tabs and forms | fields=id,name,trackedEntityType[id],programTrackedEntityAttributes[mandatory,trackedEntityAttribute[id,name,valueType,optionSet[id,name,options[id,code,name]]]],programStages[id,name,repeatable,programStageDataElements[dataElement[id,name,valueType,optionSet[id,name,options[id,code,name]]]]] | Program                                     |
-| 2    | /api/optionSets/{id}                             | GET    | Resolve option sets for dropdowns (if not included by API-01 or for caching) | fields=id,name,options[id,code,name]                         | OptionSet                                   |
-| 3    | /api/tracker/trackedEntities/{teiUid}            | GET    | Load TEI with enrollments and events for this program        | program=PrgCaseMgt1&fields=trackedEntity,trackedEntityType,orgUnit,attributes[attribute,value,displayName,valueType],enrollments[enrollment,program,status,orgUnit,enrolledAt,occurredAt,attributes[attribute,value],events[event,programStage,occurredAt,status,orgUnit,dataValues[dataElement,value]]] | TrackedEntity with nested Enrollment+Events |
-| 4    | /api/tracker/enrollments/{enrollmentUid}         | GET    | Load single enrollment details when deep-linking or refreshing one tab | fields=*,!relationships,!events,!attributes                  | Enrollment                                  |
-| 5    | /api/tracker/events                              | GET    | Load paginated repeatable events per stage tab (follow-up/treatment/test/tracking) | program=PrgCaseMgt1&enrollment={enrollmentUid}&programStage={stageUid}&order=occurredAt:desc&page={page}&pageSize={pageSize} | { pager, events[] }                         |
-| 6    | /api/tracker/events/{eventUid}                   | GET    | Load a single event for edit form                            | fields=event,program,programStage,enrollment,orgUnit,occurredAt,status,dataValues[dataElement,value] | Event                                       |
-| 7    | /api/tracker                                     | POST   | Create a new repeatable event (Stage 2/3/4/5)                | importStrategy=CREATE&atomicMode=OBJECT with payload events[] | Import summary                              |
-| 8    | /api/tracker                                     | POST   | Update an event’s data values or status                      | importStrategy=UPDATE&atomicMode=OBJECT with payload events[] (include non-collection fields) | Import summary                              |
-| 9    | /api/tracker                                     | POST   | Update TEI attributes in context of case (program attributes on TEI/enrollment as designed) | importStrategy=UPDATE&atomicMode=OBJECT with payload trackedEntities[] or enrollments[] attributes[] | Import summary                              |
-| 10   | /api/tracker                                     | POST   | Mark push-to-epidemiology flags on Investigation stage event | importStrategy=UPDATE&atomicMode=OBJECT with payload events[] dataValues[dataElement=DePushEpi01,DePushEpiDt] | Import summary                              |
-| 11   | /api/tracker                                     | POST   | Close case by setting Case Status in Stage 1 event (program rules may react) | importStrategy=UPDATE&atomicMode=OBJECT with payload events[] dataValues[dataElement=DeCaseStat1,value='CLOSED'] | Import summary                              |
-| 12   | /api/tracker/events/{eventUid}/changeLogs        | GET    | Load audit trail for event fields/data values (Operations Log tab) | order=createdAt:desc                                         | { pager, changeLogs[] }                     |
-| 13   | /api/tracker/trackedEntities/{teiUid}/changeLogs | GET    | Load audit trail for TEI attribute changes (Operations Log tab) | program=PrgCaseMgt1&order=createdAt:desc                     | { pager, changeLogs[] }                     |
-| 14   | /api/tracker/events                              | GET    | Filtered fetch for specific status or date range per tab     | program=PrgCaseMgt1&enrollment={enrollmentUid}&programStage={stageUid}&occurredAfter={from}&occurredBefore={to}&status={status} | { pager, events[] }                         |
-| 15   | /api/tracker/events/{eventUid}                   | GET    | Fetch latest single Investigation stage event to display epidemiology texts (exposure/contact/travel) | fields=event,occurredAt,dataValues[dataElement,value]        | Event                                       |
-
-## 3. Notes
-- Inter-API dependencies:
-  - API-01 should be loaded once and cached; it defines stage UIDs: PsInvestig1 (Investigation), PsFollowUp1, PsTreatmnt1, PsTest00001, PsTracking1; and data elements including DeCaseStat1, DeExposHst1, DeContHst01, DeTravHst01, DePushEpi01, DePushEpiDt etc.
-  - API-03 is the primary load for the page header and Basic/Epidemiology tabs; it returns TEI attributes (e.g., AtrCaseNo01, AtrFullNm01, AtrDiseaCd1, AtrRptDt001) and the enrollment with nested events for the program.
-  - Tabs with many events (follow-up, treatment, test, tracking) should use API-05 with pagination rather than relying solely on nested events in API-03.
-- Filtering/pagination:
-  - For list tabs use page/pageSize and order=occurredAt:desc; set totalPages=true when rendering pagers.
-  - For date filters per tab, use occurredAfter/occurredBefore; for status filters use status parameter.
-- Update semantics (Tracker v2.41):
-  - For updates via /api/tracker (API-08/09/10/11), include object non-collection fields (e.g., event, enrollment, orgUnit, programStage, occurredAt, status) even when only changing dataValues, per tracker importer requirements.
-  - To update TEI attributes owned by TEI, use trackedEntities[]; to update program attributes owned by enrollment, use enrollments[] attributes[] with enrollment UID.
-- Security and scopes:
-  - Reading/updating requires access to Program PrgCaseMgt1 (accessLevel=PROTECTED) and ownership within user capture scope; otherwise use break-the-glass flow outside this page (not covered).
-- Option sets:
-  - Disease code options (OsDiseasCd1), Case Status (OsCaseStat1), and others are available through API-01; only call API-02 if lazy-loading or cache-miss.
-- Status changes:
-  - Case closure is effected by writing DeCaseStat1='CLOSED' on the Investigation stage event (API-11). Program rules may also update via other stages.
-
-## 4. Example Request & Response
-
-API-03: 获取个案详情（TEI+Enrollment+Events）
-
-[请求地址]
-GET /api/tracker/trackedEntities/PQfMcpmXeFE?program=PrgCaseMgt1&fields=trackedEntity,trackedEntityType,orgUnit,attributes[attribute,value,displayName,valueType],enrollments[enrollment,program,status,orgUnit,enrolledAt,occurredAt,attributes[attribute,value],events[event,programStage,occurredAt,status,orgUnit,dataValues[dataElement,value]]]
-
-[返回消息体]
 {
-  "trackedEntity": "PQfMcpmXeFE",
-  "trackedEntityType": "TetPerson01",
-  "orgUnit": "OuChengdu01",
-  "attributes": [
-    { "attribute": "AtrCaseNo01", "displayName": "个案编号", "value": "CASE-20240115-0156" },
-    { "attribute": "AtrFullNm01", "displayName": "姓名", "value": "张三" },
-    { "attribute": "AtrDiseaCd1", "displayName": "疾病编码", "value": "OptDiseaB30" },
-    { "attribute": "AtrRptDt001", "displayName": "报告日期", "value": "2024-01-15" }
-  ],
-  "enrollments": [
+  "pager": {
+    "page": 1,
+    "pageSize": 50,
+    "total": 156,
+    "pageCount": 4
+  },
+  "trackedEntities": [
     {
-      "enrollment": "MNWZ6hnuhSw",
-      "program": "PrgCaseMgt1",
-      "status": "ACTIVE",
-      "orgUnit": "OuChengdu01",
-      "enrolledAt": "2024-01-15T00:00:00.000",
-      "events": [
+      "trackedEntity": "Kj6vYde4LHh",
+      "trackedEntityType": "TetPerson01",
+      "createdAt": "2024-01-15T14:30:00.000",
+      "updatedAt": "2024-01-16T09:20:00.000",
+      "orgUnit": "DiszpKrYNg8",
+      "attributes": [
         {
-          "event": "evtInvestig01",
-          "programStage": "PsInvestig1",
-          "occurredAt": "2024-01-15T14:30:00.000",
+          "attribute": "AtrCaseNo01",
+          "value": "CASE-20240115-0156",
+          "displayName": "个案编号",
+          "valueType": "TEXT"
+        },
+        {
+          "attribute": "AtrFullNm01",
+          "value": "张三",
+          "displayName": "姓名",
+          "valueType": "TEXT"
+        },
+        {
+          "attribute": "AtrDiseaCd1",
+          "value": "OptDiseaB30",
+          "displayName": "疾病编码",
+          "valueType": "TEXT"
+        },
+        {
+          "attribute": "AtrRptDt001",
+          "value": "2024-01-15",
+          "displayName": "报告日期",
+          "valueType": "DATE"
+        }
+      ],
+      "enrollments": [
+        {
+          "enrollment": "MNWZ6hnuhSw",
+          "enrolledAt": "2024-01-15T00:00:00.000",
           "status": "ACTIVE",
-          "orgUnit": "OuChengdu01",
-          "dataValues": [
-            { "dataElement": "DeCaseStat1", "value": "VERIFIED" },
-            { "dataElement": "DeExposHst1", "value": "近14天内有疫区旅居史..." },
-            { "dataElement": "DeContHst01", "value": "与确诊病例有密切接触..." },
-            { "dataElement": "DeTravHst01", "value": "1月1日至1月7日前往XX市..." },
-            { "dataElement": "DePushEpi01", "value": "false" }
+          "attributes": [
+            {
+              "attribute": "AtrCaseSrc1",
+              "value": "OptActivSv1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "trackedEntity": "Gjaiu3ea38E",
+      "trackedEntityType": "TetPerson01",
+      "createdAt": "2024-01-15T10:45:00.000",
+      "updatedAt": "2024-01-15T10:45:00.000",
+      "orgUnit": "DiszpKrYNg8",
+      "attributes": [
+        {
+          "attribute": "AtrCaseNo01",
+          "value": "CASE-20240115-0155",
+          "displayName": "个案编号",
+          "valueType": "TEXT"
+        },
+        {
+          "attribute": "AtrFullNm01",
+          "value": "李四",
+          "displayName": "姓名",
+          "valueType": "TEXT"
+        },
+        {
+          "attribute": "AtrDiseaCd1",
+          "value": "OptDiseaB30",
+          "displayName": "疾病编码",
+          "valueType": "TEXT"
+        },
+        {
+          "attribute": "AtrRptDt001",
+          "value": "2024-01-15",
+          "displayName": "报告日期",
+          "valueType": "DATE"
+        }
+      ],
+      "enrollments": [
+        {
+          "enrollment": "JMgRZyeLWO1",
+          "enrolledAt": "2024-01-15T00:00:00.000",
+          "status": "ACTIVE",
+          "attributes": [
+            {
+              "attribute": "AtrCaseSrc1",
+              "value": "OptPassRpt1"
+            }
           ]
         }
       ]
     }
   ]
 }
+API-07: Batch Push to Epidemiological System
+Request:
 
-API-05: 分页获取随访记录（Stage 2）
-
-[请求地址]
-GET /api/tracker/events?program=PrgCaseMgt1&enrollment=MNWZ6hnuhSw&programStage=PsFollowUp1&order=occurredAt:desc&page=1&pageSize=10&totalPages=true
-
-[返回消息体]
-{
-  "pager": { "page": 1, "pageSize": 10, "total": 23, "pageCount": 3 },
-  "events": [
-    {
-      "event": "evFlw001",
-      "program": "PrgCaseMgt1",
-      "programStage": "PsFollowUp1",
-      "enrollment": "MNWZ6hnuhSw",
-      "orgUnit": "OuChengdu01",
-      "occurredAt": "2024-01-15T00:00:00.000",
-      "status": "ACTIVE",
-      "dataValues": [
-        { "dataElement": "DeFlwUpMthd", "value": "PHONE" },
-        { "dataElement": "DeHlthStat1", "value": "NORMAL" },
-        { "dataElement": "DeTemp00001", "value": "36.8" },
-        { "dataElement": "DeSymptoms1", "value": "咳嗽减轻，无发热" },
-        { "dataElement": "DeTrtCompl1", "value": "GOOD" },
-        { "dataElement": "DeNxtFlwDt1", "value": "2024-01-18" }
-      ]
-    }
-  ]
-}
-
-API-07: 新增检测记录（Stage 4）
-
-[请求地址]
-POST /api/tracker?importStrategy=CREATE&atomicMode=OBJECT
+POST /api/tracker?importStrategy=UPDATE&atomicMode=OBJECT
 Content-Type: application/json
 
 {
   "events": [
     {
+      "event": "evt001",
+      "programStage": "PsInvestig1",
       "program": "PrgCaseMgt1",
-      "programStage": "PsTest00001",
       "enrollment": "MNWZ6hnuhSw",
-      "orgUnit": "OuChengdu01",
+      "trackedEntity": "Kj6vYde4LHh",
+      "orgUnit": "DiszpKrYNg8",
       "status": "ACTIVE",
-      "occurredAt": "2024-01-16T09:00:00.000",
+      "occurredAt": "2024-01-15T00:00:00.000",
       "dataValues": [
-        { "dataElement": "DeTestNo001", "value": "TEST-20240116-0101" },
-        { "dataElement": "DeSmplColDt", "value": "2024-01-15" },
-        { "dataElement": "DeSmplType1", "value": "THROAT_SWAB" },
-        { "dataElement": "DeTestType1", "value": "NAT" },
-        { "dataElement": "DeTestRslt1", "value": "POSITIVE" },
-        { "dataElement": "DeTestStat1", "value": "CONFIRMED" }
+        {
+          "dataElement": "DePushEpi01",
+          "value": "true"
+        },
+        {
+          "dataElement": "DePushEpiDt",
+          "value": "2024-01-16T09:30:00.000"
+        }
+      ]
+    },
+    {
+      "event": "evt002",
+      "programStage": "PsInvestig1",
+      "program": "PrgCaseMgt1",
+      "enrollment": "JMgRZyeLWO1",
+      "trackedEntity": "Gjaiu3ea38E",
+      "orgUnit": "DiszpKrYNg8",
+      "status": "ACTIVE",
+      "occurredAt": "2024-01-15T00:00:00.000",
+      "dataValues": [
+        {
+          "dataElement": "DePushEpi01",
+          "value": "true"
+        },
+        {
+          "dataElement": "DePushEpiDt",
+          "value": "2024-01-16T09:30:00.000"
+        }
       ]
     }
   ]
 }
+Response:
 
-[返回消息体]
 {
   "status": "OK",
-  "stats": { "created": 1, "updated": 0, "deleted": 0, "ignored": 0, "total": 1 },
+  "stats": {
+    "created": 0,
+    "updated": 2,
+    "deleted": 0,
+    "ignored": 0,
+    "total": 2
+  },
   "bundleReport": {
     "typeReportMap": {
       "EVENT": {
-        "stats": { "created": 1, "updated": 0, "deleted": 0, "ignored": 0, "total": 1 },
-        "objectReports": [ { "trackerType": "EVENT", "uid": "evTest001", "errorReports": [] } ]
+        "trackerType": "EVENT",
+        "stats": {
+          "created": 0,
+          "updated": 2,
+          "deleted": 0,
+          "ignored": 0,
+          "total": 2
+        },
+        "objectReports": [
+          {
+            "trackerType": "EVENT",
+            "uid": "evt001",
+            "errorReports": []
+          },
+          {
+            "trackerType": "EVENT",
+            "uid": "evt002",
+            "errorReports": []
+          }
+        ]
       }
     }
   }
 }
 
+---
+
+API Contract 3 – Case Details (WF-4.3)
+1. Page Description
+Displays a single confirmed disease case (Program: PrgCaseMgt1) with enrollment context and stage data. Tabs load: Basic Information (Program attributes + Stage 1: Investigation data elements), Epidemiology narrative (Stage 1 long text fields), Follow-up records (Stage 2 repeatable events), Treatment records (Stage 3 repeatable events), Test records (Stage 4 repeatable events), Tracking records (Stage 5 repeatable events), and Operation Logs (change logs). Page supports: edit case attributes, add/update repeatable stage events, push to epidemiology system flags, and close case (status changes via program rules/data element updates).
+
+2. Required DHIS2 APIs
+#	Endpoint	Method	Description	Key Parameters	Expected Response / Data Type
+1	/api/programs/PrgCaseMgt1	GET	Load program metadata, stages, and attributes to render tabs and forms	fields=id,name,trackedEntityType[id],programTrackedEntityAttributes[mandatory,trackedEntityAttribute[id,name,valueType,optionSet[id,name,options[id,code,name]]]],programStages[id,name,repeatable,programStageDataElements[dataElement[id,name,valueType,optionSet[id,name,options[id,code,name]]]]]	Program
+2	/api/optionSets/{id}	GET	Resolve option sets for dropdowns (if not included by API-01 or for caching)	fields=id,name,options[id,code,name]	OptionSet
+3	/api/tracker/trackedEntities/{teiUid}	GET	Load TEI with enrollments and events for this program	program=PrgCaseMgt1&fields=trackedEntity,trackedEntityType,orgUnit,attributes[attribute,value,displayName,valueType],enrollments[enrollment,program,status,orgUnit,enrolledAt,occurredAt,attributes[attribute,value],events[event,programStage,occurredAt,status,orgUnit,dataValues[dataElement,value]]]	TrackedEntity with nested Enrollment+Events
+4	/api/tracker/enrollments/{enrollmentUid}	GET	Load single enrollment details when deep-linking or refreshing one tab	fields=*,!relationships,!events,!attributes	Enrollment
+5	/api/tracker/events	GET	Load paginated repeatable events per stage tab (follow-up/treatment/test/tracking)	program=PrgCaseMgt1&enrollment={enrollmentUid}&programStage={stageUid}&order=occurredAt:desc&page={page}&pageSize={pageSize}	{ pager, events[] }
+6	/api/tracker/events/{eventUid}	GET	Load a single event for edit form	fields=event,program,programStage,enrollment,orgUnit,occurredAt,status,dataValues[dataElement,value]	Event
+7	/api/tracker	POST	Create a new repeatable event (Stage 2/3/4/5)	importStrategy=CREATE&atomicMode=OBJECT with payload events[]	Import summary
+8	/api/tracker	POST	Update an event’s data values or status	importStrategy=UPDATE&atomicMode=OBJECT with payload events[] (include non-collection fields)	Import summary
+9	/api/tracker	POST	Update TEI attributes in context of case (program attributes on TEI/enrollment as designed)	importStrategy=UPDATE&atomicMode=OBJECT with payload trackedEntities[] or enrollments[] attributes[]	Import summary
+10	/api/tracker	POST	Mark push-to-epidemiology flags on Investigation stage event	importStrategy=UPDATE&atomicMode=OBJECT with payload events[] dataValues[dataElement=DePushEpi01,DePushEpiDt]	Import summary
+11	/api/tracker	POST	Close case by setting Case Status in Stage 1 event (program rules may react)	importStrategy=UPDATE&atomicMode=OBJECT with payload events[] dataValues[dataElement=DeCaseStat1,value='CLOSED']	Import summary
+12	/api/tracker/events/{eventUid}/changeLogs	GET	Load audit trail for event fields/data values (Operations Log tab)	order=createdAt:desc	{ pager, changeLogs[] }
+13	/api/tracker/trackedEntities/{teiUid}/changeLogs	GET	Load audit trail for TEI attribute changes (Operations Log tab)	program=PrgCaseMgt1&order=createdAt:desc	{ pager, changeLogs[] }
+14	/api/tracker/events	GET	Filtered fetch for specific status or date range per tab	program=PrgCaseMgt1&enrollment={enrollmentUid}&programStage={stageUid}&occurredAfter={from}&occurredBefore={to}&status={status}	{ pager, events[] }
+15	/api/tracker/events/{eventUid}	GET	Fetch latest single Investigation stage event to display epidemiology texts (exposure/contact/travel)	fields=event,occurredAt,dataValues[dataElement,value]	Event
+3. Notes
+Inter-API dependencies:
+API-01 should be loaded once and cached; it defines stage UIDs: PsInvestig1 (Investigation), PsFollowUp1, PsTreatmnt1, PsTest00001, PsTracking1; and data elements including DeCaseStat1, DeExposHst1, DeContHst01, DeTravHst01, DePushEpi01, DePushEpiDt etc.
+API-03 is the primary load for the page header and Basic/Epidemiology tabs; it returns TEI attributes (e.g., AtrCaseNo01, AtrFullNm01, AtrDiseaCd1, AtrRptDt001) and the enrollment with nested events for the program.
+Tabs with many events (follow-up, treatment, test, tracking) should use API-05 with pagination rather than relying solely on nested events in API-03.
+Filtering/pagination:
+For list tabs use page/pageSize and order=occurredAt:desc; set totalPages=true when rendering pagers.
+For date filters per tab, use occurredAfter/occurredBefore; for status filters use status parameter.
+Update semantics (Tracker v2.41):
+For updates via /api/tracker (API-08/09/10/11), include object non-collection fields (e.g., event, enrollment, orgUnit, programStage, occurredAt, status) even when only changing dataValues, per tracker importer requirements.
+To update TEI attributes owned by TEI, use trackedEntities[]; to update program attributes owned by enrollment, use enrollments[] attributes[] with enrollment UID.
+Security and scopes:
+Reading/updating requires access to Program PrgCaseMgt1 (accessLevel=PROTECTED) and ownership within user capture scope; otherwise use break-the-glass flow outside this page (not covered).
+Option sets:
+Disease code options (OsDiseasCd1), Case Status (OsCaseStat1), and others are available through API-01; only call API-02 if lazy-loading or cache-miss.
+Status changes:
+Case closure is effected by writing DeCaseStat1='CLOSED' on the Investigation stage event (API-11). Program rules may also update via other stages.
+4. Example Request & Response
+API-03: 获取个案详情（TEI+Enrollment+Events）
+
+[请求地址] GET /api/tracker/trackedEntities/PQfMcpmXeFE?program=PrgCaseMgt1&fields=trackedEntity,trackedEntityType,orgUnit,attributes[attribute,value,displayName,valueType],enrollments[enrollment,program,status,orgUnit,enrolledAt,occurredAt,attributes[attribute,value],events[event,programStage,occurredAt,status,orgUnit,dataValues[dataElement,value]]]
+
+[返回消息体] { "trackedEntity": "PQfMcpmXeFE", "trackedEntityType": "TetPerson01", "orgUnit": "OuChengdu01", "attributes": [ { "attribute": "AtrCaseNo01", "displayName": "个案编号", "value": "CASE-20240115-0156" }, { "attribute": "AtrFullNm01", "displayName": "姓名", "value": "张三" }, { "attribute": "AtrDiseaCd1", "displayName": "疾病编码", "value": "OptDiseaB30" }, { "attribute": "AtrRptDt001", "displayName": "报告日期", "value": "2024-01-15" } ], "enrollments": [ { "enrollment": "MNWZ6hnuhSw", "program": "PrgCaseMgt1", "status": "ACTIVE", "orgUnit": "OuChengdu01", "enrolledAt": "2024-01-15T00:00:00.000", "events": [ { "event": "evtInvestig01", "programStage": "PsInvestig1", "occurredAt": "2024-01-15T14:30:00.000", "status": "ACTIVE", "orgUnit": "OuChengdu01", "dataValues": [ { "dataElement": "DeCaseStat1", "value": "VERIFIED" }, { "dataElement": "DeExposHst1", "value": "近14天内有疫区旅居史..." }, { "dataElement": "DeContHst01", "value": "与确诊病例有密切接触..." }, { "dataElement": "DeTravHst01", "value": "1月1日至1月7日前往XX市..." }, { "dataElement": "DePushEpi01", "value": "false" } ] } ] } ] }
+
+API-05: 分页获取随访记录（Stage 2）
+
+[请求地址] GET /api/tracker/events?program=PrgCaseMgt1&enrollment=MNWZ6hnuhSw&programStage=PsFollowUp1&order=occurredAt:desc&page=1&pageSize=10&totalPages=true
+
+[返回消息体] { "pager": { "page": 1, "pageSize": 10, "total": 23, "pageCount": 3 }, "events": [ { "event": "evFlw001", "program": "PrgCaseMgt1", "programStage": "PsFollowUp1", "enrollment": "MNWZ6hnuhSw", "orgUnit": "OuChengdu01", "occurredAt": "2024-01-15T00:00:00.000", "status": "ACTIVE", "dataValues": [ { "dataElement": "DeFlwUpMthd", "value": "PHONE" }, { "dataElement": "DeHlthStat1", "value": "NORMAL" }, { "dataElement": "DeTemp00001", "value": "36.8" }, { "dataElement": "DeSymptoms1", "value": "咳嗽减轻，无发热" }, { "dataElement": "DeTrtCompl1", "value": "GOOD" }, { "dataElement": "DeNxtFlwDt1", "value": "2024-01-18" } ] } ] }
+
+API-07: 新增检测记录（Stage 4）
+
+[请求地址] POST /api/tracker?importStrategy=CREATE&atomicMode=OBJECT Content-Type: application/json
+
+{ "events": [ { "program": "PrgCaseMgt1", "programStage": "PsTest00001", "enrollment": "MNWZ6hnuhSw", "orgUnit": "OuChengdu01", "status": "ACTIVE", "occurredAt": "2024-01-16T09:00:00.000", "dataValues": [ { "dataElement": "DeTestNo001", "value": "TEST-20240116-0101" }, { "dataElement": "DeSmplColDt", "value": "2024-01-15" }, { "dataElement": "DeSmplType1", "value": "THROAT_SWAB" }, { "dataElement": "DeTestType1", "value": "NAT" }, { "dataElement": "DeTestRslt1", "value": "POSITIVE" }, { "dataElement": "DeTestStat1", "value": "CONFIRMED" } ] } ] }
+
+[返回消息体] { "status": "OK", "stats": { "created": 1, "updated": 0, "deleted": 0, "ignored": 0, "total": 1 }, "bundleReport": { "typeReportMap": { "EVENT": { "stats": { "created": 1, "updated": 0, "deleted": 0, "ignored": 0, "total": 1 }, "objectReports": [ { "trackerType": "EVENT", "uid": "evTest001", "errorReports": [] } ] } } } }
+
 API-10: 标记推送至流调系统（调查阶段事件）
 
-[请求地址]
-POST /api/tracker?importStrategy=UPDATE&atomicMode=OBJECT
-Content-Type: application/json
+[请求地址] POST /api/tracker?importStrategy=UPDATE&atomicMode=OBJECT Content-Type: application/json
 
-{
-  "events": [
-    {
-      "event": "evtInvestig01",
-      "program": "PrgCaseMgt1",
-      "programStage": "PsInvestig1",
-      "enrollment": "MNWZ6hnuhSw",
-      "orgUnit": "OuChengdu01",
-      "status": "ACTIVE",
-      "occurredAt": "2024-01-15T14:30:00.000",
-      "dataValues": [
-        { "dataElement": "DePushEpi01", "value": "true" },
-        { "dataElement": "DePushEpiDt", "value": "2024-01-16T09:30:00.000" }
-      ]
-    }
-  ]
-}
+{ "events": [ { "event": "evtInvestig01", "program": "PrgCaseMgt1", "programStage": "PsInvestig1", "enrollment": "MNWZ6hnuhSw", "orgUnit": "OuChengdu01", "status": "ACTIVE", "occurredAt": "2024-01-15T14:30:00.000", "dataValues": [ { "dataElement": "DePushEpi01", "value": "true" }, { "dataElement": "DePushEpiDt", "value": "2024-01-16T09:30:00.000" } ] } ] }
 
-[返回消息体]
-{
-  "status": "OK",
-  "stats": { "created": 0, "updated": 1, "deleted": 0, "ignored": 0, "total": 1 }
-}
+[返回消息体] { "status": "OK", "stats": { "created": 0, "updated": 1, "deleted": 0, "ignored": 0, "total": 1 } }
 
 API-11: 结案（设置个案状态为已关闭）
 
-[请求地址]
-POST /api/tracker?importStrategy=UPDATE&atomicMode=OBJECT
-Content-Type: application/json
+[请求地址] POST /api/tracker?importStrategy=UPDATE&atomicMode=OBJECT Content-Type: application/json
 
-{
-  "events": [
-    {
-      "event": "evtInvestig01",
-      "program": "PrgCaseMgt1",
-      "programStage": "PsInvestig1",
-      "enrollment": "MNWZ6hnuhSw",
-      "orgUnit": "OuChengdu01",
-      "status": "ACTIVE",
-      "occurredAt": "2024-01-15T14:30:00.000",
-      "dataValues": [
-        { "dataElement": "DeCaseStat1", "value": "CLOSED" }
-      ]
-    }
-  ]
-}
+{ "events": [ { "event": "evtInvestig01", "program": "PrgCaseMgt1", "programStage": "PsInvestig1", "enrollment": "MNWZ6hnuhSw", "orgUnit": "OuChengdu01", "status": "ACTIVE", "occurredAt": "2024-01-15T14:30:00.000", "dataValues": [ { "dataElement": "DeCaseStat1", "value": "CLOSED" } ] } ] }
 
-[返回消息体]
-{
-  "status": "OK",
-  "stats": { "created": 0, "updated": 1, "deleted": 0, "ignored": 0, "total": 1 }
-}
+[返回消息体] { "status": "OK", "stats": { "created": 0, "updated": 1, "deleted": 0, "ignored": 0, "total": 1 } }
 
 API-12: 获取事件变更日志（操作日志Tab）
 
-[请求地址]
-GET /api/tracker/events/evtInvestig01/changeLogs?order=createdAt:desc
+[请求地址] GET /api/tracker/events/evtInvestig01/changeLogs?order=createdAt:desc
 
-[返回消息体]
-{
-  "pager": { "page": 1, "pageSize": 10 },
-  "changeLogs": [
-    {
-      "createdBy": { "uid": "UserChgd001", "username": "chengdu_cdc_001" },
-      "createdAt": "2024-01-16T09:30:10.000",
-      "type": "UPDATE",
-      "change": { "dataValue": { "dataElement": "DeCaseStat1", "previousValue": "VERIFIED", "currentValue": "CLOSED" } }
-    }
-  ]
-}
+[返回消息体] { "pager": { "page": 1, "pageSize": 10 }, "changeLogs": [ { "createdBy": { "uid": "UserChgd001", "username": "chengdu_cdc_001" }, "createdAt": "2024-01-16T09:30:10.000", "type": "UPDATE", "change": { "dataValue": { "dataElement": "DeCaseStat1", "previousValue": "VERIFIED", "currentValue": "CLOSED" } } } ] }
 
 API-09: 更新个案属性（如确诊日期 AtrDiagDt01）
 
-[请求地址]
-POST /api/tracker?importStrategy=UPDATE&atomicMode=OBJECT
-Content-Type: application/json
+[请求地址] POST /api/tracker?importStrategy=UPDATE&atomicMode=OBJECT Content-Type: application/json
 
-{
-  "enrollments": [
-    {
-      "enrollment": "MNWZ6hnuhSw",
-      "program": "PrgCaseMgt1",
-      "trackedEntity": "PQfMcpmXeFE",
-      "orgUnit": "OuChengdu01",
-      "status": "ACTIVE",
-      "enrolledAt": "2024-01-15T00:00:00.000",
-      "attributes": [
-        { "attribute": "AtrDiagDt01", "value": "2024-01-14" }
-      ]
-    }
-  ]
-}
+{ "enrollments": [ { "enrollment": "MNWZ6hnuhSw", "program": "PrgCaseMgt1", "trackedEntity": "PQfMcpmXeFE", "orgUnit": "OuChengdu01", "status": "ACTIVE", "enrolledAt": "2024-01-15T00:00:00.000", "attributes": [ { "attribute": "AtrDiagDt01", "value": "2024-01-14" } ] } ] }
 
-[返回消息体]
-{
-  "status": "OK",
-  "stats": { "created": 0, "updated": 1, "deleted": 0, "ignored": 0, "total": 1 }
-}
+[返回消息体] { "status": "OK", "stats": { "created": 0, "updated": 1, "deleted": 0, "ignored": 0, "total": 1 } }
