@@ -18,7 +18,8 @@ export function validateNotFuture(_: any, value: any): Promise<void> {
   const date = toDayjs(value);
   if (!date) return Promise.resolve();
   
-  if (date.isAfter(dayjs(), 'day')) {
+  const today = dayjs().endOf('day');
+  if (date.isAfter(today)) {
     return Promise.reject(new Error('日期不能晚于今天'));
   }
   return Promise.resolve();
@@ -86,7 +87,8 @@ export function validateSymptomOnsetDate(getReportDate: () => any) {
     if (!symptomDate) return Promise.resolve();
     
     // 不能晚于今天
-    if (symptomDate.isAfter(dayjs(), 'day')) {
+    const today = dayjs().endOf('day');
+    if (symptomDate.isAfter(today)) {
       return Promise.reject(new Error('症状开始日期不能晚于今天'));
     }
     

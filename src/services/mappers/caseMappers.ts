@@ -1,5 +1,5 @@
-import type { OptionSet, TrackedEntity } from '../caseService';
-import { ATR_CASE_NO, ATR_DISEASE_CODE, ATR_FULL_NAME, ATR_RPT_DATE } from '../caseService';
+import type { OptionSet, TrackedEntity } from '../caseService2';
+import { ATR_CASE_NO, ATR_DISEASE_CODE, ATR_FULL_NAME, ATR_RPT_DATE } from '../caseService2';
 
 export interface CaseRow {
   key: string;
