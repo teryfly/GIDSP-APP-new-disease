@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import { loadUnknownCaseDetails, listLabEventsByEnrollment, getEnrollmentChangeLogs, getEventChangeLogs } from '../services/unknownCase/details';
-import { canPushToCaseManagement, checkAlreadyEnrolledInProgram1, createProgram1EnrollmentWithInvestigation, markUnknownRegisterPushed, ensureUnknownStatusConfirmed, completeUnknownEnrollment, PATHOGEN_TO_DISEASE_MAP } from '../services/unknownCase/push';
+import { canPushToCaseManagement, checkAlreadyEnrolledInProgram1, createProgram1EnrollmentWithInvestigation, markUnknownRegisterPushed, ensureUnknownStatusConfirmed, completeUnknownEnrollment, PATHOGEN_TO_DISEASE_MAP, markUnknownRegisterEmergency, markUnknownRegisterEpi } from '../services/unknownCase/push';
 
 export interface ProgressStep {
   key: string;
@@ -51,9 +51,18 @@ export function useUnknownCaseDetails(teiUid: string) {
         enrollment: enr.enrollment,
         caseNo: enrAttrs.get('AtrUnkNo001'),
         fullName: attrs.get('AtrFullNm01'),
+        genderZh: attrs.get('AtrGender01'),
+        age: attrs.get('AtrAge00001'),
+        nationalId: attrs.get('AtrNatnlId1'),
+        phone: attrs.get('AtrPhone001'),
+        address: attrs.get('AtrAddr0001'),
         reportDate: enrAttrs.get('AtrRptDt001'),
         symptomOnsetDate: enrAttrs.get('AtrSymptDt1'),
+        suspectedPathogen: enrAttrs.get('AtrUnkPath1'),
+        clinicalSymptoms: enrAttrs.get('AtrUnkSymp1'),
+        reportOrgName: enrAttrs.get('AtrRptOrg01'),
         statusDv: reg?.dataValues || [],
+        orgUnitName: enr.orgUnit,
       });
 
       // labs (page 1)
@@ -70,8 +79,9 @@ export function useUnknownCaseDetails(teiUid: string) {
   const openPush = () => setPushVisible(true);
   const closePush = () => setPushVisible(false);
 
+  // ... keep rest from previous step unchanged (runPush, loadLogs, doPushEmergency, doPushEpiRegister, return ...)
   const runPush = useCallback(async () => {
-    if (!header || !registerEvent) return;
+    if (!header || !registerEvent) return { ok: false, error: '缺少上下文' };
     const steps: ProgressStep[] = [
       { key: 'validate', title: '数据校验', status: 'process' },
       { key: 'createCase', title: '创建个案记录', status: 'wait' },
@@ -82,20 +92,17 @@ export function useUnknownCaseDetails(teiUid: string) {
     setProgress(steps);
 
     try {
-      // Step 1: validate
       const conflict = await checkAlreadyEnrolledInProgram1(header.teiUid);
       if (conflict.hasConflict) {
         throw new Error(`该人员已存在个案记录（Program1），请勿重复推送。`);
       }
       setProgress((prev) => prev.map((s) => (s.key === 'validate' ? { ...s, status: 'finish' } : s)));
 
-      // 推导病原体→疾病映射（从最新实验室事件的 DeConfPath1）
       const latestLab = labEvents[0];
       const dvMap = new Map((latestLab?.dataValues || []).map((d: any) => [d.dataElement, String(d.value)]));
       const pathogenCode = dvMap.get('DeConfPath1');
       const diseaseCode = (pathogenCode && PATHOGEN_TO_DISEASE_MAP[pathogenCode]) || '';
 
-      // Step 2: create enrollment in Program1
       setProgress((prev) => prev.map((s) => (s.key === 'createCase' ? { ...s, status: 'process' } : s)));
       const res = await createProgram1EnrollmentWithInvestigation({
         teiUid: header.teiUid,
@@ -112,7 +119,6 @@ export function useUnknownCaseDetails(teiUid: string) {
       if (!newEnrollmentUid) throw new Error('创建 Program1 Enrollment 失败');
       setProgress((prev) => prev.map((s) => (s.key === 'createCase' ? { ...s, status: 'finish', description: `enrollment=${newEnrollmentUid}` } : s)));
 
-      // Step 3: mark pushed
       setProgress((prev) => prev.map((s) => (s.key === 'markPushed' ? { ...s, status: 'process' } : s)));
       await markUnknownRegisterPushed({
         registerEventUid: registerEvent.event,
@@ -123,7 +129,6 @@ export function useUnknownCaseDetails(teiUid: string) {
       });
       setProgress((prev) => prev.map((s) => (s.key === 'markPushed' ? { ...s, status: 'finish' } : s)));
 
-      // Step 4: ensure confirmed
       setProgress((prev) => prev.map((s) => (s.key === 'ensureConfirmed' ? { ...s, status: 'process' } : s)));
       await ensureUnknownStatusConfirmed({
         registerEventUid: registerEvent.event,
@@ -133,7 +138,6 @@ export function useUnknownCaseDetails(teiUid: string) {
       });
       setProgress((prev) => prev.map((s) => (s.key === 'ensureConfirmed' ? { ...s, status: 'finish' } : s)));
 
-      // Step 5: complete unknown enrollment
       setProgress((prev) => prev.map((s) => (s.key === 'completeEnrollment' ? { ...s, status: 'process' } : s)));
       await completeUnknownEnrollment({
         teiUid: header.teiUid,
@@ -163,6 +167,28 @@ export function useUnknownCaseDetails(teiUid: string) {
     setLogs({ enr: enr.changeLogs || [], regEvt: evt.changeLogs || [] });
   }, [registerEvent?.event]);
 
+  const doPushEmergency = useCallback(async () => {
+    if (!registerEvent || !enrollmentRef.current || !orgUnitRef.current) throw new Error('缺少上下文');
+    await markUnknownRegisterEmergency({
+      registerEventUid: registerEvent.event,
+      enrollmentUid: enrollmentRef.current,
+      orgUnit: orgUnitRef.current,
+      occurredAt: registerOccurredAtRef.current || dayjs().toISOString(),
+    });
+    await reload();
+  }, [registerEvent, reload]);
+
+  const doPushEpiRegister = useCallback(async () => {
+    if (!registerEvent || !enrollmentRef.current || !orgUnitRef.current) throw new Error('缺少上下文');
+    await markUnknownRegisterEpi({
+      registerEventUid: registerEvent.event,
+      enrollmentUid: enrollmentRef.current,
+      orgUnit: orgUnitRef.current,
+      occurredAt: registerOccurredAtRef.current || dayjs().toISOString(),
+    });
+    await reload();
+  }, [registerEvent, reload]);
+
   return {
     loading,
     header,
@@ -179,5 +205,7 @@ export function useUnknownCaseDetails(teiUid: string) {
     logs,
     loadLogs,
     setLabPager,
+    doPushEmergency,
+    doPushEpiRegister,
   };
 }

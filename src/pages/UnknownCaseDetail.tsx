@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Card, Descriptions, Tabs, Tag, Space, Button, Empty, List, Typography, Modal, Steps, message } from 'antd';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Card, Descriptions, Tabs, Tag, Space, Button, Empty, List, Typography, Modal, Steps, message, Dropdown } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
 import { useUnknownCaseDetails } from '../hooks/useUnknownCaseDetails';
-
 const { TabPane } = Tabs;
-
 const statusTagColor = (code?: string) => {
   if (!code) return 'default';
   const up = code.toUpperCase();
@@ -14,27 +13,24 @@ const statusTagColor = (code?: string) => {
   if (['EXCLUDED', 'DISCARDED'].includes(up)) return 'default';
   return 'default';
 };
-
 export default function UnknownCaseDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [active, setActive] = useState('1');
   const [pushing, setPushing] = useState(false);
   const [createdEnrollment, setCreatedEnrollment] = useState<string | null>(null);
-
   const ctx = useUnknownCaseDetails(id!);
-
   useEffect(() => {
     if (id) ctx.reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
-
   const statusDvMap = useMemo(() => new Map((ctx.registerEvent?.dataValues || []).map((d: any) => [d.dataElement, String(d.value)])), [ctx.registerEvent]);
   const statusCode = statusDvMap.get('DeUnkStat01');
-  const pushed = (statusDvMap.get('DePushCase1') || '').toLowerCase() === 'true';
-
+  const pushedToCase = (statusDvMap.get('DePushCase1') || '').toLowerCase() === 'true';
+  const pushedEmergency = (statusDvMap.get('DePushEmg01') || '').toLowerCase() === 'true';
+  const pushedEpi = (statusDvMap.get('DeUnkPshEpi') || '').toLowerCase() === 'true';
   if (!id) return <Empty description="缺少病例ID" />;
-
-  const confirmPush = () => {
+  const confirmPushToCase = () => {
     Modal.confirm({
       title: '推送病例至个案管理',
       content: (
@@ -71,7 +67,27 @@ export default function UnknownCaseDetail() {
       },
     });
   };
-
+  const onPushEmergency = async () => {
+    try {
+      await ctx.doPushEmergency();
+      message.success('已上报应急指挥系统');
+    } catch (e: any) {
+      message.error(e?.message || '上报失败');
+    }
+  };
+  const onPushEpi = async () => {
+    try {
+      await ctx.doPushEpiRegister();
+      message.success('已推送至流调系统');
+    } catch (e: any) {
+      message.error(e?.message || '推送失败');
+    }
+  };
+  const pushMenuItems = [
+    { key: 'emg', label: '上报应急指挥系统', onClick: onPushEmergency, disabled: pushedEmergency },
+    { key: 'epi', label: '推送至流调系统', onClick: onPushEpi, disabled: pushedEpi },
+    { key: 'case', label: '推送至个案管理', onClick: confirmPushToCase, disabled: pushedToCase || !ctx.canPush },
+  ];
   return (
     <>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -79,8 +95,12 @@ export default function UnknownCaseDetail() {
           <Descriptions title={`病例编号: ${ctx.header?.caseNo || '-'}`} bordered column={2}
             extra={
               <Space>
-                <Button type="primary"><Link to={`/unknown-cases/${id}/edit`}>编辑</Link></Button>
-                {ctx.canPush && <Button type="primary" danger onClick={confirmPush}>推送至个案管理</Button>}
+                <Button type="primary" onClick={() => navigate(`/unknown-cases/${id}/edit`)}>编辑</Button>
+                <Dropdown menu={{ items: pushMenuItems }} placement="bottomRight">
+                  <Button type="primary">
+                    推送 <DownOutlined />
+                  </Button>
+                </Dropdown>
                 <Button><Link to="/unknown-cases">返回列表</Link></Button>
               </Space>
             }
@@ -91,27 +111,29 @@ export default function UnknownCaseDetail() {
             </Descriptions.Item>
             <Descriptions.Item label="报告日期">{ctx.header?.reportDate || '-'}</Descriptions.Item>
             <Descriptions.Item label="症状开始">{ctx.header?.symptomOnsetDate || '-'}</Descriptions.Item>
+            <Descriptions.Item label="报告单位">{ctx.header?.reportOrgName || '-'}</Descriptions.Item>
+            <Descriptions.Item label="疑似病原体">{ctx.header?.suspectedPathogen || '-'}</Descriptions.Item>
           </Descriptions>
         </Card>
-
         <Card>
           <Tabs activeKey={active} onChange={setActive}>
             <TabPane tab="基本信息" key="1">
               <Descriptions title="患者基本信息" bordered column={2}>
                 <Descriptions.Item label="姓名">{ctx.header?.fullName || '-'}</Descriptions.Item>
-                <Descriptions.Item label="性别">{'-'}</Descriptions.Item>
-                <Descriptions.Item label="年龄">{'-'}</Descriptions.Item>
-                <Descriptions.Item label="身份证号">{'-'}</Descriptions.Item>
-                <Descriptions.Item label="联系电话">{'-'}</Descriptions.Item>
-                <Descriptions.Item label="现住址" span={2}>{'-'}</Descriptions.Item>
+                <Descriptions.Item label="性别">{ctx.header?.genderZh || '-'}</Descriptions.Item>
+                <Descriptions.Item label="年龄">{ctx.header?.age ? `${ctx.header?.age}岁` : '-'}</Descriptions.Item>
+                <Descriptions.Item label="身份证号">{ctx.header?.nationalId || '-'}</Descriptions.Item>
+                <Descriptions.Item label="联系电话">{ctx.header?.phone || '-'}</Descriptions.Item>
+                <Descriptions.Item label="现住址" span={2}>{ctx.header?.address || '-'}</Descriptions.Item>
               </Descriptions>
               <Descriptions title="病例信息" bordered column={2} style={{ marginTop: 24 }}>
+                <Descriptions.Item label="报告单位">{ctx.header?.reportOrgName || '-'}</Descriptions.Item>
                 <Descriptions.Item label="报告日期">{ctx.header?.reportDate || '-'}</Descriptions.Item>
                 <Descriptions.Item label="症状开始">{ctx.header?.symptomOnsetDate || '-'}</Descriptions.Item>
-                <Descriptions.Item label="病例状态">{statusCode || '-'}</Descriptions.Item>
+                <Descriptions.Item label="疑似病原体">{ctx.header?.suspectedPathogen || '-'}</Descriptions.Item>
+                <Descriptions.Item label="临床症状" span={2}>{ctx.header?.clinicalSymptoms || '-'}</Descriptions.Item>
               </Descriptions>
             </TabPane>
-
             <TabPane tab="检测记录" key="3">
               <List
                 dataSource={ctx.labEvents}
@@ -124,7 +146,7 @@ export default function UnknownCaseDetail() {
                           <Descriptions.Item label="样本类型">{dv.get('DeUnkSmplTp') || '-'}</Descriptions.Item>
                           <Descriptions.Item label="检测结果"><Tag color={String(dv.get('DeUnkTstRst') || '').toUpperCase() === 'POSITIVE' ? 'red' : 'green'}>{dv.get('DeUnkTstRst') || '-'}</Tag></Descriptions.Item>
                           <Descriptions.Item label="病原体" span={2}>{dv.get('DeConfPath1') || 'N/A'}</Descriptions.Item>
-                          <Descriptions.Item label="检测机构" span={2}>{'-'}</Descriptions.Item>
+                          <Descriptions.Item label="确诊疾病" span={2}>{dv.get('DeConfDis01') || 'N/A'}</Descriptions.Item>
                           <Descriptions.Item label="检测状态">{dv.get('DeUnkTstSt1') || '-'}</Descriptions.Item>
                         </Descriptions>
                         <Space style={{ marginTop: 16, float: 'right' }}>
@@ -137,7 +159,6 @@ export default function UnknownCaseDetail() {
                 locale={{ emptyText: <Empty description="暂无检测记录" /> }}
               />
             </TabPane>
-
             <TabPane tab="推送记录" key="4">
               <Button onClick={ctx.loadLogs} style={{ marginBottom: 12 }}>刷新</Button>
               <Descriptions bordered column={1} title="Enrollment 变更日志">
@@ -154,7 +175,6 @@ export default function UnknownCaseDetail() {
           </Tabs>
         </Card>
       </Space>
-
       <Modal title="正在推送病例..." open={pushing} footer={null} onCancel={() => setPushing(false)}>
         <Steps
           direction="vertical"

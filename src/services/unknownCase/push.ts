@@ -189,3 +189,61 @@ export function canPushToCaseManagement(registerEventDv: Array<{ dataElement: st
   const pushed = (m.get('DePushCase1') || '').toLowerCase() === 'true';
   return status === 'CONFIRMED' && !pushed;
 }
+
+/**
+ * 上报应急指挥系统：DePushEmg01=true, DePushEmgDt=now
+ */
+export async function markUnknownRegisterEmergency(params: {
+  registerEventUid: string;
+  enrollmentUid: string;
+  orgUnit: string;
+  occurredAt: string; // 使用登记事件原 occurredAt
+}) {
+  const payload = {
+    events: [
+      {
+        event: params.registerEventUid,
+        program: PROGRAM_UNKNOWN_ID,
+        programStage: STAGE_REGISTER_ID,
+        enrollment: params.enrollmentUid,
+        orgUnit: params.orgUnit,
+        status: 'ACTIVE',
+        occurredAt: params.occurredAt,
+        dataValues: [
+          { dataElement: 'DePushEmg01', value: 'true' },
+          { dataElement: 'DePushEmgDt', value: dayjs().toISOString() },
+        ],
+      },
+    ],
+  };
+  return dhis2Client.post<any>('/api/tracker', payload, { importStrategy: 'UPDATE', atomicMode: 'OBJECT', async: 'false' });
+}
+
+/**
+ * 推送至流调系统：DeUnkPshEpi=true, DeUnkPshDt1=now
+ */
+export async function markUnknownRegisterEpi(params: {
+  registerEventUid: string;
+  enrollmentUid: string;
+  orgUnit: string;
+  occurredAt: string;
+}) {
+  const payload = {
+    events: [
+      {
+        event: params.registerEventUid,
+        program: PROGRAM_UNKNOWN_ID,
+        programStage: STAGE_REGISTER_ID,
+        enrollment: params.enrollmentUid,
+        orgUnit: params.orgUnit,
+        status: 'ACTIVE',
+        occurredAt: params.occurredAt,
+        dataValues: [
+          { dataElement: 'DeUnkPshEpi', value: 'true' },
+          { dataElement: 'DeUnkPshDt1', value: dayjs().toISOString() },
+        ],
+      },
+    ],
+  };
+  return dhis2Client.post<any>('/api/tracker', payload, { importStrategy: 'UPDATE', atomicMode: 'OBJECT', async: 'false' });
+}
