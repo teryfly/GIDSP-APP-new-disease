@@ -19,7 +19,8 @@ export interface Dhis2Pager {
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 // 根据dhis2.useUrlIs配置决定是否使用config.dhis2
-const useUrlConfig = config.dhis2?.useUrlIs === false;
+// 当useUrlIs为true时，使用配置的baseUrl；为false时使用相对路径
+const useUrlConfig = config.dhis2?.useUrlIs === true;
 const { baseUrl, username, password } = useUrlConfig ? config.dhis2 : { 
   baseUrl: '',  // 将在请求时使用相对路径
   username: '',
