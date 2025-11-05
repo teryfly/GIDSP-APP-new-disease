@@ -1,6 +1,5 @@
 import { ArrowUpOutlined } from '@ant-design/icons';
 import { Card, Col, Row, Statistic, List, Space, Typography, Button, Divider } from 'antd';
-import { Link } from 'react-router-dom';
 import { metrics, todoItems, recentVisits, quickAccess } from '../data/dashboard';
 
 const { Title, Text } = Typography;
@@ -20,7 +19,7 @@ const Dashboard = () => {
                                 prefix={metric.trend ? <ArrowUpOutlined /> : null}
                                 suffix={metric.unit}
                             />
-                            {metric.link && <Link to={metric.link} style={{ marginTop: '10px', display: 'block' }}>查看</Link>}
+                            查看
                         </Card>
                     </Col>
                 ))}
@@ -53,7 +52,7 @@ const Dashboard = () => {
                             dataSource={recentVisits}
                             renderItem={item => (
                                 <List.Item>
-                                    <Link to={item.link}>{item.name}</Link>
+                                    {item.name}
                                 </List.Item>
                             )}
                         />
@@ -65,7 +64,7 @@ const Dashboard = () => {
                         <Space wrap>
                             {quickAccess.map(item => (
                                 <Button key={item.id} type="primary" ghost>
-                                    <Link to={item.link}>{item.name}</Link>
+                                    {item.name}
                                 </Button>
                             ))}
                         </Space>
