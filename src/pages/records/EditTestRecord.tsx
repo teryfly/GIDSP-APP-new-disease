@@ -1,79 +1,190 @@
-import { useState, useEffect } from 'react';
-import { Form, Button, Space, message, Spin } from 'antd';
+import { useEffect, useState } from 'react';
+import { Form, Button, Space, message, Spin, Card, Typography, DatePicker, Radio, Input, Row, Col, Select } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
-import TestRecordForm from '../../components/forms/TestRecordForm';
-import type { TestRecordFormData } from '../../types/forms';
-import { testRecords } from '../../data/testRecords'; // Mock data
-import moment from 'moment';
+import dayjs from 'dayjs';
+import { getEvent, getCaseDetails } from '../../services/caseDetailsService';
+import { updateTestEvent } from '../../services/eventService';
+
+const { Title } = Typography;
+const { TextArea } = Input;
 
 const EditTestRecord = () => {
-    const [form] = Form.useForm<TestRecordFormData>();
-    const navigate = useNavigate();
-    const { caseId, unknownCaseId, id } = useParams<{ caseId?: string; unknownCaseId?: string; id: string }>();
-    const [loading, setLoading] = useState(true);
-    const [initialData, setInitialData] = useState<TestRecordFormData | undefined>(undefined);
+  const [form] = Form.useForm();
+  const navigate = useNavigate();
+  const { caseId, id } = useParams<{ caseId: string; id: string }>();
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [enrollment, setEnrollment] = useState<string | null>(null);
+  const [orgUnit, setOrgUnit] = useState<string | null>(null);
 
-    const parentId = caseId || unknownCaseId;
-    const parentType = caseId ? 'case' : 'unknownCase';
-
-    useEffect(() => {
-        if (id && parentId) {
-            // Simulate fetching data
-            const record = testRecords.find(tr => tr.id === id && (tr.caseId === caseId || tr.unknownCaseId === unknownCaseId));
-            if (record) {
-                setInitialData({
-                    ...record,
-                    sampleCollectionDate: moment(record.collectionTime), // Use 'collectionTime' for sampleCollectionDate
-                    testDate: record.testStatus === '已确认' ? moment(record.collectionTime) : undefined, // Mock testDate if confirmed
-                });
-                form.setFieldsValue({
-                    ...record,
-                    sampleCollectionDate: moment(record.collectionTime),
-                    testDate: record.testStatus === '已确认' ? moment(record.collectionTime) : undefined,
-                });
-            } else {
-                message.error('未找到该检测记录。');
-                navigate(caseId ? `/cases/${caseId}` : `/unknown-cases/${unknownCaseId}`);
-            }
-            setLoading(false);
-        } else {
-            message.error('缺少必要的ID，无法编辑检测记录。');
-            navigate('/cases');
-        }
-    }, [id, caseId, unknownCaseId, navigate, form, parentId]);
-
-    const handleSubmit = async () => {
-        try {
-            const values = await form.validateFields();
-            // In a real app, send values to API
-            console.log('Updated Test Record Data:', values);
-            message.success('检测记录更新成功!');
-            navigate(caseId ? `/cases/${caseId}` : `/unknown-cases/${unknownCaseId}`); // Navigate back to parent detail
-        } catch (errorInfo) {
-            console.log('Failed:', errorInfo);
-            message.error('请检查表单填写项。');
-        }
-    };
-
-    const handleCancel = () => {
-        navigate(caseId ? `/cases/${caseId}` : `/unknown-cases/${unknownCaseId}`); // Navigate back to parent detail
-    };
-
-    if (loading) {
-        return <Spin size="large" style={{ display: 'block', margin: '50px auto' }} />;
+  useEffect(() => {
+    if (!caseId || !id) {
+      message.error('缺少必要参数');
+      navigate('/cases');
+      return;
     }
 
-    return (
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            <TestRecordForm form={form} initialValues={initialData} parentType={parentType} parentId={parentId!} />
-            <div style={{ textAlign: 'right', marginTop: 24 }}>
-                <Space>
-                    <Button onClick={handleCancel}>取消</Button>
-                    <Button type="primary" onClick={handleSubmit}>保存</Button>
-                </Space>
-            </div>
+    (async () => {
+      setLoading(true);
+      try {
+        const [event, tei] = await Promise.all([getEvent(id), getCaseDetails(caseId)]);
+        const enr = tei.enrollments?.[0];
+        if (!enr) {
+          message.error('该个案没有入组记录');
+          navigate(`/cases/${caseId}`);
+          return;
+        }
+        setEnrollment(enr.enrollment);
+        setOrgUnit(event.orgUnit);
+
+        const dvMap = new Map<string, string>((event.dataValues || []).map((dv: any) => [dv.dataElement, String(dv.value)]));
+
+        form.setFieldsValue({
+          sampleCollectionDate: dvMap.get('DeSmplColDt') ? dayjs(dvMap.get('DeSmplColDt')) : dayjs(),
+          sampleType: dvMap.get('DeSmplType1'),
+          testType: dvMap.get('DeTestType1'),
+          testOrgName: dvMap.get('DeLabName01'),
+          testDate: dvMap.get('DeTestDate1') ? dayjs(dvMap.get('DeTestDate1')) : undefined,
+          testResult: dvMap.get('DeTestRslt1'),
+          pathogenDetected: dvMap.get('DePathog001'),
+          resultDetails: dvMap.get('DeRsltDtls1'),
+          testStatus: dvMap.get('DeTestStat1'),
+        });
+      } catch (e: any) {
+        message.error(`加载失败: ${e.message}`);
+        navigate(`/cases/${caseId}`);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [caseId, id, navigate, form]);
+
+  const handleSubmit = async () => {
+    if (!enrollment || !orgUnit || !id) {
+      message.error('缺少必要的上下文信息');
+      return;
+    }
+
+    try {
+      const values = await form.validateFields();
+      setSubmitting(true);
+      const occurredAt = dayjs().format('YYYY-MM-DD');
+      const sampleCollectionDate = values.sampleCollectionDate.format('YYYY-MM-DD');
+      const testDate = values.testDate ? values.testDate.format('YYYY-MM-DD') : undefined;
+
+      const result = await updateTestEvent(id, enrollment, orgUnit, occurredAt, {
+        testNo: `TEST-${Date.now().toString().slice(-6)}`,
+        sampleCollectionDate,
+        sampleType: values.sampleType,
+        testType: values.testType,
+        lab: values.testOrgName,
+        testDate,
+        result: values.testResult,
+        pathogen: values.pathogenDetected,
+        resultDetails: values.resultDetails,
+        testStatus: values.testStatus,
+      });
+
+      if (result.status === 'OK') {
+        message.success('检测记录更新成功!');
+        navigate(`/cases/${caseId}`);
+      } else {
+        message.error('更新失败，请检查数据');
+        console.error('Import result:', result);
+      }
+    } catch (errorInfo: any) {
+      message.error(errorInfo.message || '请检查表单填写项。');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCancel = () => navigate(`/cases/${caseId}`);
+
+  if (loading) return <Spin size="large" style={{ display: 'block', margin: '50px auto' }} />;
+
+  return (
+    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <Card>
+        <Title level={4}>编辑检测记录</Title>
+        <Form form={form} layout="vertical">
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="样本采集时间" name="sampleCollectionDate" rules={[{ required: true, message: '请选择样本采集时间' }]}>
+                <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="样本类型" name="sampleType" rules={[{ required: true, message: '请选择样本类型' }]}>
+                <Select placeholder="请选择">
+                  <Select.Option value="咽拭子">咽拭子</Select.Option>
+                  <Select.Option value="血液">血液</Select.Option>
+                  <Select.Option value="粪便">粪便</Select.Option>
+                  <Select.Option value="尿液">尿液</Select.Option>
+                  <Select.Option value="其他">其他</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="检测类型" name="testType" rules={[{ required: true, message: '请选择检测类型' }]}>
+                <Select placeholder="请选择">
+                  <Select.Option value="核酸检测">核酸检测</Select.Option>
+                  <Select.Option value="抗体检测">抗体检测</Select.Option>
+                  <Select.Option value="培养">培养</Select.Option>
+                  <Select.Option value="影像学">影像学</Select.Option>
+                  <Select.Option value="其他">其他</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="检测机构" name="testOrgName" rules={[{ required: true, message: '请输入检测机构' }]}>
+                <Input placeholder="请输入检测机构" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="检测日期" name="testDate">
+                <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="检测结果" name="testResult">
+                <Radio.Group>
+                  <Radio value="阳性">阳性</Radio>
+                  <Radio value="阴性">阴性</Radio>
+                  <Radio value="待定">待定</Radio>
+                  <Radio value="不确定">不确定</Radio>
+                </Radio.Group>
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item label="检出病原体" name="pathogenDetected">
+                <Input placeholder="请输入检出的病原体" />
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item label="结果详情" name="resultDetails">
+                <TextArea rows={2} placeholder="请输入结果详情" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="检测状态" name="testStatus" rules={[{ required: true, message: '请选择检测状态' }]}>
+                <Radio.Group>
+                  <Radio value="待确认">待确认</Radio>
+                  <Radio value="已确认">已确认</Radio>
+                </Radio.Group>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Card>
+      <div style={{ textAlign: 'right' }}>
+        <Space>
+          <Button onClick={handleCancel} disabled={submitting}>取消</Button>
+          <Button type="primary" onClick={handleSubmit} loading={submitting}>保存</Button>
         </Space>
-    );
+      </div>
+    </Space>
+  );
 };
 
 export default EditTestRecord;
