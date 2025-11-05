@@ -1,7 +1,9 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createHashRouter } from 'react-router-dom';
 import GlobalLayout from '../layouts/GlobalLayout';
 import Dashboard from '../pages/Dashboard';
-export const router = createBrowserRouter([
+
+// 使用 HashRouter 避免 DHIS2 路径冲突
+export const router = createHashRouter([
     {
         path: '/',
         element: <GlobalLayout />,
