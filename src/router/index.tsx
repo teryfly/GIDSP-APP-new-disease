@@ -164,7 +164,7 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'unknown-cases/new',
-                element: <NewUnknownCase />, // Specific new page for unknown case
+                element: <NewUnknownCase />,
                 handle: {
                     crumb: () => "新增不明原因病例",
                 },
@@ -178,7 +178,7 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'unknown-cases/:id/edit',
-                element: <EditUnknownCase />, // Specific edit page for unknown case
+                element: <EditUnknownCase />,
                 handle: {
                     crumb: () => "编辑不明原因病例",
                 },
