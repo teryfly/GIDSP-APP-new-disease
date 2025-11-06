@@ -3,7 +3,7 @@
     "baseUrl": "http://192.168.120.233:8080",
     "username": "admin",
     "password": "district",
-    "useUrlIs": false
+    "useUrlIs": true
   },
   "tracker": {
     "debug": false
