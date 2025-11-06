@@ -1,0 +1,337 @@
+首页/不明原因病例列表/新增病例：（分布完成病例创建）
+## 第一步：创建新的person信息
+
+    1.表单信息包含：
+    报名登记部分：登记日期、症状起始日期
+    基本信息部分：姓名、身份证号、性别、年龄、联系电话、住址、不明病例编号（接口自动生成不可更改）、报告机构、报告日期（不允许将来的日期）、症状起始日期（不允许将来的日期）、临床症状描述、疑似病原体
+    - 登记日期(默认当天)/症状起始日期（不允许将来日期）/姓名/身份证号/性别/年龄/不明病例编号/报告机构/症状起始日期/报告日期/临床症状描述，为必填
+    - "性别"单选，参考现有代码处理
+    - “不明病例编号”生成调用接口
+        get:http://192.168.120.233:8080/api/42/trackedEntityAttributes/AtrUnkNo001/generate?expiration=3
+        获取到数据结构如下，使用value为不明病例编号
+        {
+            "ownerObject": "TRACKEDENTITYATTRIBUTE",
+            "ownerUid": "AtrUnkNo001",
+            "key": "UNK-20251106-SEQUENTIAL(####)",
+            "value": "UNK-20251106-0012",
+            "created": "2025-11-06T11:22:21.591",
+            "expiryDate": "2025-11-09T11:22:21.591"
+        }
+    - "报告机构"下拉框选择数据来源:
+        get：http://192.168.120.233:8080/api/organisationUnits/
+        获取数据结构如下：{
+            "pager": {
+                "page": 1,
+                "total": 7,
+                "pageSize": 50,
+                "pageCount": 1
+            },
+            "organisationUnits": [
+                {
+                    "displayName": "四川省",
+                    "id": "OuSichuan10"
+                },
+                {
+                    "displayName": "成都市",
+                    "id": "OuChengdu01"
+                },
+                {
+                    "displayName": "武侯区",
+                    "id": "OuWuhou0001"
+                },
+                {
+                    "displayName": "涪城区",
+                    "id": "OuFucheng01"
+                },
+                {
+                    "displayName": "游仙区",
+                    "id": "OuYouxian01"
+                },
+                {
+                    "displayName": "绵阳市",
+                    "id": "OuMianyang1"
+                },
+                {
+                    "displayName": "锦江区",
+                    "id": "OuJinjiang1"
+                }
+            ]
+        }
+    
+    2.新建person调用接口实例：
+    http://192.168.120.233:8080/api/42/tracker?async=false
+    {
+        "trackedEntities": [
+            {
+                "trackedEntity": "jp8JIvaiLfu",
+                "orgUnit": "OuMianyang1",
+                "trackedEntityType": "TetPerson01",
+                "attributes": [
+                    {
+                        "attribute": "AtrUnkNo001",
+                        "value": "UNK-20251106-0011"
+                    },
+                    {
+                        "attribute": "AtrFullNm01",
+                        "value": "235"
+                    },
+                    {
+                        "attribute": "AtrNatnlId1",
+                        "value": "788965200002020000"
+                    },
+                    {
+                        "attribute": "AtrGender01",
+                        "value": "MALE"
+                    },
+                    {
+                        "attribute": "AtrAge00001",
+                        "value": "25"
+                    },
+                    {
+                        "attribute": "AtrPhone001",
+                        "value": "14474857485"
+                    },
+                    {
+                        "attribute": "AtrAddr0001",
+                        "value": "绕太阳你的绕太阳吧"
+                    },
+                    {
+                        "attribute": "AtrRptOrg01",
+                        "value": "OuChengdu01"
+                    },
+                    {
+                        "attribute": "AtrRptDt001",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "attribute": "AtrSymptDt1",
+                        "value": "2025-10-30"
+                    },
+                    {
+                        "attribute": "AtrUnkSymp1",
+                        "value": "让他如图一发图"
+                    }
+                ],
+                "enrollments": [
+                    {
+                        "program": "PrgUnknown1",
+                        "status": "ACTIVE",
+                        "orgUnit": "OuMianyang1",
+                        "occurredAt": "2025-11-01",
+                        "enrolledAt": "2025-11-06",
+                        "attributes": [
+                            {
+                                "attribute": "AtrUnkNo001",
+                                "value": "UNK-20251106-0011"
+                            },
+                            {
+                                "attribute": "AtrFullNm01",
+                                "value": "235"
+                            },
+                            {
+                                "attribute": "AtrNatnlId1",
+                                "value": "788965200002020000"
+                            },
+                            {
+                                "attribute": "AtrGender01",
+                                "value": "MALE"
+                            },
+                            {
+                                "attribute": "AtrAge00001",
+                                "value": "25"
+                            },
+                            {
+                                "attribute": "AtrPhone001",
+                                "value": "14474857485"
+                            },
+                            {
+                                "attribute": "AtrAddr0001",
+                                "value": "绕太阳你的绕太阳吧"
+                            },
+                            {
+                                "attribute": "AtrRptOrg01",
+                                "value": "OuChengdu01"
+                            },
+                            {
+                                "attribute": "AtrRptDt001",
+                                "value": "2025-11-01"
+                            },
+                            {
+                                "attribute": "AtrSymptDt1",
+                                "value": "2025-10-30"
+                            },
+                            {
+                                "attribute": "AtrUnkSymp1",
+                                "value": "让他如图一发图"
+                            }
+                        ],
+                        "events": [
+                            {
+                                "attributeCategoryOptions": "",
+                                "status": "SCHEDULE",
+                                "scheduledAt": "2025-11-06",
+                                "event": "HAtXvAW4zAo",
+                                "programStage": "PsRegister1",
+                                "program": "PrgUnknown1",
+                                "orgUnit": "OuMianyang1"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+    - "orgUnit": "OuMianyang1",是列表页中的"报告单位"（必选）选择的数据。（列表页功能已完成）
+        http://192.168.120.233:8080/api/me?fields=id%2Cusername%2CorganisationUnits%5Bid%2Cname%2Cpath%5D
+        {
+            "id": "M5zQapPyTZI",
+            "username": "admin",
+            "organisationUnits": [
+                {
+                    "name": "绵阳市",
+                    "path": "/OuSichuan10/OuMianyang1",
+                    "id": "OuMianyang1"
+                },
+                {
+                    "name": "四川省",
+                    "path": "/OuSichuan10",
+                    "id": "OuSichuan10"
+                },
+                {
+                    "name": "成都市",
+                    "path": "/OuSichuan10/OuChengdu01",
+                    "id": "OuChengdu01"
+                },
+                {
+                    "name": "锦江区",
+                    "path": "/OuSichuan10/OuChengdu01/OuJinjiang1",
+                    "id": "OuJinjiang1"
+                },
+                {
+                    "name": "涪城区",
+                    "path": "/OuSichuan10/OuMianyang1/OuFucheng01",
+                    "id": "OuFucheng01"
+                },
+                {
+                    "name": "武侯区",
+                    "path": "/OuSichuan10/OuChengdu01/OuWuhou0001",
+                    "id": "OuWuhou0001"
+                },
+                {
+                    "name": "游仙区",
+                    "path": "/OuSichuan10/OuMianyang1/OuYouxian01",
+                    "id": "OuYouxian01"
+                }
+            ]
+        }
+    - "trackedEntityType": "TetPerson01",为固定传值
+    - "trackedEntity": "jp8JIvaiLfu",为随机生成的11位长度的随机字符串,
+        直接调用/api/system/id?limit=1接口获得，获得数据结构为{
+            "codes": [
+                "LcGWAmF7wjn"
+            ]
+        }，取codes数组的第一个值
+
+## 第二步：person信息创建成功后，进入第二步“不明病例登记”表单
+
+    1.表单信息包含：
+    基本信息部分：
+        Report date（必传，yyyy-mm-dd）、Scheduled date（yyyy-mm-dd，自动选择今天不可更改）、Organisation unit（默认为列表页选择的报告单位orgUnit）、
+        已推送个案管理（单选YES/NO）、已推送流调系统-3（单选YES/NO）、推送个案ID、已上报应急系统（单选YES/NO）、
+        上报应急时间、推送个案时间、推送流调时间-3、不明病例状态（必传）
+    状态部分：Complete event（复选框勾选"YES"，默认不勾选）
+    - 上报应急时间、推送个案时间、推送流调时间-3:Date(时间选择eg:2025-11-06)+Time（egt填写:'8:00'）
+    - 不明病例状态：单选 [
+            {
+                "displayName": "待检测",
+                "id": "OptPendTst1"
+            },
+            {
+                "displayName": "检测中",
+                "id": "OptTesting1"
+            },
+            {
+                "displayName": "已确诊",
+                "id": "OptConfirm2"
+            },
+            {
+                "displayName": "排除",
+                "id": "OptExclude1"
+            }
+        ],
+    
+    2.填写完病例登记表单后保存，调用接口实例：
+    /api/42/tracker?async=false&importStrategy=UPDATE
+    {
+        "events": [
+            {
+                "event": "HAtXvAW4zAo",
+                "status": "ACTIVE",
+                "program": "PrgUnknown1",
+                "programStage": "PsRegister1",
+                "enrollment": "NdWywNFzUJQ",
+                "trackedEntity": "jp8JIvaiLfu",
+                "orgUnit": "OuMianyang1",
+                "occurredAt": "2025-11-07",
+                "scheduledAt": "2025-11-06",
+                "followUp": false,
+                "deleted": false,
+                "createdAt": "2025-11-06T02:31:24.940Z",
+                "updatedAt": "2025-11-06T10:37:42.531",
+                "attributeCategoryOptions": "xYerKDKCefk",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "notes": [],
+                "geometry": null,
+                "dataValues": [
+                    {
+                        "dataElement": "DePushCase1",
+                        "value": "false"
+                    },
+                    {
+                        "dataElement": "DeUnkPshEpi",
+                        "value": "false"
+                    },
+                    {
+                        "dataElement": "DePushCsId1",
+                        "value": null
+                    },
+                    {
+                        "dataElement": "DePushEmg01",
+                        "value": "false"
+                    },
+                    {
+                        "dataElement": "DePushEmgDt",
+                        "value": "2025-11-01T00:00:00.000Z"
+                    },
+                    {
+                        "dataElement": "DePushCsDt1",
+                        "value": null
+                    },
+                    {
+                        "dataElement": "DeUnkPshDt1",
+                        "value": null
+                    },
+                    {
+                        "dataElement": "DeUnkStat01",
+                        "value": "PENDING_TEST"
+                    }
+                ]
+            }
+        ]
+    }
+
+## 分布完成病例数据新增成功后，返回列表页并刷新列表数据
+    path:/unknown-cases
+
+## metadata_corrected_B.json:元数据集合（可根据id查找其对应的中文名称）
