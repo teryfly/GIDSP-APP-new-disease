@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Card, Col, DatePicker, Form, Input, Row, Select, Space, Table, Tag, Typography, Tooltip, message } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import OrgUnitSelect from '../components/common/OrgUnitSelect';
 import dayjs from 'dayjs';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
@@ -22,16 +22,17 @@ const { Text } = Typography;
 const statusTagColor = (code?: string) => {
   if (!code) return 'default';
   const up = code.toUpperCase();
-  if (['PENDING', 'PEND', 'WAIT', 'TO_BE_TESTED'].includes(up)) return 'gold'; // 待检测
-  if (['TESTING', 'IN_PROGRESS'].includes(up)) return 'blue'; // 检测中
-  if (['CONFIRMED'].includes(up)) return 'green'; // 已确诊
-  if (['EXCLUDED', 'DISCARDED'].includes(up)) return 'default'; // 已排除
+  if (['PENDING', 'PEND', 'WAIT', 'TO_BE_TESTED'].includes(up)) return 'gold';
+  if (['TESTING', 'IN_PROGRESS'].includes(up)) return 'blue';
+  if (['CONFIRMED'].includes(up)) return 'green';
+  if (['EXCLUDED', 'DISCARDED'].includes(up)) return 'default';
   return 'default';
 };
 const urgencyTagColor = (u?: UnknownCaseRow['urgency']) => (u === '高' ? 'red' : u === '低' ? 'green' : 'orange');
 
 export default function UnknownCaseList() {
   const [form] = Form.useForm();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
   const [statusOS, setStatusOS] = useState<OptionSet | null>(null);
@@ -46,7 +47,7 @@ export default function UnknownCaseList() {
   const patientNameLike = Form.useWatch('patientNameLike', form);
   const dateRange = Form.useWatch('dateRange', form);
   const orgUnitId = Form.useWatch('orgUnitId', form);
-  const statusCodeEq = Form.useWatch('statusCodeEq', form); // Stored in stage; API-04 doesn't filter by it.
+  const statusCodeEq = Form.useWatch('statusCodeEq', form);
 
   const debouncedCaseNo = useDebouncedValue(caseNoLike, 400);
   const debouncedName = useDebouncedValue(patientNameLike, 400);
@@ -66,7 +67,6 @@ export default function UnknownCaseList() {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const statusCodeMap = useMemo(() => {
@@ -93,7 +93,7 @@ export default function UnknownCaseList() {
         patientNameLike: debouncedName,
         enrolledAfter,
         enrolledBefore,
-        statusCodeEq, // ignored by API as status lives in stage DE; kept for future compatibility
+        statusCodeEq,
       });
       const rows: UnknownCaseRow[] = res.trackedEntities.map((tei) => mapTEIsToUnknownRows(tei, statusCodeMap));
       setData(rows);
@@ -129,7 +129,6 @@ export default function UnknownCaseList() {
   useEffect(() => {
     if (!meOrgUnitId) return;
     fetchData.current(1, pager.pageSize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedCaseNo, debouncedName, dateRange, orgUnitId, order, statusCodeEq, meOrgUnitId]);
 
   const columns = useMemo(() => {
@@ -229,6 +228,11 @@ export default function UnknownCaseList() {
     fetchData.current(1, pager.pageSize);
   };
 
+  const handleNewCase = () => {
+    const currentOrgUnit = orgUnitId || meOrgUnitId;
+    navigate(`/unknown-cases/new?orgUnit=${currentOrgUnit}`);
+  };
+
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Card>
@@ -279,8 +283,8 @@ export default function UnknownCaseList() {
         <Row justify="space-between" align="middle">
           <Col>
             <Space>
-              <Button type="primary">
-                <Link to="/unknown-cases/new">新增病例</Link>
+              <Button type="primary" onClick={handleNewCase}>
+                新增病例
               </Button>
               <Button onClick={handleExport}>导出Excel</Button>
             </Space>
