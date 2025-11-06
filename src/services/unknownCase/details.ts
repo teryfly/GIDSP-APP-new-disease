@@ -4,7 +4,7 @@ import { PROGRAM_UNKNOWN_ID, STAGE_LABTEST_ID } from './constants';
 export async function loadUnknownCaseDetails(teiUid: string) {
   const fields = buildFieldsParam([
     'trackedEntity,trackedEntityType,orgUnit',
-    'attributes[attribute,value,displayName]',
+    'attributes[attribute,value,displayName,valueType]',
     'enrollments[enrollment,program,status,orgUnit,enrolledAt,occurredAt,attributes[attribute,value],events[event,programStage,occurredAt,status,dataValues[dataElement,value]]]',
   ]);
   return dhis2Client.get<any>(`/api/tracker/trackedEntities/${teiUid}`, { program: PROGRAM_UNKNOWN_ID, fields });

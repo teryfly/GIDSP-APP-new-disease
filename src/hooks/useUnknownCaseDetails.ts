@@ -1,7 +1,21 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import { loadUnknownCaseDetails, listLabEventsByEnrollment, getEnrollmentChangeLogs, getEventChangeLogs } from '../services/unknownCase/details';
+import { getGenderOptionSet, getOrgUnitById } from '../services/unknownCase/meta';
 import { canPushToCaseManagement, checkAlreadyEnrolledInProgram1, createProgram1EnrollmentWithInvestigation, markUnknownRegisterPushed, ensureUnknownStatusConfirmed, completeUnknownEnrollment, PATHOGEN_TO_DISEASE_MAP } from '../services/unknownCase/push';
+import {
+  ATR_UNK_NO,
+  ATR_FULL_NAME,
+  ATR_GENDER,
+  ATR_AGE,
+  ATR_NATIONAL_ID,
+  ATR_PHONE,
+  ATR_ADDRESS,
+  ATR_RPT_DATE,
+  ATR_SYMPT_DATE,
+  ATR_UNK_SYMPT,
+  ATR_RPT_ORG,
+} from '../services/unknownCase/constants';
 
 export interface ProgressStep {
   key: string;
@@ -18,6 +32,7 @@ export function useUnknownCaseDetails(teiUid: string) {
   const [pushVisible, setPushVisible] = useState(false);
   const [progress, setProgress] = useState<ProgressStep[]>([]);
   const [loading, setLoading] = useState(false);
+  const [genderMap, setGenderMap] = useState<Map<string, string>>(new Map());
 
   const enrollmentRef = useRef<string | null>(null);
   const orgUnitRef = useRef<string | null>(null);
@@ -31,29 +46,46 @@ export function useUnknownCaseDetails(teiUid: string) {
   const reload = useCallback(async () => {
     setLoading(true);
     try {
+      // Load gender option set
+      const genderOs = await getGenderOptionSet();
+      const gMap = new Map(genderOs.options.map((o) => [o.code, o.name]));
+      setGenderMap(gMap);
+
       const tei = await loadUnknownCaseDetails(teiUid);
       const enr = (tei.enrollments || []).find((e: any) => e.program === 'PrgUnknown1') || tei.enrollments?.[0];
       if (!enr) throw new Error('未找到该病例的入组信息');
       enrollmentRef.current = enr.enrollment;
       orgUnitRef.current = enr.orgUnit || tei.orgUnit;
-      reportDateRef.current = (new Map((enr.attributes || []).map((a: any) => [a.attribute, a.value]))).get('AtrRptDt001') || undefined;
-      symptDateRef.current = (new Map((enr.attributes || []).map((a: any) => [a.attribute, a.value]))).get('AtrSymptDt1') || undefined;
+
+      const teiAttrs = new Map(tei.attributes.map((a: any) => [a.attribute, a.value]));
+      const enrAttrs = new Map((enr.attributes || []).map((a: any) => [a.attribute, a.value]));
+
+      reportDateRef.current = teiAttrs.get(ATR_RPT_DATE) || undefined;
+      symptDateRef.current = teiAttrs.get(ATR_SYMPT_DATE) || undefined;
 
       const reg = (enr.events || []).find((ev: any) => ev.programStage === 'PsRegister1');
       setRegisterEvent(reg || null);
       registerOccurredAtRef.current = reg?.occurredAt || dayjs().toISOString();
 
-      const attrs = new Map(tei.attributes.map((a: any) => [a.attribute, a.value]));
-      const enrAttrs = new Map((enr.attributes || []).map((a: any) => [a.attribute, a.value]));
+      // Load organization unit name
+      const orgUnitId = teiAttrs.get(ATR_RPT_ORG);
+      let orgUnitName = orgUnitId;
+      if (orgUnitId) {
+        const ou = await getOrgUnitById(orgUnitId);
+        if (ou) orgUnitName = ou.name;
+      }
+
       setHeader({
         teiUid: tei.trackedEntity,
         orgUnit: tei.orgUnit,
         enrollment: enr.enrollment,
-        caseNo: enrAttrs.get('AtrUnkNo001'),
-        fullName: attrs.get('AtrFullNm01'),
-        reportDate: enrAttrs.get('AtrRptDt001'),
-        symptomOnsetDate: enrAttrs.get('AtrSymptDt1'),
+        caseNo: teiAttrs.get(ATR_UNK_NO),
+        fullName: teiAttrs.get(ATR_FULL_NAME),
+        reportDate: teiAttrs.get(ATR_RPT_DATE),
+        symptomOnsetDate: teiAttrs.get(ATR_SYMPT_DATE),
         statusDv: reg?.dataValues || [],
+        teiAttributes: teiAttrs,
+        reportOrgName: orgUnitName,
       });
 
       // labs (page 1)
@@ -179,5 +211,6 @@ export function useUnknownCaseDetails(teiUid: string) {
     logs,
     loadLogs,
     setLabPager,
+    genderMap,
   };
 }
