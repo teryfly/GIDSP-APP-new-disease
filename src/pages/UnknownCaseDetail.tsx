@@ -2,6 +2,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, Descriptions, Tabs, Tag, Space, Button, Empty, List, Typography, Modal, Steps, message } from 'antd';
 import { useUnknownCaseDetails } from '../hooks/useUnknownCaseDetails';
+import { 
+  ATR_FULL_NAME, 
+  ATR_GENDER, 
+  ATR_AGE, 
+  ATR_NATIONAL_ID, 
+  ATR_PHONE, 
+  ATR_ADDRESS,
+  ATR_RPT_DATE,
+  ATR_SYMPT_DATE,
+  ATR_UNK_SYMPT,
+  ATR_UNK_NO
+} from '../services/unknownCase/constants';
 
 const { TabPane } = Tabs;
 
@@ -32,6 +44,38 @@ export default function UnknownCaseDetail() {
   const statusCode = statusDvMap.get('DeUnkStat01');
   const pushed = (statusDvMap.get('DePushCase1') || '').toLowerCase() === 'true';
 
+  // 提取完整的患者信息
+  const patientInfo = useMemo(() => {
+    if (!ctx.header) return null;
+    const attrs = ctx.header.teiAttributes || new Map();
+    const genderCode = attrs.get(ATR_GENDER);
+    const genderName = ctx.genderMap.get(genderCode || '') || genderCode || '-';
+    
+    return {
+      fullName: attrs.get(ATR_FULL_NAME) || '-',
+      gender: genderName,
+      age: attrs.get(ATR_AGE) || '-',
+      nationalId: attrs.get(ATR_NATIONAL_ID) || '-',
+      phone: attrs.get(ATR_PHONE) || '-',
+      address: attrs.get(ATR_ADDRESS) || '-',
+    };
+  }, [ctx.header, ctx.genderMap]);
+
+  // 提取完整的病例信息
+  const caseInfo = useMemo(() => {
+    if (!ctx.header) return null;
+    const attrs = ctx.header.teiAttributes || new Map();
+    
+    return {
+      caseNo: attrs.get(ATR_UNK_NO) || '-',
+      reportDate: attrs.get(ATR_RPT_DATE) || '-',
+      symptomOnsetDate: attrs.get(ATR_SYMPT_DATE) || '-',
+      clinicalSymptoms: attrs.get(ATR_UNK_SYMPT) || '-',
+      reportOrgName: ctx.header.reportOrgName || '-',
+      statusCode: statusCode || '-',
+    };
+  }, [ctx.header, statusCode]);
+
   if (!id) return <Empty description="缺少病例ID" />;
 
   const confirmPush = () => {
@@ -41,8 +85,8 @@ export default function UnknownCaseDetail() {
         <div>
           <p>确认将以下病例推送至个案管理系统？</p>
           <Descriptions column={1} bordered size="small">
-            <Descriptions.Item label="病例编号">{ctx.header?.caseNo || '-'}</Descriptions.Item>
-            <Descriptions.Item label="患者姓名">{ctx.header?.fullName || '-'}</Descriptions.Item>
+            <Descriptions.Item label="病例编号">{caseInfo?.caseNo || '-'}</Descriptions.Item>
+            <Descriptions.Item label="患者姓名">{patientInfo?.fullName || '-'}</Descriptions.Item>
             <Descriptions.Item label="病例状态">{statusCode || '-'}</Descriptions.Item>
           </Descriptions>
           <div style={{ marginTop: 12 }}>
@@ -76,7 +120,7 @@ export default function UnknownCaseDetail() {
     <>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Card>
-          <Descriptions title={`病例编号: ${ctx.header?.caseNo || '-'}`} bordered column={2}
+          <Descriptions title={`病例编号: ${caseInfo?.caseNo || '-'}`} bordered column={2}
             extra={
               <Space>
                 <Button type="primary"><Link to={`/unknown-cases/${id}/edit`}>编辑</Link></Button>
@@ -85,12 +129,12 @@ export default function UnknownCaseDetail() {
               </Space>
             }
           >
-            <Descriptions.Item label="患者姓名">{ctx.header?.fullName || '-'}</Descriptions.Item>
+            <Descriptions.Item label="患者姓名">{patientInfo?.fullName || '-'}</Descriptions.Item>
             <Descriptions.Item label="病例状态">
               <Tag color={statusTagColor(statusCode)}>{statusCode || '-'}</Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="报告日期">{ctx.header?.reportDate || '-'}</Descriptions.Item>
-            <Descriptions.Item label="症状开始">{ctx.header?.symptomOnsetDate || '-'}</Descriptions.Item>
+            <Descriptions.Item label="报告日期">{caseInfo?.reportDate || '-'}</Descriptions.Item>
+            <Descriptions.Item label="症状开始">{caseInfo?.symptomOnsetDate || '-'}</Descriptions.Item>
           </Descriptions>
         </Card>
 
@@ -98,17 +142,24 @@ export default function UnknownCaseDetail() {
           <Tabs activeKey={active} onChange={setActive}>
             <TabPane tab="基本信息" key="1">
               <Descriptions title="患者基本信息" bordered column={2}>
-                <Descriptions.Item label="姓名">{ctx.header?.fullName || '-'}</Descriptions.Item>
-                <Descriptions.Item label="性别">{'-'}</Descriptions.Item>
-                <Descriptions.Item label="年龄">{'-'}</Descriptions.Item>
-                <Descriptions.Item label="身份证号">{'-'}</Descriptions.Item>
-                <Descriptions.Item label="联系电话">{'-'}</Descriptions.Item>
-                <Descriptions.Item label="现住址" span={2}>{'-'}</Descriptions.Item>
+                <Descriptions.Item label="姓名">{patientInfo?.fullName || '-'}</Descriptions.Item>
+                <Descriptions.Item label="性别">{patientInfo?.gender || '-'}</Descriptions.Item>
+                <Descriptions.Item label="年龄">{patientInfo?.age || '-'}</Descriptions.Item>
+                <Descriptions.Item label="身份证号">{patientInfo?.nationalId || '-'}</Descriptions.Item>
+                <Descriptions.Item label="联系电话">{patientInfo?.phone || '-'}</Descriptions.Item>
+                <Descriptions.Item label="现住址" span={2}>{patientInfo?.address || '-'}</Descriptions.Item>
               </Descriptions>
               <Descriptions title="病例信息" bordered column={2} style={{ marginTop: 24 }}>
-                <Descriptions.Item label="报告日期">{ctx.header?.reportDate || '-'}</Descriptions.Item>
-                <Descriptions.Item label="症状开始">{ctx.header?.symptomOnsetDate || '-'}</Descriptions.Item>
-                <Descriptions.Item label="病例状态">{statusCode || '-'}</Descriptions.Item>
+                <Descriptions.Item label="病例编号">{caseInfo?.caseNo || '-'}</Descriptions.Item>
+                <Descriptions.Item label="报告机构">{caseInfo?.reportOrgName || '-'}</Descriptions.Item>
+                <Descriptions.Item label="报告日期">{caseInfo?.reportDate || '-'}</Descriptions.Item>
+                <Descriptions.Item label="症状开始日期">{caseInfo?.symptomOnsetDate || '-'}</Descriptions.Item>
+                <Descriptions.Item label="病例状态">
+                  <Tag color={statusTagColor(caseInfo?.statusCode)}>{caseInfo?.statusCode || '-'}</Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="临床症状描述" span={2}>
+                  {caseInfo?.clinicalSymptoms || '-'}
+                </Descriptions.Item>
               </Descriptions>
             </TabPane>
 
