@@ -7,7 +7,8 @@ import EditTestRecord from '../pages/records/EditTestRecord';
 import UnknownCaseList from '../pages/UnknownCaseList';
 import UnknownCaseDetail from '../pages/UnknownCaseDetail';
 import NewUnknownCase from '../pages/records/NewUnknownCase';
-import EditUnknownCase from '../pages/records/EditUnknownCase';
+import EditUnknownCasePersonInfo from '../pages/records/EditUnknownCasePersonInfo';
+import EditUnknownCaseRegister from '../pages/records/EditUnknownCaseRegister';
 
 export const router = createBrowserRouter([
     {
@@ -51,10 +52,17 @@ export const router = createBrowserRouter([
                 },
             },
             {
-                path: 'unknown-cases/:id/edit',
-                element: <EditUnknownCase />,
+                path: 'unknown-cases/:id/edit-person',
+                element: <EditUnknownCasePersonInfo />,
                 handle: {
-                    crumb: () => "编辑不明原因病例",
+                    crumb: () => "编辑个人资料",
+                },
+            },
+            {
+                path: 'unknown-cases/:id/edit-register/:eventId',
+                element: <EditUnknownCaseRegister />,
+                handle: {
+                    crumb: () => "编辑不明病例登记",
                 },
             },
             // Test Records for Unknown Cases
