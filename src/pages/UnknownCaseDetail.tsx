@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Card, Descriptions, Tabs, Tag, Space, Button, Empty, List, Typography, Modal, Steps, message } from 'antd';
+import { Card, Descriptions, Tabs, Tag, Space, Button, Empty, Typography, Modal, Steps, message } from 'antd';
 import { useUnknownCaseDetails } from '../hooks/useUnknownCaseDetails';
+import LabTestList from '../components/unknownCase/LabTestList';
 import { 
   ATR_FULL_NAME, 
   ATR_GENDER, 
@@ -75,6 +76,29 @@ export default function UnknownCaseDetail() {
       statusCode: statusCode || '-',
     };
   }, [ctx.header, statusCode]);
+
+  // 映射检测记录数据
+  const labTestRecords = useMemo(() => {
+    return ctx.labEvents.map((event: any) => {
+      const dvMap = new Map(event.dataValues.map((dv: any) => [dv.dataElement, dv.value]));
+      return {
+        event: event.event,
+        occurredAt: event.occurredAt || '-',
+        testNo: dvMap.get('DeUnkTstNo1') || '-',
+        testType: dvMap.get('DeUnkTstTp1') || '-',
+        sampleCollectionDate: dvMap.get('DeUnkSmplDt') || '-',
+        testStatus: dvMap.get('DeUnkTstSt1') || '-',
+        testResult: dvMap.get('DeUnkTstRst'),
+        confirmedPathogen: dvMap.get('DeConfPath1'),
+        testOrgName: dvMap.get('DeUnkTstOrg'),
+        sampleType: dvMap.get('DeUnkSmplTp') || '-',
+        confirmedDiseaseName: dvMap.get('DeConfDis01'),
+        testDate: dvMap.get('DeUnkTstDt1'),
+        labReportUrl: dvMap.get('DeUnkLabUrl'),
+        resultDetails: dvMap.get('DeUnkRstDtl'),
+      };
+    });
+  }, [ctx.labEvents]);
 
   if (!id) return <Empty description="缺少病例ID" />;
 
@@ -167,29 +191,14 @@ export default function UnknownCaseDetail() {
             </TabPane>
 
             <TabPane tab="检测记录" key="3">
-              <List
-                dataSource={ctx.labEvents}
-                renderItem={(item: any) => {
-                  const dv = new Map((item.dataValues || []).map((d: any) => [d.dataElement, String(d.value)]));
-                  return (
-                    <List.Item>
-                      <Card style={{ width: '100%' }} title={`🧪 ${dv.get('DeUnkTstTp1') || '-'} | ${item.occurredAt}`}>
-                        <Descriptions column={2}>
-                          <Descriptions.Item label="样本类型">{dv.get('DeUnkSmplTp') || '-'}</Descriptions.Item>
-                          <Descriptions.Item label="检测结果"><Tag color={String(dv.get('DeUnkTstRst') || '').toUpperCase() === 'POSITIVE' ? 'red' : 'green'}>{dv.get('DeUnkTstRst') || '-'}</Tag></Descriptions.Item>
-                          <Descriptions.Item label="病原体" span={2}>{dv.get('DeConfPath1') || 'N/A'}</Descriptions.Item>
-                          <Descriptions.Item label="检测机构" span={2}>{'-'}</Descriptions.Item>
-                          <Descriptions.Item label="检测状态">{dv.get('DeUnkTstSt1') || '-'}</Descriptions.Item>
-                        </Descriptions>
-                        <Space style={{ marginTop: 16, float: 'right' }}>
-                          <Link to={`/unknown-cases/${id}/test-records/${item.event}/edit`}>编辑</Link>
-                        </Space>
-                      </Card>
-                    </List.Item>
-                  );
-                }}
-                locale={{ emptyText: <Empty description="暂无检测记录" /> }}
-              />
+              <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                <Button type="primary">
+                  <Link to={`/unknown-cases/${id}/lab-tests/new?enrollment=${ctx.header?.enrollment}&orgUnit=${ctx.header?.orgUnit}`}>
+                    新增检测记录
+                  </Link>
+                </Button>
+                <LabTestList data={labTestRecords} caseId={id} loading={ctx.loading} />
+              </Space>
             </TabPane>
 
             <TabPane tab="推送记录" key="4">
