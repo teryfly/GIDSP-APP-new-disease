@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Form, Select, DatePicker, Row, Col, Card, Typography, Checkbox, Input, message, Spin } from 'antd';
 import type { FormInstance } from 'antd';
 import dayjs from 'dayjs';
-import { getUnknownStatusOptions } from '../../services/unknownCase/create';
+import { getDHIS2MetadataInfo } from '../../utils/dhis2MetadataUtils';
 
 const { Title } = Typography;
 
@@ -40,8 +40,13 @@ const UnknownCaseStepTwoForm = ({ form, orgUnit }: Props) => {
     setLoading(true);
     try {
       // 加载状态选项
-      const options = await getUnknownStatusOptions();
-      setStatusOptions(options.map((o) => ({ value: o.code, label: o.displayName })));
+      const optionSet = await getDHIS2MetadataInfo('', '', '', 'OsUnkStat01');
+      const options = optionSet?.options?.map((option: any) => ({
+        value: option.code,
+        label: option.name
+      })) || [];
+      
+      setStatusOptions(options);
 
       // 设置默认值 - 使用 dayjs 对象
       form.setFieldsValue({
