@@ -123,7 +123,10 @@ export default function UnknownCaseDetail() {
           <Descriptions title={`病例编号: ${caseInfo?.caseNo || '-'}`} bordered column={2}
             extra={
               <Space>
-                <Button type="primary"><Link to={`/unknown-cases/${id}/edit`}>编辑</Link></Button>
+                <Button type="primary"><Link to={`/unknown-cases/${id}/edit-person`}>编辑个人资料</Link></Button>
+                {ctx.registerEvent && (
+                  <Button type="primary"><Link to={`/unknown-cases/${id}/edit-register/${ctx.registerEvent.event}`}>编辑不明病例登记</Link></Button>
+                )}
                 {ctx.canPush && <Button type="primary" danger onClick={confirmPush}>推送至个案管理</Button>}
                 <Button><Link to="/unknown-cases">返回列表</Link></Button>
               </Space>
