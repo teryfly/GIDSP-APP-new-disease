@@ -32,6 +32,8 @@ import NewUnknownCase from '../pages/records/NewUnknownCase';
 import EditCase from '../pages/records/EditCase'; // Specific Edit Case Multi-step form
 import EditUnknownCasePersonInfo from '../pages/records/EditUnknownCasePersonInfo';
 import EditUnknownCaseRegister from '../pages/records/EditUnknownCaseRegister';
+import NewLabTest from '../pages/records/NewLabTest';
+import EditLabTest from '../pages/records/EditLabTest';
 
 export const router = createBrowserRouter([
     {
@@ -190,7 +192,22 @@ export const router = createBrowserRouter([
                     crumb: () => "编辑不明病例登记",
                 },
             },
-            // Test Records for Unknown Cases
+            // Lab Test Records for Unknown Cases
+            {
+                path: 'unknown-cases/:id/lab-tests/new',
+                element: <NewLabTest />,
+                handle: {
+                    crumb: () => "新增检测记录",
+                },
+            },
+            {
+                path: 'unknown-cases/:id/lab-tests/:eventId/edit',
+                element: <EditLabTest />,
+                handle: {
+                    crumb: () => "编辑检测记录",
+                },
+            },
+            // Test Records for Unknown Cases (legacy routes - kept for compatibility)
             {
                 path: 'unknown-cases/:unknownCaseId/test-records/new',
                 element: <NewTestRecord />,
