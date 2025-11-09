@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Card, Descriptions, Tabs, Tag, Space, Button, Empty, Typography, message, Spin, Dropdown } from 'antd';
 import { DownOutlined, EditOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
@@ -29,6 +29,7 @@ const genderMap: Record<string, string> = {
 const CaseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('1');
 
   const {
@@ -53,6 +54,16 @@ const CaseDetail = () => {
     doPushEpi,
     doCloseCase,
   } = useCaseDetails(id!);
+
+  useEffect(() => {
+    // read ?tab= query and set initial tab
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab && ['1','2','3','4','5','6','7'].includes(tab)) {
+      setActiveTab(tab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   useEffect(() => {
     if (error) message.error(error);
