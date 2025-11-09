@@ -1,6 +1,10 @@
-# 首页/个案详情 个案详情中可查看随访记录、治疗记录、检测记录、追踪记录等
-  切换tab，进入对应的记录界面，界面都会包含（列表显示，新增，编辑）
-  -- 获取各记录列表数据都是由一个接口获取，接口调取示例：
+# 背景：
+在首页/个案详情页中现有多个TAB页，其中随访记录、治疗记录、检测记录、追踪记录这4个TAB的数据列表显示、新增、编辑都没有调用真实的后台API。
+# 目标：
+为随访记录、治疗记录、检测记录、追踪记录这4个TAB页分别增加数据列表显示、单条数据新增、数据编辑的功能和为实现这些功能而调整相应的页面。
+# 要求：
+使用以下API的说明，绑定真实后台数据。
+一、列表数据API，这4个TAB列表数据是通过一个接口一次性全部获取的，接口调取示例：
     /api/42/tracker/trackedEntities/rGuyAeff4aD?program=PrgCaseMgt1&fields=enrollments%5B*%2C!attributes%5D%2Cattributes
     {
         "attributes": [
@@ -812,13 +816,13 @@
             }
         ]
     }
-  -- events中programStage：
+  -- events中programStage 的元数据id对应关系如下：
      PsFollowUp1：随访记录
      PsTreatmnt1：治疗记录
      PsTest00001：检测记录
      PsTracking1：追踪记录
 
-
+二、每个TAB页实现思路
 ## 随访记录
 
 ### 新增
@@ -2877,8 +2881,8 @@
         ]
     }
 
-
-## 所有记录中表单中关于"笔记"和"分配者"描述症状
+三、补充说明
+## 每个TAB(共4个)的新增表单中关于"笔记"和"分配者"描述
     笔记：点击“编写说明”显示文本框，“编写说明”按钮变为“添加笔记”/"取消"，
         -- 编辑输入文本框，点击“添加笔记”，调取/api/42/me?fields=firstName%2Csurname%2Cusername，获得{
             "username": "admin",
@@ -2913,7 +2917,7 @@
 ## dhis2MetadataUtils.ts 
   项目中dhis2MetadataUtils.ts文件提供了方法可以查询:程序信息/阶段信息/数据元素信息/选项集信息。
   上述新增/编辑表单中某些属性是值域集，可使用该方法查询。
-  用不明病例状态举例：
+  ### 以获取“不明病例状态”的场景示例：
     const unknownCaseStatusOptions = await getDHIS2MetadataInfo('', '', '', 'OsUnkStat01');
     console.log('不明病例状态选项集:', unknownCaseStatusOptions);
     获得：
@@ -2948,12 +2952,13 @@
             }
         ]
     }
-  补充：
+ ### 需求用到的元数据id:
    -- 项目（已知疾病个案管理）id=PrgCaseMgt1
    -- 阶段：
      PsFollowUp1：随访记录
      PsTreatmnt1：治疗记录
      PsTest00001：检测记录
      PsTracking1：追踪记录
+### 方法调用示例
    -- getDHIS2MetadataInfo('', 'PsFollowUp1', '', '') 
       可查询到该阶段下的所有数据元素/选项集/元素/值域集
