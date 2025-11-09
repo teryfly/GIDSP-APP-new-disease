@@ -3,14 +3,7 @@ import GlobalLayout from '../layouts/GlobalLayout';
 import Dashboard from '../pages/Dashboard';
 import CaseList from '../pages/CaseList';
 import CaseDetail from '../pages/CaseDetail';
-import UnknownCaseList from '../pages/UnknownCaseList';
-import UnknownCaseDetail from '../pages/UnknownCaseDetail';
-import AlertList from '../pages/AlertList';
-import Statistics from '../pages/Statistics';
-import DiseaseCodeList from '../pages/DiseaseCodeList';
 import NewCase from '../pages/NewCase'; // Specific New Case Multi-step form
-import PathogenList from '../pages/PathogenList';
-import AlertDetail from '../pages/AlertDetail'; // Specific Alert Detail
 
 import EditBasicInfo from '../pages/records/EditBasicInfo';
 import EditEpiInfo from '../pages/records/EditEpiInfo';
@@ -24,16 +17,7 @@ import NewTestRecord from '../pages/records/NewTestRecord';
 import EditTestRecord from '../pages/records/EditTestRecord';
 import NewTrackingRecord from '../pages/records/NewTrackingRecord';
 import EditTrackingRecord from '../pages/records/EditTrackingRecord';
-import NewDiseaseCode from '../pages/records/NewDiseaseCode';
-import EditDiseaseCode from '../pages/records/EditDiseaseCode';
-import NewPathogen from '../pages/records/NewPathogen';
-import EditPathogen from '../pages/records/EditPathogen';
-import NewUnknownCase from '../pages/records/NewUnknownCase';
 import EditCase from '../pages/records/EditCase'; // Specific Edit Case Multi-step form
-import EditUnknownCasePersonInfo from '../pages/records/EditUnknownCasePersonInfo';
-import EditUnknownCaseRegister from '../pages/records/EditUnknownCaseRegister';
-import NewLabTest from '../pages/records/NewLabTest';
-import EditLabTest from '../pages/records/EditLabTest';
 
 export const router = createBrowserRouter([
     {
@@ -154,145 +138,7 @@ export const router = createBrowserRouter([
                 handle: {
                     crumb: () => "编辑追踪记录",
                 },
-            },
-
-            // Unknown Cases
-            {
-                path: 'unknown-cases',
-                element: <UnknownCaseList />,
-                handle: {
-                    crumb: () => "不明原因病例列表",
-                },
-            },
-            {
-                path: 'unknown-cases/new',
-                element: <NewUnknownCase />,
-                handle: {
-                    crumb: () => "新增不明原因病例",
-                },
-            },
-            {
-                path: 'unknown-cases/:id',
-                element: <UnknownCaseDetail />,
-                handle: {
-                    crumb: () => "不明原因病例详情",
-                },
-            },
-            {
-                path: 'unknown-cases/:id/edit-person',
-                element: <EditUnknownCasePersonInfo />,
-                handle: {
-                    crumb: () => "编辑个人资料",
-                },
-            },
-            {
-                path: 'unknown-cases/:id/edit-register/:eventId',
-                element: <EditUnknownCaseRegister />,
-                handle: {
-                    crumb: () => "编辑不明病例登记",
-                },
-            },
-            // Lab Test Records for Unknown Cases
-            {
-                path: 'unknown-cases/:id/lab-tests/new',
-                element: <NewLabTest />,
-                handle: {
-                    crumb: () => "新增检测记录",
-                },
-            },
-            {
-                path: 'unknown-cases/:id/lab-tests/:eventId/edit',
-                element: <EditLabTest />,
-                handle: {
-                    crumb: () => "编辑检测记录",
-                },
-            },
-            // Test Records for Unknown Cases (legacy routes - kept for compatibility)
-            {
-                path: 'unknown-cases/:unknownCaseId/test-records/new',
-                element: <NewTestRecord />,
-                handle: {
-                    crumb: () => "新增检测记录",
-                },
-            },
-            {
-                path: 'unknown-cases/:unknownCaseId/test-records/:id/edit',
-                element: <EditTestRecord />,
-                handle: {
-                    crumb: () => "编辑检测记录",
-                },
-            },
-
-            // Alert Management
-            {
-                path: 'alerts',
-                element: <AlertList />,
-                handle: {
-                    crumb: () => "预警列表",
-                },
-            },
-            {
-                path: 'alerts/:id/detail',
-                element: <AlertDetail />, // Specific detail page for alerts
-                handle: {
-                    crumb: () => "预警详情",
-                },
-            },
-
-            // Statistics (no new/edit implied)
-            {
-                path: 'statistics',
-                element: <Statistics />,
-                handle: {
-                    crumb: () => "疾病统计",
-                },
-            },
-
-            // Master Data Management - Disease Codes
-            {
-                path: 'disease-codes',
-                element: <DiseaseCodeList />,
-                handle: {
-                    crumb: () => "疾病编码管理",
-                },
-            },
-            {
-                path: 'disease-codes/new',
-                element: <NewDiseaseCode />, // Specific new page for disease code
-                handle: {
-                    crumb: () => "新增疾病编码",
-                },
-            },
-            {
-                path: 'disease-codes/:id/edit',
-                element: <EditDiseaseCode />, // Specific edit page for disease code
-                handle: {
-                    crumb: () => "编辑疾病编码",
-                },
-            },
-
-            // Master Data Management - Pathogens
-            {
-                path: 'pathogens',
-                element: <PathogenList />,
-                handle: {
-                    crumb: () => "病原微生物管理",
-                },
-            },
-            {
-                path: 'pathogens/new',
-                element: <NewPathogen />, // Specific new page for pathogen
-                handle: {
-                    crumb: () => "新增病原体",
-                },
-            },
-            {
-                path: 'pathogens/:id/edit',
-                element: <EditPathogen />, // Specific edit page for pathogen
-                handle: {
-                    crumb: () => "编辑病原体",
-                },
-            },
+            }
         ],
     },
 ]);

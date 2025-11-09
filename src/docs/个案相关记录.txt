@@ -1,0 +1,2959 @@
+# 首页/个案详情 个案详情中可查看随访记录、治疗记录、检测记录、追踪记录等
+  切换tab，进入对应的记录界面，界面都会包含（列表显示，新增，编辑）
+  -- 获取各记录列表数据都是由一个接口获取，接口调取示例：
+    /api/42/tracker/trackedEntities/rGuyAeff4aD?program=PrgCaseMgt1&fields=enrollments%5B*%2C!attributes%5D%2Cattributes
+    {
+        "attributes": [
+            {
+                "attribute": "AtrFullNm01",
+                "displayName": "姓名",
+                "createdAt": "2025-11-06T10:21:39.807",
+                "updatedAt": "2025-11-06T10:21:39.807",
+                "valueType": "TEXT",
+                "value": "杨智豪"
+            },
+            {
+                "attribute": "AtrGender01",
+                "displayName": "性别",
+                "createdAt": "2025-11-06T10:21:39.808",
+                "updatedAt": "2025-11-06T10:21:39.808",
+                "valueType": "TEXT",
+                "value": "MALE"
+            },
+            {
+                "attribute": "AtrAge00001",
+                "displayName": "年龄",
+                "createdAt": "2025-11-06T10:21:39.809",
+                "updatedAt": "2025-11-06T10:21:39.809",
+                "valueType": "INTEGER",
+                "value": "22"
+            },
+            {
+                "attribute": "AtrPhone001",
+                "displayName": "联系电话",
+                "createdAt": "2025-11-06T10:21:39.810",
+                "updatedAt": "2025-11-06T10:21:39.810",
+                "valueType": "PHONE_NUMBER",
+                "value": "18881671208"
+            },
+            {
+                "attribute": "AtrAddr0001",
+                "displayName": "住址",
+                "createdAt": "2025-11-06T10:21:39.810",
+                "updatedAt": "2025-11-06T10:21:39.810",
+                "valueType": "LONG_TEXT",
+                "value": "陕西省西安市周至县"
+            },
+            {
+                "attribute": "AtrDiseaCd1",
+                "displayName": "疾病编码",
+                "createdAt": "2025-11-06T10:21:39.811",
+                "updatedAt": "2025-11-06T10:21:39.811",
+                "valueType": "TEXT",
+                "value": "D02"
+            },
+            {
+                "attribute": "AtrRptOrg01",
+                "displayName": "报告机构",
+                "createdAt": "2025-11-06T10:21:39.812",
+                "updatedAt": "2025-11-06T10:21:39.812",
+                "valueType": "ORGANISATION_UNIT",
+                "value": "OuChengdu01"
+            },
+            {
+                "attribute": "AtrRptDt001",
+                "displayName": "报告日期",
+                "createdAt": "2025-11-06T10:21:39.812",
+                "updatedAt": "2025-11-06T10:21:39.812",
+                "valueType": "DATE",
+                "value": "2025-11-06"
+            },
+            {
+                "attribute": "AtrSymptDt1",
+                "displayName": "症状起始日期",
+                "createdAt": "2025-11-06T10:21:39.813",
+                "updatedAt": "2025-11-06T10:21:39.813",
+                "valueType": "DATE",
+                "value": "2025-11-06"
+            },
+            {
+                "attribute": "AtrDiagDt01",
+                "displayName": "诊断日期",
+                "createdAt": "2025-11-06T10:21:39.813",
+                "updatedAt": "2025-11-06T10:21:39.813",
+                "valueType": "DATE",
+                "value": "2025-11-06"
+            },
+            {
+                "attribute": "AtrCaseSrc1",
+                "displayName": "个案来源",
+                "createdAt": "2025-11-06T10:21:39.814",
+                "updatedAt": "2025-11-06T10:21:39.814",
+                "valueType": "TEXT",
+                "value": "ACTIVE_SURVEILLANCE"
+            },
+            {
+                "attribute": "AtrCaseNo01",
+                "displayName": "个案编号",
+                "createdAt": "2025-11-06T10:21:39.792",
+                "updatedAt": "2025-11-06T10:21:39.792",
+                "valueType": "TEXT",
+                "value": "CASE-20251106-0012"
+            },
+            {
+                "attribute": "AtrNatnlId1",
+                "displayName": "身份证号",
+                "createdAt": "2025-11-06T10:21:39.808",
+                "updatedAt": "2025-11-06T10:21:39.808",
+                "valueType": "TEXT",
+                "value": "610124200303072439"
+            }
+        ],
+        "enrollments": [
+            {
+                "enrollment": "erYpje4XClA",
+                "createdAt": "2025-11-06T10:21:39.815",
+                "updatedAt": "2025-11-06T10:21:39.815",
+                "trackedEntity": "rGuyAeff4aD",
+                "program": "PrgCaseMgt1",
+                "status": "ACTIVE",
+                "orgUnit": "OuChengdu01",
+                "enrolledAt": "2025-11-06T00:00:00.000",
+                "occurredAt": "2025-11-06T00:00:00.000",
+                "followUp": false,
+                "deleted": false,
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "events": [
+                    {
+                        "event": "s7c2GEtMGWf",
+                        "status": "COMPLETED",
+                        "program": "PrgCaseMgt1",
+                        "programStage": "PsTracking1",
+                        "enrollment": "erYpje4XClA",
+                        "trackedEntity": "rGuyAeff4aD",
+                        "orgUnit": "OuChengdu01",
+                        "relationships": [],
+                        "occurredAt": "2025-11-08T00:00:00.000",
+                        "followUp": false,
+                        "deleted": false,
+                        "createdAt": "2025-11-09T04:42:28.631",
+                        "updatedAt": "2025-11-09T04:42:28.631",
+                        "attributeOptionCombo": "HllvX50cXC0",
+                        "attributeCategoryOptions": "xYerKDKCefk",
+                        "completedBy": "admin",
+                        "completedAt": "2025-11-09T04:42:28.631",
+                        "createdBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "updatedBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "dataValues": [
+                            {
+                                "createdAt": "2025-11-09T04:42:28.633",
+                                "updatedAt": "2025-11-09T04:42:28.633",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeEndDt0001",
+                                "value": "2025-11-09",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:28.637",
+                                "updatedAt": "2025-11-09T04:42:28.637",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeLocDesc01",
+                                "value": "11",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:28.632",
+                                "updatedAt": "2025-11-09T04:42:28.632",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeRelRgn001",
+                                "value": "OuChengdu01",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:28.633",
+                                "updatedAt": "2025-11-09T04:42:28.633",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeStartDt01",
+                                "value": "2025-11-06",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:28.637",
+                                "updatedAt": "2025-11-09T04:42:28.637",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeRiskAsmt1",
+                                "value": "LOW",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:28.638",
+                                "updatedAt": "2025-11-09T04:42:28.638",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTrackTp01",
+                                "value": "CONTACT_HISTORY",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            }
+                        ],
+                        "notes": []
+                    },
+                    {
+                        "event": "BVMcmLbEL6h",
+                        "status": "COMPLETED",
+                        "program": "PrgCaseMgt1",
+                        "programStage": "PsFollowUp1",
+                        "enrollment": "erYpje4XClA",
+                        "trackedEntity": "rGuyAeff4aD",
+                        "orgUnit": "OuChengdu01",
+                        "relationships": [],
+                        "occurredAt": "2025-11-09T00:00:00.000",
+                        "followUp": false,
+                        "deleted": false,
+                        "createdAt": "2025-11-09T04:41:21.299",
+                        "updatedAt": "2025-11-09T04:58:01.603",
+                        "attributeOptionCombo": "HllvX50cXC0",
+                        "attributeCategoryOptions": "xYerKDKCefk",
+                        "completedBy": "admin",
+                        "completedAt": "2025-11-09T04:41:21.299",
+                        "createdBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "updatedBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "dataValues": [
+                            {
+                                "createdAt": "2025-11-09T04:58:01.603",
+                                "updatedAt": "2025-11-09T04:58:01.603",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeSymptoms1",
+                                "value": "111",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:41:21.306",
+                                "updatedAt": "2025-11-09T04:41:21.306",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTrtCompl1",
+                                "value": "FAIR",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:41:21.307",
+                                "updatedAt": "2025-11-09T04:41:21.307",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeFlwUpMthd",
+                                "value": "ONLINE",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:41:21.306",
+                                "updatedAt": "2025-11-09T04:41:21.306",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeHlthStat1",
+                                "value": "NORMAL",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            }
+                        ],
+                        "notes": []
+                    },
+                    {
+                        "event": "tCJVF72FQNK",
+                        "status": "COMPLETED",
+                        "program": "PrgCaseMgt1",
+                        "programStage": "PsTest00001",
+                        "enrollment": "erYpje4XClA",
+                        "trackedEntity": "rGuyAeff4aD",
+                        "orgUnit": "OuChengdu01",
+                        "relationships": [],
+                        "occurredAt": "2025-11-09T00:00:00.000",
+                        "followUp": false,
+                        "deleted": false,
+                        "createdAt": "2025-11-09T04:42:02.678",
+                        "updatedAt": "2025-11-09T04:42:02.678",
+                        "attributeOptionCombo": "HllvX50cXC0",
+                        "attributeCategoryOptions": "xYerKDKCefk",
+                        "completedBy": "admin",
+                        "completedAt": "2025-11-09T04:42:02.678",
+                        "createdBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "updatedBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "dataValues": [
+                            {
+                                "createdAt": "2025-11-09T04:42:02.691",
+                                "updatedAt": "2025-11-09T04:42:02.691",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTestStat1",
+                                "value": "PENDING_CONFIRMATION",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:02.685",
+                                "updatedAt": "2025-11-09T04:42:02.685",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTestType1",
+                                "value": "NAT",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:02.691",
+                                "updatedAt": "2025-11-09T04:42:02.691",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeSmplType1",
+                                "value": "BLOOD",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:02.691",
+                                "updatedAt": "2025-11-09T04:42:02.691",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeSmplColDt",
+                                "value": "2025-11-09",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:02.688",
+                                "updatedAt": "2025-11-09T04:42:02.688",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTestNo001",
+                                "value": "11",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            }
+                        ],
+                        "notes": []
+                    },
+                    {
+                        "event": "UEcYyEfe4t1",
+                        "status": "COMPLETED",
+                        "program": "PrgCaseMgt1",
+                        "programStage": "PsInvestig1",
+                        "enrollment": "erYpje4XClA",
+                        "trackedEntity": "rGuyAeff4aD",
+                        "orgUnit": "OuChengdu01",
+                        "relationships": [],
+                        "occurredAt": "2025-11-06T00:00:00.000",
+                        "scheduledAt": "2025-11-06T00:00:00.000",
+                        "followUp": false,
+                        "deleted": false,
+                        "createdAt": "2025-11-06T10:21:39.831",
+                        "updatedAt": "2025-11-06T10:22:22.373",
+                        "attributeOptionCombo": "HllvX50cXC0",
+                        "attributeCategoryOptions": "xYerKDKCefk",
+                        "completedBy": "admin",
+                        "completedAt": "2025-11-06T10:22:22.373",
+                        "createdBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "updatedBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "dataValues": [
+                            {
+                                "createdAt": "2025-11-06T10:22:22.374",
+                                "updatedAt": "2025-11-06T10:22:22.374",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeExposHst1",
+                                "value": "行人",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.376",
+                                "updatedAt": "2025-11-06T10:22:22.376",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeContHst01",
+                                "value": "路人",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.377",
+                                "updatedAt": "2025-11-06T10:22:22.377",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DePushEpiDt",
+                                "value": "2025-11-06T10:21:00.000Z",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.377",
+                                "updatedAt": "2025-11-06T10:22:22.377",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeCaseStat1",
+                                "value": "VERIFIED",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.376",
+                                "updatedAt": "2025-11-06T10:22:22.376",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeInitDiag1",
+                                "value": "伤寒",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.375",
+                                "updatedAt": "2025-11-06T10:22:22.375",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DePushEpi01",
+                                "value": "true",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.375",
+                                "updatedAt": "2025-11-06T10:22:22.375",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTravHst01",
+                                "value": "春熙路",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.378",
+                                "updatedAt": "2025-11-06T10:22:22.378",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeConfDiag1",
+                                "value": "伤寒",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            }
+                        ],
+                        "notes": []
+                    },
+                    {
+                        "event": "lupKKG4uMqj",
+                        "status": "COMPLETED",
+                        "program": "PrgCaseMgt1",
+                        "programStage": "PsTreatmnt1",
+                        "enrollment": "erYpje4XClA",
+                        "trackedEntity": "rGuyAeff4aD",
+                        "orgUnit": "OuChengdu01",
+                        "relationships": [],
+                        "occurredAt": "2025-11-09T00:00:00.000",
+                        "followUp": false,
+                        "deleted": false,
+                        "createdAt": "2025-11-09T04:41:37.114",
+                        "updatedAt": "2025-11-09T04:41:37.114",
+                        "attributeOptionCombo": "HllvX50cXC0",
+                        "attributeCategoryOptions": "xYerKDKCefk",
+                        "completedBy": "admin",
+                        "completedAt": "2025-11-09T04:41:37.114",
+                        "createdBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "updatedBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "dataValues": [
+                            {
+                                "createdAt": "2025-11-09T04:41:37.119",
+                                "updatedAt": "2025-11-09T04:41:37.119",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeDiagnos01",
+                                "value": "11",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:41:37.119",
+                                "updatedAt": "2025-11-09T04:41:37.119",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTrtType01",
+                                "value": "OUTPATIENT",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            }
+                        ],
+                        "notes": []
+                    }
+                ],
+                "relationships": [],
+                "notes": []
+            }
+        ]
+    }
+  -- events中programStage：
+     PsFollowUp1：随访记录
+     PsTreatmnt1：治疗记录
+     PsTest00001：检测记录
+     PsTracking1：追踪记录
+
+
+## 随访记录
+
+### 新增
+    1.首页/个案详情/随访记录，添加“新增随访记录”按钮，点击进入随访记录新增页
+    2.随访记录的新增页表单信息（*为必填）
+    基本信息：
+        Report date *
+        机构 *
+        治疗依从性
+        健康状态 *
+        随访方式 *
+        症状描述
+        下次随访日期（"不允许将来的日期"）
+        备注
+        体温
+    笔记：点击“编写说明”显示文本框，“编写说明”按钮变为“添加笔记”/"取消"
+    分配者：
+        分配的用户
+    3.提交保存调用示例：
+    /api/42/tracker?async=false
+    {
+        "events": [
+            {
+                "orgUnit": "OuMianyang1",
+                "occurredAt": "2025-11-01",
+                "assignedUser": {
+                    "uid": "M5zQapPyTZI",
+                    "displayName": "admin admin",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "notes": [
+                    {
+                        "value": "任天野"
+                    },
+                    {
+                        "value": "超负荷"
+                    }
+                ],
+                "status": "COMPLETED",
+                "event": "zW15H86zSs3",
+                "program": "PrgCaseMgt1",
+                "programStage": "PsFollowUp1",
+                "orgUnitName": "绵阳市",
+                "trackedEntity": "rGuyAeff4aD",
+                "enrollment": "erYpje4XClA",
+                "updatedAt": "2025-11-09T06:26:20",
+                "dataValues": [
+                    {
+                        "dataElement": "DeTrtCompl1",
+                        "value": "GOOD"
+                    },
+                    {
+                        "dataElement": "DeHlthStat1",
+                        "value": "NORMAL"
+                    },
+                    {
+                        "dataElement": "DeFlwUpMthd",
+                        "value": "ON_SITE"
+                    },
+                    {
+                        "dataElement": "DeSymptoms1",
+                        "value": "描述症状"
+                    },
+                    {
+                        "dataElement": "DeNxtFlwDt1",
+                        "value": "2025-11-08"
+                    },
+                    {
+                        "dataElement": "DeRemarks01",
+                        "value": "成功后"
+                    },
+                    {
+                        "dataElement": "DeTemp00001",
+                        "value": "38"
+                    }
+                ]
+            }
+        ]
+    }
+
+### 列表:显示已有随访数据
+    1.首页/个案详情/随访记录，随访记录数据界面显示记录列表，表头显示所有信息中文名称和操作（编辑）
+    2.列表数据获取示例：（events中programStage:"PsFollowUp1"是随访记录的数据，如：示例中有一条随访记录的数据）
+    /api/42/tracker/trackedEntities/rGuyAeff4aD?program=PrgCaseMgt1&fields=enrollments%5B*%2C!attributes%5D%2Cattributes
+    {
+        "attributes": [
+            {
+                "attribute": "AtrFullNm01",
+                "displayName": "姓名",
+                "createdAt": "2025-11-06T10:21:39.807",
+                "updatedAt": "2025-11-06T10:21:39.807",
+                "valueType": "TEXT",
+                "value": "杨智豪"
+            },
+            {
+                "attribute": "AtrGender01",
+                "displayName": "性别",
+                "createdAt": "2025-11-06T10:21:39.808",
+                "updatedAt": "2025-11-06T10:21:39.808",
+                "valueType": "TEXT",
+                "value": "MALE"
+            },
+            {
+                "attribute": "AtrAge00001",
+                "displayName": "年龄",
+                "createdAt": "2025-11-06T10:21:39.809",
+                "updatedAt": "2025-11-06T10:21:39.809",
+                "valueType": "INTEGER",
+                "value": "22"
+            },
+            {
+                "attribute": "AtrPhone001",
+                "displayName": "联系电话",
+                "createdAt": "2025-11-06T10:21:39.810",
+                "updatedAt": "2025-11-06T10:21:39.810",
+                "valueType": "PHONE_NUMBER",
+                "value": "18881671208"
+            },
+            {
+                "attribute": "AtrAddr0001",
+                "displayName": "住址",
+                "createdAt": "2025-11-06T10:21:39.810",
+                "updatedAt": "2025-11-06T10:21:39.810",
+                "valueType": "LONG_TEXT",
+                "value": "陕西省西安市周至县"
+            },
+            {
+                "attribute": "AtrDiseaCd1",
+                "displayName": "疾病编码",
+                "createdAt": "2025-11-06T10:21:39.811",
+                "updatedAt": "2025-11-06T10:21:39.811",
+                "valueType": "TEXT",
+                "value": "D02"
+            },
+            {
+                "attribute": "AtrRptOrg01",
+                "displayName": "报告机构",
+                "createdAt": "2025-11-06T10:21:39.812",
+                "updatedAt": "2025-11-06T10:21:39.812",
+                "valueType": "ORGANISATION_UNIT",
+                "value": "OuChengdu01"
+            },
+            {
+                "attribute": "AtrRptDt001",
+                "displayName": "报告日期",
+                "createdAt": "2025-11-06T10:21:39.812",
+                "updatedAt": "2025-11-06T10:21:39.812",
+                "valueType": "DATE",
+                "value": "2025-11-06"
+            },
+            {
+                "attribute": "AtrSymptDt1",
+                "displayName": "症状起始日期",
+                "createdAt": "2025-11-06T10:21:39.813",
+                "updatedAt": "2025-11-06T10:21:39.813",
+                "valueType": "DATE",
+                "value": "2025-11-06"
+            },
+            {
+                "attribute": "AtrDiagDt01",
+                "displayName": "诊断日期",
+                "createdAt": "2025-11-06T10:21:39.813",
+                "updatedAt": "2025-11-06T10:21:39.813",
+                "valueType": "DATE",
+                "value": "2025-11-06"
+            },
+            {
+                "attribute": "AtrCaseSrc1",
+                "displayName": "个案来源",
+                "createdAt": "2025-11-06T10:21:39.814",
+                "updatedAt": "2025-11-06T10:21:39.814",
+                "valueType": "TEXT",
+                "value": "ACTIVE_SURVEILLANCE"
+            },
+            {
+                "attribute": "AtrCaseNo01",
+                "displayName": "个案编号",
+                "createdAt": "2025-11-06T10:21:39.792",
+                "updatedAt": "2025-11-06T10:21:39.792",
+                "valueType": "TEXT",
+                "value": "CASE-20251106-0012"
+            },
+            {
+                "attribute": "AtrNatnlId1",
+                "displayName": "身份证号",
+                "createdAt": "2025-11-06T10:21:39.808",
+                "updatedAt": "2025-11-06T10:21:39.808",
+                "valueType": "TEXT",
+                "value": "610124200303072439"
+            }
+        ],
+        "enrollments": [
+            {
+                "enrollment": "erYpje4XClA",
+                "createdAt": "2025-11-06T10:21:39.815",
+                "updatedAt": "2025-11-06T10:21:39.815",
+                "trackedEntity": "rGuyAeff4aD",
+                "program": "PrgCaseMgt1",
+                "status": "ACTIVE",
+                "orgUnit": "OuChengdu01",
+                "enrolledAt": "2025-11-06T00:00:00.000",
+                "occurredAt": "2025-11-06T00:00:00.000",
+                "followUp": false,
+                "deleted": false,
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "events": [
+                    {
+                        "event": "s7c2GEtMGWf",
+                        "status": "COMPLETED",
+                        "program": "PrgCaseMgt1",
+                        "programStage": "PsTracking1",
+                        "enrollment": "erYpje4XClA",
+                        "trackedEntity": "rGuyAeff4aD",
+                        "orgUnit": "OuChengdu01",
+                        "relationships": [],
+                        "occurredAt": "2025-11-08T00:00:00.000",
+                        "followUp": false,
+                        "deleted": false,
+                        "createdAt": "2025-11-09T04:42:28.631",
+                        "updatedAt": "2025-11-09T04:42:28.631",
+                        "attributeOptionCombo": "HllvX50cXC0",
+                        "attributeCategoryOptions": "xYerKDKCefk",
+                        "completedBy": "admin",
+                        "completedAt": "2025-11-09T04:42:28.631",
+                        "createdBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "updatedBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "dataValues": [
+                            {
+                                "createdAt": "2025-11-09T04:42:28.633",
+                                "updatedAt": "2025-11-09T04:42:28.633",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeEndDt0001",
+                                "value": "2025-11-09",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:28.637",
+                                "updatedAt": "2025-11-09T04:42:28.637",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeLocDesc01",
+                                "value": "11",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:28.632",
+                                "updatedAt": "2025-11-09T04:42:28.632",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeRelRgn001",
+                                "value": "OuChengdu01",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:28.633",
+                                "updatedAt": "2025-11-09T04:42:28.633",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeStartDt01",
+                                "value": "2025-11-06",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:28.637",
+                                "updatedAt": "2025-11-09T04:42:28.637",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeRiskAsmt1",
+                                "value": "LOW",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:28.638",
+                                "updatedAt": "2025-11-09T04:42:28.638",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTrackTp01",
+                                "value": "CONTACT_HISTORY",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            }
+                        ],
+                        "notes": []
+                    },
+                    {
+                        "event": "BVMcmLbEL6h",
+                        "status": "COMPLETED",
+                        "program": "PrgCaseMgt1",
+                        "programStage": "PsFollowUp1",
+                        "enrollment": "erYpje4XClA",
+                        "trackedEntity": "rGuyAeff4aD",
+                        "orgUnit": "OuChengdu01",
+                        "relationships": [],
+                        "occurredAt": "2025-11-09T00:00:00.000",
+                        "followUp": false,
+                        "deleted": false,
+                        "createdAt": "2025-11-09T04:41:21.299",
+                        "updatedAt": "2025-11-09T04:58:01.603",
+                        "attributeOptionCombo": "HllvX50cXC0",
+                        "attributeCategoryOptions": "xYerKDKCefk",
+                        "completedBy": "admin",
+                        "completedAt": "2025-11-09T04:41:21.299",
+                        "createdBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "updatedBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "dataValues": [
+                            {
+                                "createdAt": "2025-11-09T04:58:01.603",
+                                "updatedAt": "2025-11-09T04:58:01.603",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeSymptoms1",
+                                "value": "111",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:41:21.306",
+                                "updatedAt": "2025-11-09T04:41:21.306",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTrtCompl1",
+                                "value": "FAIR",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:41:21.307",
+                                "updatedAt": "2025-11-09T04:41:21.307",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeFlwUpMthd",
+                                "value": "ONLINE",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:41:21.306",
+                                "updatedAt": "2025-11-09T04:41:21.306",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeHlthStat1",
+                                "value": "NORMAL",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            }
+                        ],
+                        "notes": []
+                    },
+                    {
+                        "event": "tCJVF72FQNK",
+                        "status": "COMPLETED",
+                        "program": "PrgCaseMgt1",
+                        "programStage": "PsTest00001",
+                        "enrollment": "erYpje4XClA",
+                        "trackedEntity": "rGuyAeff4aD",
+                        "orgUnit": "OuChengdu01",
+                        "relationships": [],
+                        "occurredAt": "2025-11-09T00:00:00.000",
+                        "followUp": false,
+                        "deleted": false,
+                        "createdAt": "2025-11-09T04:42:02.678",
+                        "updatedAt": "2025-11-09T04:42:02.678",
+                        "attributeOptionCombo": "HllvX50cXC0",
+                        "attributeCategoryOptions": "xYerKDKCefk",
+                        "completedBy": "admin",
+                        "completedAt": "2025-11-09T04:42:02.678",
+                        "createdBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "updatedBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "dataValues": [
+                            {
+                                "createdAt": "2025-11-09T04:42:02.691",
+                                "updatedAt": "2025-11-09T04:42:02.691",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTestStat1",
+                                "value": "PENDING_CONFIRMATION",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:02.685",
+                                "updatedAt": "2025-11-09T04:42:02.685",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTestType1",
+                                "value": "NAT",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:02.691",
+                                "updatedAt": "2025-11-09T04:42:02.691",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeSmplType1",
+                                "value": "BLOOD",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:02.691",
+                                "updatedAt": "2025-11-09T04:42:02.691",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeSmplColDt",
+                                "value": "2025-11-09",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:42:02.688",
+                                "updatedAt": "2025-11-09T04:42:02.688",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTestNo001",
+                                "value": "11",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            }
+                        ],
+                        "notes": []
+                    },
+                    {
+                        "event": "UEcYyEfe4t1",
+                        "status": "COMPLETED",
+                        "program": "PrgCaseMgt1",
+                        "programStage": "PsInvestig1",
+                        "enrollment": "erYpje4XClA",
+                        "trackedEntity": "rGuyAeff4aD",
+                        "orgUnit": "OuChengdu01",
+                        "relationships": [],
+                        "occurredAt": "2025-11-06T00:00:00.000",
+                        "scheduledAt": "2025-11-06T00:00:00.000",
+                        "followUp": false,
+                        "deleted": false,
+                        "createdAt": "2025-11-06T10:21:39.831",
+                        "updatedAt": "2025-11-06T10:22:22.373",
+                        "attributeOptionCombo": "HllvX50cXC0",
+                        "attributeCategoryOptions": "xYerKDKCefk",
+                        "completedBy": "admin",
+                        "completedAt": "2025-11-06T10:22:22.373",
+                        "createdBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "updatedBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "dataValues": [
+                            {
+                                "createdAt": "2025-11-06T10:22:22.374",
+                                "updatedAt": "2025-11-06T10:22:22.374",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeExposHst1",
+                                "value": "行人",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.376",
+                                "updatedAt": "2025-11-06T10:22:22.376",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeContHst01",
+                                "value": "路人",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.377",
+                                "updatedAt": "2025-11-06T10:22:22.377",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DePushEpiDt",
+                                "value": "2025-11-06T10:21:00.000Z",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.377",
+                                "updatedAt": "2025-11-06T10:22:22.377",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeCaseStat1",
+                                "value": "VERIFIED",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.376",
+                                "updatedAt": "2025-11-06T10:22:22.376",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeInitDiag1",
+                                "value": "伤寒",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.375",
+                                "updatedAt": "2025-11-06T10:22:22.375",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DePushEpi01",
+                                "value": "true",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.375",
+                                "updatedAt": "2025-11-06T10:22:22.375",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTravHst01",
+                                "value": "春熙路",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-06T10:22:22.378",
+                                "updatedAt": "2025-11-06T10:22:22.378",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeConfDiag1",
+                                "value": "伤寒",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            }
+                        ],
+                        "notes": []
+                    },
+                    {
+                        "event": "lupKKG4uMqj",
+                        "status": "COMPLETED",
+                        "program": "PrgCaseMgt1",
+                        "programStage": "PsTreatmnt1",
+                        "enrollment": "erYpje4XClA",
+                        "trackedEntity": "rGuyAeff4aD",
+                        "orgUnit": "OuChengdu01",
+                        "relationships": [],
+                        "occurredAt": "2025-11-09T00:00:00.000",
+                        "followUp": false,
+                        "deleted": false,
+                        "createdAt": "2025-11-09T04:41:37.114",
+                        "updatedAt": "2025-11-09T04:41:37.114",
+                        "attributeOptionCombo": "HllvX50cXC0",
+                        "attributeCategoryOptions": "xYerKDKCefk",
+                        "completedBy": "admin",
+                        "completedAt": "2025-11-09T04:41:37.114",
+                        "createdBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "updatedBy": {
+                            "uid": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin"
+                        },
+                        "dataValues": [
+                            {
+                                "createdAt": "2025-11-09T04:41:37.119",
+                                "updatedAt": "2025-11-09T04:41:37.119",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeDiagnos01",
+                                "value": "11",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            },
+                            {
+                                "createdAt": "2025-11-09T04:41:37.119",
+                                "updatedAt": "2025-11-09T04:41:37.119",
+                                "storedBy": "admin",
+                                "providedElsewhere": false,
+                                "dataElement": "DeTrtType01",
+                                "value": "OUTPATIENT",
+                                "createdBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                },
+                                "updatedBy": {
+                                    "uid": "M5zQapPyTZI",
+                                    "username": "admin",
+                                    "firstName": "admin",
+                                    "surname": "admin"
+                                }
+                            }
+                        ],
+                        "notes": []
+                    }
+                ],
+                "relationships": [],
+                "notes": []
+            }
+        ]
+    }
+
+### 编辑
+    1.首页/个案详情/随访记录，点击列表操作列“编辑”功能进入随访记录编辑页
+    2.编辑页可与新增使用同一界面（表单大致相同）
+    基本信息：（*为必填）
+        Report date *
+        Scheduled date（无法选择，鼠标移入提示图标有tips:"无法更改 已完成 事件的预定日期"）
+        机构 *
+        治疗依从性
+        健康状态 *
+        随访方式 *
+        症状描述
+        下次随访日期（"不允许将来的日期"）
+        备注
+        体温
+    状态：
+        事件完成（复选框选择："是"）
+    3.获取详情复现数据示例：
+    api/42/tracker/events/BVMcmLbEL6h
+    {
+        "event": "BVMcmLbEL6h",
+        "status": "COMPLETED",
+        "program": "PrgCaseMgt1",
+        "programStage": "PsFollowUp1",
+        "enrollment": "erYpje4XClA",
+        "trackedEntity": "rGuyAeff4aD",
+        "orgUnit": "OuChengdu01",
+        "occurredAt": "2025-11-09T00:00:00.000",
+        "followUp": false,
+        "deleted": false,
+        "createdAt": "2025-11-09T04:41:21.299",
+        "updatedAt": "2025-11-09T04:58:01.603",
+        "attributeOptionCombo": "HllvX50cXC0",
+        "attributeCategoryOptions": "xYerKDKCefk",
+        "completedBy": "admin",
+        "completedAt": "2025-11-09T04:41:21.299",
+        "createdBy": {
+            "uid": "M5zQapPyTZI",
+            "username": "admin",
+            "firstName": "admin",
+            "surname": "admin"
+        },
+        "updatedBy": {
+            "uid": "M5zQapPyTZI",
+            "username": "admin",
+            "firstName": "admin",
+            "surname": "admin"
+        },
+        "dataValues": [
+            {
+                "createdAt": "2025-11-09T04:58:01.603",
+                "updatedAt": "2025-11-09T04:58:01.603",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeSymptoms1",
+                "value": "111",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:41:21.306",
+                "updatedAt": "2025-11-09T04:41:21.306",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeTrtCompl1",
+                "value": "FAIR",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:41:21.306",
+                "updatedAt": "2025-11-09T04:41:21.306",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeHlthStat1",
+                "value": "NORMAL",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:41:21.307",
+                "updatedAt": "2025-11-09T04:41:21.307",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeFlwUpMthd",
+                "value": "ONLINE",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            }
+        ],
+        "notes": []
+    }
+    4.修改保存，调用接口示例：
+    /api/42/tracker?async=false&importStrategy=UPDATE
+    {
+        "events": [
+            {
+                "event": "BVMcmLbEL6h",
+                "status": "COMPLETED",
+                "program": "PrgCaseMgt1",
+                "programStage": "PsFollowUp1",
+                "enrollment": "erYpje4XClA",
+                "trackedEntity": "rGuyAeff4aD",
+                "orgUnit": "OuChengdu01",
+                "occurredAt": "2025-11-09",
+                "followUp": false,
+                "deleted": false,
+                "createdAt": "2025-11-08T20:41:21.299Z",
+                "updatedAt": "2025-11-09T04:58:01.603",
+                "attributeCategoryOptions": "xYerKDKCefk",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "notes": [],
+                "scheduledAt": null,
+                "geometry": null,
+                "dataValues": [
+                    {
+                        "dataElement": "DeTrtCompl1",
+                        "value": "FAIR"
+                    },
+                    {
+                        "dataElement": "DeHlthStat1",
+                        "value": "NORMAL"
+                    },
+                    {
+                        "dataElement": "DeFlwUpMthd",
+                        "value": "ONLINE"
+                    },
+                    {
+                        "dataElement": "DeSymptoms1",
+                        "value": "1112"
+                    },
+                    {
+                        "dataElement": "DeNxtFlwDt1",
+                        "value": null
+                    },
+                    {
+                        "dataElement": "DeRemarks01",
+                        "value": "e4t5e5t"
+                    },
+                    {
+                        "dataElement": "DeTemp00001",
+                        "value": "37"
+                    }
+                ]
+            }
+        ]
+    }
+
+
+## 治疗记录
+
+### 新增
+    1.首页/个案详情/治疗记录，添加“新增治疗记录”按钮，点击进入治疗记录新增页
+    2.治疗记录的新增页表单信息（*为必填）
+    基本信息：
+        Report date *
+        机构 *
+        医生姓名
+        诊断结果 *
+        医院名称
+        治疔转归
+        治疗方案
+        治疔类型 *
+        科室名称
+        出院日期（不允许将来的日期）
+        用药情况
+    笔记：点击“编写说明”显示文本框，“编写说明”按钮变为“添加笔记”/"取消"
+    分配者：
+        分配的用户
+    3.提交保存调用示例：
+    /api/42/tracker?async=false
+    {
+        "events": [
+            {
+                "orgUnit": "OuMianyang1",
+                "occurredAt": "2025-11-01",
+                "assignedUser": {
+                    "uid": "M5zQapPyTZI",
+                    "displayName": "admin admin",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "notes": [
+                    {
+                        "value": "的容颜"
+                    },
+                    {
+                        "value": "地图"
+                    }
+                ],
+                "status": "COMPLETED",
+                "event": "ijKLvpQl7DP",
+                "program": "PrgCaseMgt1",
+                "programStage": "PsTreatmnt1",
+                "orgUnitName": "绵阳市",
+                "trackedEntity": "rGuyAeff4aD",
+                "enrollment": "erYpje4XClA",
+                "updatedAt": "2025-11-09T06:35:10",
+                "dataValues": [
+                    {
+                        "dataElement": "DeDocNm0001",
+                        "value": "王医生"
+                    },
+                    {
+                        "dataElement": "DeDiagnos01",
+                        "value": "热热结合客户日历诊断结果"
+                    },
+                    {
+                        "dataElement": "DeHospNm001",
+                        "value": "医生的名称"
+                    },
+                    {
+                        "dataElement": "DeTrtOutcm1",
+                        "value": "IMPROVED"
+                    },
+                    {
+                        "dataElement": "DeTrtPlan01",
+                        "value": "未复工也不溶解"
+                    },
+                    {
+                        "dataElement": "DeTrtType01",
+                        "value": "INPATIENT"
+                    },
+                    {
+                        "dataElement": "DeDeptNm001",
+                        "value": "计划位科室"
+                    },
+                    {
+                        "dataElement": "DeDiscDt001",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "dataElement": "DeMedicat01",
+                        "value": "对日元图"
+                    }
+                ]
+            }
+        ]
+    }
+
+### 列表:显示已有治疗数据
+    1.首页/个案详情/治疗记录，治疗记录数据界面显示记录列表，表头显示所有信息中文名称和操作（编辑）
+    2.列表数据获取示例：（events中programStage:"PsFollowUp1"是治疗记录的数据，如：示例中有一条programStage是"PsFollowUp1"的，就有一条治疗记录的数据）
+    /api/42/tracker/trackedEntities/rGuyAeff4aD?program=PrgCaseMgt1&fields=enrollments%5B*%2C!attributes%5D%2Cattributes
+
+### 编辑
+    1.首页/个案详情/治疗记录，点击列表操作列“编辑”功能进入治疗记录编辑页
+    2.编辑页可与新增使用同一界面（表单大致相同）
+    基本信息：（*为必填）
+        Report date*
+        Scheduled date*（无法选择，鼠标移入提示图标有tips:"无法更改 已完成 事件的预定日期"）
+        机构*
+        医生姓名
+        诊断结果*
+        医院名称
+        治疔转归
+        治疗方案
+        治疔类型*
+        科室名称
+        出院日期
+        用药情况
+    状态：
+        事件完成（复选框选择："是"）
+    3.获取详情复现数据示例：
+    /api/42/tracker/events/lupKKG4uMqj
+    {
+        "event": "lupKKG4uMqj",
+        "status": "COMPLETED",
+        "program": "PrgCaseMgt1",
+        "programStage": "PsTreatmnt1",
+        "enrollment": "erYpje4XClA",
+        "trackedEntity": "rGuyAeff4aD",
+        "orgUnit": "OuChengdu01",
+        "occurredAt": "2025-11-09T00:00:00.000",
+        "followUp": false,
+        "deleted": false,
+        "createdAt": "2025-11-09T04:41:37.114",
+        "updatedAt": "2025-11-09T04:41:37.114",
+        "attributeOptionCombo": "HllvX50cXC0",
+        "attributeCategoryOptions": "xYerKDKCefk",
+        "completedBy": "admin",
+        "completedAt": "2025-11-09T04:41:37.114",
+        "createdBy": {
+            "uid": "M5zQapPyTZI",
+            "username": "admin",
+            "firstName": "admin",
+            "surname": "admin"
+        },
+        "updatedBy": {
+            "uid": "M5zQapPyTZI",
+            "username": "admin",
+            "firstName": "admin",
+            "surname": "admin"
+        },
+        "dataValues": [
+            {
+                "createdAt": "2025-11-09T04:41:37.119",
+                "updatedAt": "2025-11-09T04:41:37.119",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeDiagnos01",
+                "value": "11",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:41:37.119",
+                "updatedAt": "2025-11-09T04:41:37.119",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeTrtType01",
+                "value": "OUTPATIENT",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            }
+        ],
+        "notes": []
+    }
+    4.修改保存，调用接口示例：
+    /api/42/tracker?async=false&importStrategy=UPDATE
+    {
+        "events": [
+            {
+                "event": "lupKKG4uMqj",
+                "status": "COMPLETED",
+                "program": "PrgCaseMgt1",
+                "programStage": "PsTreatmnt1",
+                "enrollment": "erYpje4XClA",
+                "trackedEntity": "rGuyAeff4aD",
+                "orgUnit": "OuChengdu01",
+                "occurredAt": "2025-11-09",
+                "followUp": false,
+                "deleted": false,
+                "createdAt": "2025-11-08T20:41:37.114Z",
+                "updatedAt": "2025-11-09T04:41:37.114",
+                "attributeCategoryOptions": "xYerKDKCefk",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "notes": [],
+                "scheduledAt": null,
+                "geometry": null,
+                "dataValues": [
+                    {
+                        "dataElement": "DeDocNm0001",
+                        "value": "医生张"
+                    },
+                    {
+                        "dataElement": "DeDiagnos01",
+                        "value": "11"
+                    },
+                    {
+                        "dataElement": "DeHospNm001",
+                        "value": "的功夫"
+                    },
+                    {
+                        "dataElement": "DeTrtOutcm1",
+                        "value": "IMPROVED"
+                    },
+                    {
+                        "dataElement": "DeTrtPlan01",
+                        "value": null
+                    },
+                    {
+                        "dataElement": "DeTrtType01",
+                        "value": "OUTPATIENT"
+                    },
+                    {
+                        "dataElement": "DeDeptNm001",
+                        "value": "如果"
+                    },
+                    {
+                        "dataElement": "DeDiscDt001",
+                        "value": null
+                    },
+                    {
+                        "dataElement": "DeMedicat01",
+                        "value": null
+                    }
+                ]
+            }
+        ]
+    }
+
+## 检测记录
+
+### 新增
+    1.首页/个案详情/检测记录，添加“新增检测记录”按钮，点击进入检测记录新增页
+    2.检测记录的新增页表单信息（*为必填）
+    基本信息：
+        Report date*
+        机构*
+        样本类型*
+        推送实验室时间（日期+时间。时间要求eg:08:00,“请输入有效时间”）
+        已推送实验室（单选：是/否）
+        检测类型*
+        检测状态*
+        检测编号*
+        结果详情
+        实验室报告URL（请提供有效的URL）
+        检测到的病原体
+        样本采集日期*（不允许将来的日期）
+        检测机构
+        检测日期（不允许将来的日期）
+        检测结果
+    笔记：点击“编写说明”显示文本框，“编写说明”按钮变为“添加笔记”/"取消"
+    分配者：
+        分配的用户
+    3.提交保存调用示例：
+    /api/42/tracker?async=false
+    {
+        "events": [
+            {
+                "orgUnit": "OuMianyang1",
+                "occurredAt": "2025-11-01",
+                "notes": [
+                    {
+                        "value": "虽然有"
+                    }
+                ],
+                "status": "COMPLETED",
+                "event": "LFhKed5Dyqd",
+                "program": "PrgCaseMgt1",
+                "programStage": "PsTest00001",
+                "orgUnitName": "绵阳市",
+                "trackedEntity": "rGuyAeff4aD",
+                "enrollment": "erYpje4XClA",
+                "updatedAt": "2025-11-09T07:07:36",
+                "dataValues": [
+                    {
+                        "dataElement": "DeSmplType1",
+                        "value": "THROAT_SWAB"
+                    },
+                    {
+                        "dataElement": "DePushLabDt",
+                        "value": "2025-11-02T00:00:00.000Z"
+                    },
+                    {
+                        "dataElement": "DePushLab01",
+                        "value": "false"
+                    },
+                    {
+                        "dataElement": "DeTestType1",
+                        "value": "NAT"
+                    },
+                    {
+                        "dataElement": "DeTestStat1",
+                        "value": "PENDING_CONFIRMATION"
+                    },
+                    {
+                        "dataElement": "DeTestNo001",
+                        "value": "111111"
+                    },
+                    {
+                        "dataElement": "DeRsltDtl01",
+                        "value": "绕太阳发"
+                    },
+                    {
+                        "dataElement": "DePathogen1",
+                        "value": "V002"
+                    },
+                    {
+                        "dataElement": "DeSmplColDt",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "dataElement": "DeTestOrg01",
+                        "value": "玩填入而已"
+                    },
+                    {
+                        "dataElement": "DeTestDt001",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "dataElement": "DeTestRslt1",
+                        "value": "NEGATIVE"
+                    }
+                ]
+            }
+        ]
+    }
+
+### 列表:显示已有检测数据
+    1.首页/个案详情/检测记录，检测记录数据界面显示记录列表，表头显示所有信息中文名称和操作（编辑）
+    2.列表数据获取示例：（events中programStage:"PsTest00001"是检测记录的数据，如：示例中有一条programStage是"PsTest00001"的，就有一条检测记录的数据）
+    /api/42/tracker/trackedEntities/rGuyAeff4aD?program=PrgCaseMgt1&fields=enrollments%5B*%2C!attributes%5D%2Cattributes
+
+### 编辑
+    1.首页/个案详情/检测记录，点击列表操作列“编辑”功能进入检测记录编辑页
+    2.编辑页可与新增使用同一界面（表单大致相同）
+    基本信息：（*为必填）
+        Report date*
+        Scheduled date（无法选择，鼠标移入提示图标有tips:"无法更改 已完成 事件的预定日期"）
+        机构*
+        样本类型*
+        推送实验室时间
+        已推送实验室
+        检测类型*
+        检测状态*
+        检测编号*
+        结果详情
+        实验室报告URL
+        检测到的病原体
+        样本采集日期*（"不允许将来的日期"）
+        检测机构
+        检测日期
+        检测结果
+    状态：
+        事件完成（复选框选择："是"）
+    3..获取详情复现数据示例：
+    /api/42/tracker/events/tCJVF72FQNK
+    {
+        "event": "tCJVF72FQNK",
+        "status": "COMPLETED",
+        "program": "PrgCaseMgt1",
+        "programStage": "PsTest00001",
+        "enrollment": "erYpje4XClA",
+        "trackedEntity": "rGuyAeff4aD",
+        "orgUnit": "OuChengdu01",
+        "occurredAt": "2025-11-09T00:00:00.000",
+        "followUp": false,
+        "deleted": false,
+        "createdAt": "2025-11-09T04:42:02.678",
+        "updatedAt": "2025-11-09T04:42:02.678",
+        "attributeOptionCombo": "HllvX50cXC0",
+        "attributeCategoryOptions": "xYerKDKCefk",
+        "completedBy": "admin",
+        "completedAt": "2025-11-09T04:42:02.678",
+        "createdBy": {
+            "uid": "M5zQapPyTZI",
+            "username": "admin",
+            "firstName": "admin",
+            "surname": "admin"
+        },
+        "updatedBy": {
+            "uid": "M5zQapPyTZI",
+            "username": "admin",
+            "firstName": "admin",
+            "surname": "admin"
+        },
+        "dataValues": [
+            {
+                "createdAt": "2025-11-09T04:42:02.685",
+                "updatedAt": "2025-11-09T04:42:02.685",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeTestType1",
+                "value": "NAT",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:42:02.691",
+                "updatedAt": "2025-11-09T04:42:02.691",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeSmplType1",
+                "value": "BLOOD",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:42:02.691",
+                "updatedAt": "2025-11-09T04:42:02.691",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeSmplColDt",
+                "value": "2025-11-09",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:42:02.691",
+                "updatedAt": "2025-11-09T04:42:02.691",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeTestStat1",
+                "value": "PENDING_CONFIRMATION",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:42:02.688",
+                "updatedAt": "2025-11-09T04:42:02.688",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeTestNo001",
+                "value": "11",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            }
+        ],
+        "notes": []
+    }
+    4.修改保存，调用接口示例：
+    /api/42/tracker?async=false&importStrategy=UPDATE
+    {
+        "events": [
+            {
+                "event": "tCJVF72FQNK",
+                "status": "COMPLETED",
+                "program": "PrgCaseMgt1",
+                "programStage": "PsTest00001",
+                "enrollment": "erYpje4XClA",
+                "trackedEntity": "rGuyAeff4aD",
+                "orgUnit": "OuChengdu01",
+                "occurredAt": "2025-11-02",
+                "followUp": false,
+                "deleted": false,
+                "createdAt": "2025-11-08T20:42:02.678Z",
+                "updatedAt": "2025-11-09T04:42:02.678",
+                "attributeCategoryOptions": "xYerKDKCefk",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "notes": [],
+                "scheduledAt": null,
+                "geometry": null,
+                "dataValues": [
+                    {
+                        "dataElement": "DeSmplType1",
+                        "value": "BLOOD"
+                    },
+                    {
+                        "dataElement": "DePushLabDt",
+                        "value": "2025-11-14T01:00:00.000Z"
+                    },
+                    {
+                        "dataElement": "DePushLab01",
+                        "value": "false"
+                    },
+                    {
+                        "dataElement": "DeTestType1",
+                        "value": "NAT"
+                    },
+                    {
+                        "dataElement": "DeTestStat1",
+                        "value": "PENDING_CONFIRMATION"
+                    },
+                    {
+                        "dataElement": "DeTestNo001",
+                        "value": "1121424"
+                    },
+                    {
+                        "dataElement": "DeRsltDtl01",
+                        "value": "sdfdg"
+                    },
+                    {
+                        "dataElement": "DeLabRptUrl",
+                        "value": null
+                    },
+                    {
+                        "dataElement": "DePathogen1",
+                        "value": "V004"
+                    },
+                    {
+                        "dataElement": "DeSmplColDt",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "dataElement": "DeTestOrg01",
+                        "value": "dgf"
+                    },
+                    {
+                        "dataElement": "DeTestDt001",
+                        "value": null
+                    },
+                    {
+                        "dataElement": "DeTestRslt1",
+                        "value": "PENDING"
+                    }
+                ]
+            }
+        ]
+    }
+
+    
+## 追踪记录
+
+### 新增
+    1.首页/个案详情/追踪记录，添加“新增追踪记录”按钮，点击进入追踪记录新增页
+    2.追踪记录的新增页表单信息（*为必填）
+    基本信息：
+        Report date*
+        机构*
+        地点描述*
+        结束日期*（不允许将来的日期）
+        接触人员
+        暴露详情
+        已推送流调系统-2
+        关联地区
+        起始日期*（不允许将来的日期）
+        风险评估*
+        推送流调时间-2
+        追踪类型*
+    笔记：点击“编写说明”显示文本框，“编写说明”按钮变为“添加笔记”/"取消"
+    分配者：
+        分配的用户
+    3.提交保存调用示例：
+    /api/42/tracker?async=false
+    {
+        "events": [
+            {
+                "orgUnit": "OuChengdu01",
+                "occurredAt": "2025-11-01",
+                "notes": [
+                    {
+                        "value": "srgffgh"
+                    }
+                ],
+                "status": "COMPLETED",
+                "event": "fY4khaGOmLa",
+                "program": "PrgCaseMgt1",
+                "programStage": "PsTracking1",
+                "orgUnitName": "成都市",
+                "trackedEntity": "rGuyAeff4aD",
+                "enrollment": "erYpje4XClA",
+                "updatedAt": "2025-11-09T07:32:32",
+                "dataValues": [
+                    {
+                        "dataElement": "DeLocDesc01",
+                        "value": "wefdrgy的任何"
+                    },
+                    {
+                        "dataElement": "DeEndDt0001",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "dataElement": "DeContPrsn1",
+                        "value": "是法国不超过"
+                    },
+                    {
+                        "dataElement": "DeExpDtl001",
+                        "value": "大太阳"
+                    },
+                    {
+                        "dataElement": "DeTrkPshEpi",
+                        "value": "false"
+                    },
+                    {
+                        "dataElement": "DeRelRgn001",
+                        "value": "OuMianyang1"
+                    },
+                    {
+                        "dataElement": "DeStartDt01",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "dataElement": "DeRiskAsmt1",
+                        "value": "HIGH"
+                    },
+                    {
+                        "dataElement": "DeTrkPshDt1",
+                        "value": "2025-11-01T01:00:00.000Z"
+                    },
+                    {
+                        "dataElement": "DeTrackTp01",
+                        "value": "CONTACT_HISTORY"
+                    }
+                ]
+            }
+        ]
+    }
+
+### 列表
+    1.首页/个案详情/追踪记录，追踪记录数据界面显示记录列表，表头显示所有信息中文名称和操作（编辑）
+    2.列表数据获取示例：（events中programStage:"PsTracking1"是追踪记录的数据，如：示例中有一条programStage是"PsTracking1"的，就有一条追踪记录的数据）
+    /api/42/tracker/trackedEntities/rGuyAeff4aD?program=PrgCaseMgt1&fields=enrollments%5B*%2C!attributes%5D%2Cattributes
+
+### 编辑
+    1.首页/个案详情/追踪记录，点击列表操作列“编辑”功能进入追踪记录编辑页
+    2.编辑页可与新增使用同一界面（表单大致相同）
+    基本信息：（*为必填）
+        Report date *
+        Scheduled date（无法选择，鼠标移入提示图标有tips:"无法更改 已完成 事件的预定日期"）
+        机构 *
+        地点描述*
+        结束日期*(不允许将来的日期)
+        接触人员
+        暴露详情
+        已推送流调系统-2(单选：是/否)
+        关联地区
+        起始日期*（日期+时间。时间要求eg:08:00,“请输入有效时间”）
+        风险评估*
+        推送流调时间-2
+        追踪类型*
+    状态：
+        事件完成（复选框选择："是"）
+    3.获取详情复现数据示例：
+    /api/42/tracker/events/s7c2GEtMGWf
+    {
+        "event": "s7c2GEtMGWf",
+        "status": "COMPLETED",
+        "program": "PrgCaseMgt1",
+        "programStage": "PsTracking1",
+        "enrollment": "erYpje4XClA",
+        "trackedEntity": "rGuyAeff4aD",
+        "orgUnit": "OuChengdu01",
+        "occurredAt": "2025-11-08T00:00:00.000",
+        "followUp": false,
+        "deleted": false,
+        "createdAt": "2025-11-09T04:42:28.631",
+        "updatedAt": "2025-11-09T04:42:28.631",
+        "attributeOptionCombo": "HllvX50cXC0",
+        "attributeCategoryOptions": "xYerKDKCefk",
+        "completedBy": "admin",
+        "completedAt": "2025-11-09T04:42:28.631",
+        "createdBy": {
+            "uid": "M5zQapPyTZI",
+            "username": "admin",
+            "firstName": "admin",
+            "surname": "admin"
+        },
+        "updatedBy": {
+            "uid": "M5zQapPyTZI",
+            "username": "admin",
+            "firstName": "admin",
+            "surname": "admin"
+        },
+        "dataValues": [
+            {
+                "createdAt": "2025-11-09T04:42:28.632",
+                "updatedAt": "2025-11-09T04:42:28.632",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeRelRgn001",
+                "value": "OuChengdu01",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:42:28.633",
+                "updatedAt": "2025-11-09T04:42:28.633",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeStartDt01",
+                "value": "2025-11-06",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:42:28.637",
+                "updatedAt": "2025-11-09T04:42:28.637",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeRiskAsmt1",
+                "value": "LOW",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:42:28.633",
+                "updatedAt": "2025-11-09T04:42:28.633",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeEndDt0001",
+                "value": "2025-11-09",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:42:28.637",
+                "updatedAt": "2025-11-09T04:42:28.637",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeLocDesc01",
+                "value": "11",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            },
+            {
+                "createdAt": "2025-11-09T04:42:28.638",
+                "updatedAt": "2025-11-09T04:42:28.638",
+                "storedBy": "admin",
+                "providedElsewhere": false,
+                "dataElement": "DeTrackTp01",
+                "value": "CONTACT_HISTORY",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                }
+            }
+        ],
+        "notes": []
+    }
+    4.修改保存，调用接口示例：
+    /api/42/tracker?async=false&importStrategy=UPDATE
+    {
+        "events": [
+            {
+                "event": "s7c2GEtMGWf",
+                "status": "COMPLETED",
+                "program": "PrgCaseMgt1",
+                "programStage": "PsTracking1",
+                "enrollment": "erYpje4XClA",
+                "trackedEntity": "rGuyAeff4aD",
+                "orgUnit": "OuChengdu01",
+                "occurredAt": "2025-11-08",
+                "followUp": false,
+                "deleted": false,
+                "createdAt": "2025-11-08T20:42:28.631Z",
+                "updatedAt": "2025-11-09T04:42:28.631",
+                "attributeCategoryOptions": "xYerKDKCefk",
+                "createdBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "updatedBy": {
+                    "uid": "M5zQapPyTZI",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "notes": [],
+                "scheduledAt": null,
+                "geometry": null,
+                "dataValues": [
+                    {
+                        "dataElement": "DeLocDesc01",
+                        "value": "11tytgh"
+                    },
+                    {
+                        "dataElement": "DeEndDt0001",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "dataElement": "DeContPrsn1",
+                        "value": "dfhfgfh"
+                    },
+                    {
+                        "dataElement": "DeExpDtl001",
+                        "value": "drgfyht6"
+                    },
+                    {
+                        "dataElement": "DeTrkPshEpi",
+                        "value": "false"
+                    },
+                    {
+                        "dataElement": "DeRelRgn001",
+                        "value": "OuChengdu01"
+                    },
+                    {
+                        "dataElement": "DeStartDt01",
+                        "value": "2025-11-06"
+                    },
+                    {
+                        "dataElement": "DeRiskAsmt1",
+                        "value": "MEDIUM"
+                    },
+                    {
+                        "dataElement": "DeTrkPshDt1",
+                        "value": "2025-11-01T00:00:00.000Z"
+                    },
+                    {
+                        "dataElement": "DeTrackTp01",
+                        "value": "CONTACT_HISTORY"
+                    }
+                ]
+            }
+        ]
+    }
+
+
+## 所有记录中表单中关于"笔记"和"分配者"描述症状
+    笔记：点击“编写说明”显示文本框，“编写说明”按钮变为“添加笔记”/"取消"，
+        -- 编辑输入文本框，点击“添加笔记”，调取/api/42/me?fields=firstName%2Csurname%2Cusername，获得{
+            "username": "admin",
+            "surname": "admin",
+            "firstName": "admin"
+        }，添加一条数据显示eg:admin admin 'value'。可编写多条
+    分配者：
+        分配的用户
+            -- 输入数据，调取接口api/42/userLookup?query=ad 
+            -- 获得：
+                {
+                    "users": [
+                        {
+                            "id": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin",
+                            "displayName": "admin admin"
+                        },
+                        {
+                            "id": "UserAdmin01",
+                            "username": "admin1",
+                            "firstName": "系统",
+                            "surname": "管理员",
+                            "displayName": "系统 管理员"
+                        }
+                    ]
+                }
+            -- 获取到数据后，可直接选择。若无可选数据，输入框下方提示“没有结果”
+    
+   
+## dhis2MetadataUtils.ts 
+  项目中dhis2MetadataUtils.ts文件提供了方法可以查询:程序信息/阶段信息/数据元素信息/选项集信息。
+  上述新增/编辑表单中某些属性是值域集，可使用该方法查询。
+  用不明病例状态举例：
+    const unknownCaseStatusOptions = await getDHIS2MetadataInfo('', '', '', 'OsUnkStat01');
+    console.log('不明病例状态选项集:', unknownCaseStatusOptions);
+    获得：
+    {
+        "id": "OsUnkStat01",
+        "name": "不明病例状态",
+        "valueType": "TEXT",
+        "options": [
+            {
+                "id": "OptPendTst1",
+                "code": "PENDING_TEST",
+                "name": "待检测",
+                "sortOrder": 1
+            },
+            {
+                "id": "OptTesting1",
+                "code": "TESTING",
+                "name": "检测中",
+                "sortOrder": 2
+            },
+            {
+                "id": "OptConfirm2",
+                "code": "CONFIRMED",
+                "name": "已确诊",
+                "sortOrder": 3
+            },
+            {
+                "id": "OptExclude1",
+                "code": "EXCLUDED",
+                "name": "排除",
+                "sortOrder": 4
+            }
+        ]
+    }
+  补充：
+   -- 项目（已知疾病个案管理）id=PrgCaseMgt1
+   -- 阶段：
+     PsFollowUp1：随访记录
+     PsTreatmnt1：治疗记录
+     PsTest00001：检测记录
+     PsTracking1：追踪记录
+   -- getDHIS2MetadataInfo('', 'PsFollowUp1', '', '') 
+      可查询到该阶段下的所有数据元素/选项集/元素/值域集
