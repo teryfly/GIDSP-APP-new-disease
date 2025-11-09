@@ -1,22 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Form, Button, Space, message, Spin, Card, Typography, DatePicker, Radio, Input, Row, Col, Select, Tooltip, Checkbox } from 'antd';
+import { Form, Button, Space, message, Spin, Card, Typography, DatePicker, Radio, Input, Row, Col, Tooltip, Checkbox } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { getEvent, getCaseDetails, updateEvents } from '../../services/caseDetailsService';
-import { toTreatmentForm, buildTreatmentUpdateDVs } from '../../services/mappers/eventFormMappers';
+import { toFollowUpForm, buildFollowUpUpdateDVs } from '../../services/mappers/eventFormMappers';
 import { PS } from '../../services/contractMapping';
 import { validateNotFuture } from '../../utils/dateValidators';
 
 const { Title } = Typography;
-const { TextArea } = Input;
 
-const EditTreatment = () => {
+const EditFollowUpContract = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const { caseId, id } = useParams<{ caseId: string; id: string }>();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
   const [enrollment, setEnrollment] = useState<string | null>(null);
   const [orgUnit, setOrgUnit] = useState<string | null>(null);
   const [statusCompleted, setStatusCompleted] = useState<boolean>(false);
@@ -38,11 +38,11 @@ const EditTreatment = () => {
         setOrgUnit(event.orgUnit);
         setStatusCompleted(event.status === 'COMPLETED');
 
-        const mapped = toTreatmentForm(event.dataValues || []);
+        const initial = toFollowUpForm(event.dataValues || []);
         form.setFieldsValue({
           occurredAt: event.occurredAt ? dayjs(event.occurredAt) : dayjs(),
           orgUnit: event.orgUnit,
-          ...mapped,
+          ...initial,
         });
       } catch (e: any) {
         message.error(`加载失败: ${e.message}`);
@@ -63,25 +63,22 @@ const EditTreatment = () => {
       setSubmitting(true);
 
       const occurred = values.occurredAt?.format('YYYY-MM-DD') || dayjs().format('YYYY-MM-DD');
-      const dischargeDate = values.dischargeDate ? values.dischargeDate.format('YYYY-MM-DD') : undefined;
 
-      const dvs = buildTreatmentUpdateDVs({
-        treatmentType: values.treatmentType,
-        hospitalName: values.hospitalName,
-        departmentName: values.departmentName,
-        doctorName: values.doctorName,
-        diagnosis: values.diagnosis,
-        treatmentPlan: values.treatmentPlan,
-        medications: values.medications,
-        treatmentOutcome: values.treatmentOutcome,
-        dischargeDate,
+      const dvs = buildFollowUpUpdateDVs({
+        followUpMethod: values.followUpMethod,
+        healthStatus: values.healthStatus,
+        treatmentCompliance: values.treatmentCompliance,
+        temperature: values.temperature !== undefined && values.temperature !== '' ? Number(values.temperature) : undefined,
+        symptoms: values.symptoms,
+        nextFollowUpDate: values.nextFollowUpDate ? values.nextFollowUpDate.format('YYYY-MM-DD') : undefined,
+        remarks: values.remarks,
       });
 
       const res = await updateEvents([
         {
           event: id,
           program: 'PrgCaseMgt1',
-          programStage: PS.TREATMENT,
+          programStage: PS.FOLLOW_UP,
           enrollment,
           orgUnit,
           status: statusCompleted ? 'COMPLETED' : 'ACTIVE',
@@ -91,7 +88,7 @@ const EditTreatment = () => {
       ] as any);
 
       if (res.status === 'OK') {
-        message.success('治疗记录更新成功!');
+        message.success('随访记录更新成功!');
         navigate(`/cases/${caseId}`);
       } else {
         message.error('更新失败，请检查数据');
@@ -111,7 +108,7 @@ const EditTreatment = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Card>
-        <Title level={4}>编辑治疗记录</Title>
+        <Title level={4}>编辑随访记录</Title>
         <Form form={form} layout="vertical">
           <Row gutter={16}>
             <Col span={12}>
@@ -126,12 +123,9 @@ const EditTreatment = () => {
             <Col span={12}>
               <Form.Item
                 label={
-                  <Space size={4}>
-                    <span>Scheduled date</span>
-                    <Tooltip title="无法更改 已完成 事件的预定日期">
-                      <InfoCircleOutlined />
-                    </Tooltip>
-                  </Space>
+                  <span>
+                    Scheduled date <Tooltip title="无法更改 已完成 事件的预定日期"><InfoCircleOutlined /></Tooltip>
+                  </span>
                 }
               >
                 <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" disabled placeholder="不可编辑" />
@@ -145,66 +139,65 @@ const EditTreatment = () => {
             </Col>
 
             <Col span={12}>
-              <Form.Item label="医生姓名" name="doctorName" rules={[{ min: 2, max: 50, message: '医生姓名2-50字' }]}>
-                <Input placeholder="请输入医生姓名" />
-              </Form.Item>
-            </Col>
-
-            <Col span={24}>
-              <Form.Item label="诊断结果" name="diagnosis" rules={[{ required: true, message: '请输入诊断结果' }, { min: 2, max: 500 }]}>
-                <TextArea rows={2} placeholder="请输入诊断结果" />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="医院名称" name="hospitalName" rules={[{ required: true, message: '请输入医院名称' }, { min: 2, max: 200 }]}>
-                <Input placeholder="请输入医院名称" />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="治疗转归" name="treatmentOutcome">
-                <Select placeholder="请选择">
-                  <Select.Option value="CURED">治愈</Select.Option>
-                  <Select.Option value="IMPROVED">好转</Select.Option>
-                  <Select.Option value="INEFFECTIVE">无效</Select.Option>
-                  <Select.Option value="DEATH">死亡</Select.Option>
-                  <Select.Option value="TRANSFERRED">转院</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
-
-            <Col span={24}>
-              <Form.Item label="治疗方案" name="treatmentPlan" rules={[{ required: true, message: '请输入治疗方案' }, { min: 10, max: 1000 }]}>
-                <TextArea rows={3} placeholder="请输入治疗方案" />
-              </Form.Item>
-            </Col>
-
-            <Col span={24}>
-              <Form.Item label="用药情况" name="medications" rules={[{ max: 1000, message: '用药情况不能超过1000字' }]}>
-                <TextArea rows={3} placeholder="请输入用药情况" />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="治疗类型" name="treatmentType" rules={[{ required: true, message: '请选择治疗类型' }]}>
+              <Form.Item label="治疗依从性" name="treatmentCompliance" rules={[{ required: true, message: '请选择治疗依从性' }]}>
                 <Radio.Group>
-                  <Radio value="OUTPATIENT">门诊</Radio>
-                  <Radio value="INPATIENT">住院</Radio>
-                  <Radio value="HOME_ISOLATION">居家隔离</Radio>
+                  <Radio value="GOOD">良好</Radio>
+                  <Radio value="FAIR">一般</Radio>
+                  <Radio value="POOR">差</Radio>
                 </Radio.Group>
               </Form.Item>
             </Col>
 
             <Col span={12}>
-              <Form.Item label="科室名称" name="departmentName" rules={[{ min: 2, max: 100, message: '科室名称2-100字' }]}>
-                <Input placeholder="请输入科室名称" />
+              <Form.Item label="健康状态" name="healthStatus" rules={[{ required: true, message: '请选择健康状态' }]}>
+                <Radio.Group>
+                  <Radio value="NORMAL">正常</Radio>
+                  <Radio value="ABNORMAL">异常</Radio>
+                  <Radio value="HOSPITALIZED">住院</Radio>
+                  <Radio value="DEATH">死亡</Radio>
+                </Radio.Group>
               </Form.Item>
             </Col>
 
             <Col span={12}>
-              <Form.Item label="出院日期" name="dischargeDate" rules={[{ validator: validateNotFuture }]}>
+              <Form.Item label="随访方式" name="followUpMethod" rules={[{ required: true, message: '请选择随访方式' }]}>
+                <Radio.Group>
+                  <Radio value="PHONE">电话随访</Radio>
+                  <Radio value="ON_SITE">现场随访</Radio>
+                  <Radio value="ONLINE">线上随访</Radio>
+                </Radio.Group>
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                label="体温(°C)"
+                name="temperature"
+                rules={[{ type: 'number', min: 35.0, max: 42.0, transform: (v) => (v === '' || v === undefined ? undefined : Number(v)), message: '体温范围35.0-42.0°C' }]}
+              >
+                <Input placeholder="体温示例: 36.5" />
+              </Form.Item>
+            </Col>
+
+            <Col span={24}>
+              <Form.Item label="症状描述" name="symptoms" rules={[{ max: 1000, message: '症状描述不能超过1000字' }]}>
+                <Input.TextArea rows={3} placeholder="请输入症状描述" />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                label="下次随访日期"
+                name="nextFollowUpDate"
+                rules={[{ validator: validateNotFuture }]}
+              >
                 <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+              </Form.Item>
+            </Col>
+
+            <Col span={24}>
+              <Form.Item label="备注" name="remarks" rules={[{ max: 1000, message: '备注不能超过1000字' }]}>
+                <Input.TextArea rows={3} placeholder="请输入备注" />
               </Form.Item>
             </Col>
 
@@ -226,4 +219,4 @@ const EditTreatment = () => {
   );
 };
 
-export default EditTreatment;
+export default EditFollowUpContract;

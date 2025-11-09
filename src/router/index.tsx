@@ -10,7 +10,8 @@ import EditEpiInfo from '../pages/records/EditEpiInfo';
 import EditDiagnosis from '../pages/records/EditDiagnosis';
 // existing imports
 import NewFollowUp from '../pages/records/NewFollowUp';
-import EditFollowUp from '../pages/records/EditFollowUp';
+// import EditFollowUp from '../pages/records/EditFollowUp';
+import EditFollowUpContract from '../pages/records/EditFollowUpContract';
 import NewTreatment from '../pages/records/NewTreatment';
 import EditTreatment from '../pages/records/EditTreatment';
 import NewTestRecord from '../pages/records/NewTestRecord';
@@ -92,7 +93,7 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'cases/:caseId/follow-ups/:id/edit',
-                element: <EditFollowUp />,
+                element: <EditFollowUpContract />,
                 handle: {
                     crumb: () => "编辑随访记录",
                 },
