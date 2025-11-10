@@ -1,6 +1,11 @@
 import type { TrackerEvent } from '../caseDetailsService';
 import { DE_INVEST, DE_FOLLOWUP, DE_TREAT, DE_TEST, DE_TRACK, readDV } from '../contractMapping';
 
+// 修复类型问题，创建一个兼容的readDV函数
+function readDVCompat(map: Map<string, string>, def: { id: string; legacy: readonly string[] }) {
+  return readDV(map, def as any);
+}
+
 function dvMap(event: TrackerEvent): Map<string, string> {
   return new Map((event.dataValues || []).map((dv) => [dv.dataElement, String(dv.value)]));
 }
@@ -34,7 +39,6 @@ export interface FollowUpItem {
   event: string;
   occurredAt: string;
   method?: string;
-  doctor?: string;
   healthStatus?: string;
   temperature?: string;
   symptoms?: string;
@@ -45,13 +49,21 @@ export interface FollowUpItem {
 }
 
 export function mapFollowUps(events: TrackerEvent[]): FollowUpItem[] {
-  return events.map((e) => {
+  // 过滤出真正的随访记录事件
+  const followUpEvents = events.filter(e => e.programStage === 'PsFollowUp1');
+  
+  // 添加调试日志
+  if (events.length !== followUpEvents.length) {
+    console.warn('mapFollowUps - Filtering out non-follow-up events:', 
+      events.filter(e => e.programStage !== 'PsFollowUp1'));
+  }
+  
+  return followUpEvents.map((e) => {
     const m = dvMap(e);
     return {
       event: e.event,
       occurredAt: e.occurredAt,
       method: readDV(m, DE_FOLLOWUP.METHOD),
-      doctor: readDV(m, DE_TREAT.DOCTOR),
       healthStatus: readDV(m, DE_FOLLOWUP.HEALTH_STATUS),
       temperature: readDV(m, DE_FOLLOWUP.TEMP),
       symptoms: readDV(m, DE_FOLLOWUP.SYMPTOMS),
@@ -78,7 +90,10 @@ export interface TreatmentItem {
 }
 
 export function mapTreatments(events: TrackerEvent[]): TreatmentItem[] {
-  return events.map((e) => {
+  // 过滤出真正的治疗记录事件
+  const treatmentEvents = events.filter(e => e.programStage === 'PsTreatmnt1');
+  
+  return treatmentEvents.map((e) => {
     const m = dvMap(e);
     return {
       event: e.event,
@@ -112,7 +127,10 @@ export interface TestItem {
 }
 
 export function mapTests(events: TrackerEvent[]): TestItem[] {
-  return events.map((e) => {
+  // 过滤出真正的检测记录事件
+  const testEvents = events.filter(e => e.programStage === 'PsTest00001');
+  
+  return testEvents.map((e) => {
     const m = dvMap(e);
     const pushed = readDV(m, DE_TEST.PUSH_LAB);
     return {
@@ -148,7 +166,10 @@ export interface TrackingItem {
 }
 
 export function mapTrackings(events: TrackerEvent[]): TrackingItem[] {
-  return events.map((e) => {
+  // 过滤出真正的追踪记录事件
+  const trackingEvents = events.filter(e => e.programStage === 'PsTracking1');
+  
+  return trackingEvents.map((e) => {
     const m = dvMap(e);
     const lng = m.get('DeLng');
     const lat = m.get('DeLat');

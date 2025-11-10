@@ -76,7 +76,7 @@ export const DE_INVEST = {
 } as const;
 
 // 工具: 从事件dataValues中读取值，按合同UID优先，若无则尝试legacy列表
-export function readDV(map: Map<string, string>, def: { id: string; legacy: string[] }): string | undefined {
+export function readDV(map: Map<string, string>, def: { id: string; legacy: readonly string[] }): string | undefined {
   if (map.has(def.id)) return map.get(def.id);
   for (const k of def.legacy) {
     if (map.has(k)) return map.get(k);

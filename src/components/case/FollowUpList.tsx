@@ -6,7 +6,7 @@ interface Props {
   caseId: string;
   items: FollowUpItem[];
   pager: { page: number; pageSize: number; total: number };
-  onLoadMore: (nextPage: number) => void;
+  onLoadMore?: (nextPage: number) => void; // 使onLoadMore变为可选
 }
 
 const FollowUpList = ({ caseId, items, pager, onLoadMore }: Props) => {
@@ -16,7 +16,7 @@ const FollowUpList = ({ caseId, items, pager, onLoadMore }: Props) => {
     <List
       dataSource={items}
       loadMore={
-        canLoadMore ? (
+        canLoadMore && onLoadMore ? ( // 检查onLoadMore是否存在
           <div style={{ textAlign: 'center', marginTop: 16 }}>
             <Button onClick={() => onLoadMore(pager.page + 1)}>加载更多...</Button>
           </div>
@@ -24,7 +24,7 @@ const FollowUpList = ({ caseId, items, pager, onLoadMore }: Props) => {
       }
       renderItem={(item) => (
         <List.Item>
-          <Card style={{ width: '100%' }} title={`📅 ${item.occurredAt} | ${item.method || '-'} | ${item.doctor || '-'}`}>
+          <Card style={{ width: '100%' }} title={`📅 ${item.occurredAt} | ${item.method || '-'}`}>
             <Descriptions column={2}>
               <Descriptions.Item label="健康状态">
                 <Tag color={item.healthStatus === 'ABNORMAL' || item.healthStatus === '恶化' ? 'red' : 'green'}>

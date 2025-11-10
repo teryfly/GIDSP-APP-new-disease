@@ -1,7 +1,10 @@
-import { Form, Input, Select, DatePicker, Radio, Row, Col, Card, Typography } from 'antd';
+import { useEffect, useState } from 'react';
+import { Form, Input, Select, DatePicker, Radio, Row, Col, Card, Typography, Spin, message } from 'antd';
 import type { FormInstance } from 'antd';
 import moment from 'moment';
 import type { TreatmentFormData } from '../../types/forms';
+import { getAllOrgUnits } from '../../services/caseService';
+import type { OrgUnit } from '../../services/caseService';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -14,6 +17,28 @@ interface TreatmentFormProps {
 
 const TreatmentForm = ({ form, initialValues, caseId }: TreatmentFormProps) => {
     const treatmentType = Form.useWatch('treatmentType', form);
+    const [orgUnitOptions, setOrgUnitOptions] = useState<{ value: string; label: string }[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        loadOrgUnits();
+    }, []);
+
+    const loadOrgUnits = async () => {
+        setLoading(true);
+        try {
+            const orgUnits = await getAllOrgUnits();
+            setOrgUnitOptions(orgUnits.map((o: OrgUnit) => ({ value: o.id, label: o.name })));
+        } catch (e: any) {
+            message.error(`加载机构数据失败: ${e.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return <Spin size="large" style={{ display: 'block', margin: '50px auto' }} />;
+    }
 
     return (
         <Card>
@@ -56,6 +81,22 @@ const TreatmentForm = ({ form, initialValues, caseId }: TreatmentFormProps) => {
                             rules={[{ required: true, message: '请输入医院名称', min: 2, max: 200 }]}
                         >
                             <Input placeholder="请输入医院名称" />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item
+                            label="机构"
+                            name="orgUnit"
+                            rules={[{ required: true, message: '请选择机构' }]}
+                        >
+                            <Select
+                                showSearch
+                                placeholder="请选择机构"
+                                options={orgUnitOptions}
+                                filterOption={(input, option) =>
+                                    (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
+                                }
+                            />
                         </Form.Item>
                     </Col>
                     <Col span={12}>

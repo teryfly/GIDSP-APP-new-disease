@@ -4,10 +4,12 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { getEvent, getCaseDetails, updateEvents } from '../../services/caseDetailsService';
+import { getAllOrgUnits } from '../../services/caseService';
 import { getMe, getOrgUnitsByPath } from '../../services/caseService2';
 import { toTrackingForm, buildTrackingUpdateDVs } from '../../services/mappers/eventFormMappers';
 import { PS } from '../../services/contractMapping';
 import { validateNotFuture, validateDateRange } from '../../utils/dateValidators';
+import type { OrgUnit } from '../../services/caseService';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -23,6 +25,7 @@ const EditTrackingRecord = () => {
   const { caseId, id } = useParams<{ caseId: string; id: string }>();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [orgUnitOptions, setOrgUnitOptions] = useState<{ value: string; label: string }[]>([]);
 
   const [enrollment, setEnrollment] = useState<string | null>(null);
   const [orgUnit, setOrgUnit] = useState<string | null>(null);
@@ -43,7 +46,14 @@ const EditTrackingRecord = () => {
     (async () => {
       setLoading(true);
       try {
-        const [event, tei] = await Promise.all([getEvent(id), getCaseDetails(caseId)]);
+        // 并行加载事件数据、个案详情、机构数据和区域数据
+        const [event, tei, orgUnits, me] = await Promise.all([
+          getEvent(id),
+          getCaseDetails(caseId),
+          getAllOrgUnits(),
+          getMe()
+        ]);
+        
         const enr = tei.enrollments?.[0];
         if (!enr) {
           message.error('该个案没有入组记录');
@@ -53,6 +63,9 @@ const EditTrackingRecord = () => {
         setEnrollment(enr.enrollment);
         setOrgUnit(event.orgUnit);
         setStatusCompleted(event.status === 'COMPLETED');
+        
+        // 设置机构选项
+        setOrgUnitOptions(orgUnits.map((o: OrgUnit) => ({ value: o.id, label: o.name })));
 
         const mapped = toTrackingForm(event.dataValues || []);
         form.setFieldsValue({
@@ -64,7 +77,6 @@ const EditTrackingRecord = () => {
         });
 
         setRegionLoading(true);
-        const me = await getMe();
         const path = me.organisationUnits?.[0]?.path || '';
         const parentPath = path.substring(0, path.lastIndexOf('/')) || path;
         const ous = await getOrgUnitsByPath(parentPath);
@@ -114,7 +126,7 @@ const EditTrackingRecord = () => {
           program: 'PrgCaseMgt1',
           programStage: PS.TRACKING,
           enrollment,
-          orgUnit,
+          orgUnit: values.orgUnit, // 使用表单中选择的机构
           status: statusCompleted ? 'COMPLETED' : 'ACTIVE',
           occurredAt: occurred,
           dataValues: dvs,
@@ -169,13 +181,24 @@ const EditTrackingRecord = () => {
                   </Space>
                 }
               >
-                <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" disabled placeholder="不可编辑" />
+                <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" disabled placeholder="YYYY-MM-DD" />
               </Form.Item>
             </Col>
 
             <Col span={12}>
-              <Form.Item label="机构" name="orgUnit">
-                <Input readOnly />
+              <Form.Item 
+                label="机构" 
+                name="orgUnit"
+                rules={[{ required: true, message: '请选择机构' }]}
+              >
+                <Select
+                  showSearch
+                  placeholder="请选择机构"
+                  options={orgUnitOptions}
+                  filterOption={(input, option) =>
+                    (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
+                  }
+                />
               </Form.Item>
             </Col>
 

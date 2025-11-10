@@ -125,6 +125,19 @@ export async function getOrgUnitsByPath(pathLike: string): Promise<OrgUnit[]> {
   return res.organisationUnits || [];
 }
 
+/**
+ * 获取所有机构单位，用于值域集单选
+ * @returns 机构单位列表
+ */
+export async function getAllOrgUnits(): Promise<OrgUnit[]> {
+  const fields = buildFieldsParam(['id', 'name', 'code', 'level', 'path']);
+  const res = await dhis2Client.get<{ organisationUnits: OrgUnit[] }>('/api/organisationUnits', {
+    paging: false,
+    fields,
+  });
+  return res.organisationUnits || [];
+}
+
 export interface CaseFilters {
   caseNoLike?: string;
   patientNameLike?: string;
