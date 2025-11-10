@@ -9,6 +9,9 @@ import { toTestForm, buildTestUpdateDVs } from '../../services/mappers/eventForm
 import { PS } from '../../services/contractMapping';
 import { validateNotFuture } from '../../utils/dateValidators';
 import type { OrgUnit } from '../../services/caseService';
+import NotesEditor, { type NoteItem } from '../../components/forms/NotesEditor';
+import AssigneeSelect from '../../components/forms/AssigneeSelect';
+import { createTestEvent } from '../../services/eventService';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -16,16 +19,19 @@ const { TextArea } = Input;
 const EditTestRecord = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const { caseId, id } = useParams<{ caseId: string; id: string }>();
+  const { caseId, id } = useParams<{ caseId: string; id?: string }>();
+  const isCreate = !id;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [orgUnitOptions, setOrgUnitOptions] = useState<{ value: string; label: string }[]>([]);
   const [enrollment, setEnrollment] = useState<string | null>(null);
-  const [orgUnit, setOrgUnit] = useState<string | null>(null);
   const [statusCompleted, setStatusCompleted] = useState<boolean>(false);
 
+  const [notes, setNotes] = useState<NoteItem[]>([]);
+  const [assignee, setAssignee] = useState<{ uid: string; displayName: string; username: string; firstName: string; surname: string } | null>(null);
+
   useEffect(() => {
-    if (!caseId || !id) {
+    if (!caseId) {
       message.error('缺少必要参数');
       navigate('/cases');
       return;
@@ -34,30 +40,37 @@ const EditTestRecord = () => {
     (async () => {
       setLoading(true);
       try {
-        // 并行加载事件数据、个案详情和机构数据
-        const [event, tei, orgUnits] = await Promise.all([
-          getEvent(id),
-          getCaseDetails(caseId),
-          getAllOrgUnits()
-        ]);
-        
-        const enr = tei.enrollments?.[0];
-        if (!enr) throw new Error('该个案没有入组记录');
-        setEnrollment(enr.enrollment);
-        setOrgUnit(event.orgUnit);
-        setStatusCompleted(event.status === 'COMPLETED');
-        
-        // 设置机构选项
+        const orgUnits = await getAllOrgUnits();
         setOrgUnitOptions(orgUnits.map((o: OrgUnit) => ({ value: o.id, label: o.name })));
 
-        const mapped = toTestForm(event.dataValues || []);
-        form.setFieldsValue({
-          occurredAt: event.occurredAt ? dayjs(event.occurredAt) : dayjs(),
-          orgUnit: event.orgUnit,
-          ...mapped,
-          pushLab: String(mapped.pushLab || '') === 'true',
-          pushLabDateTime: mapped.pushLabDateTime ? dayjs(mapped.pushLabDateTime) : undefined,
-        });
+        const tei = await getCaseDetails(caseId);
+        const enr = tei.enrollments?.[0];
+        if (!enr) {
+          message.error('该个案没有入组记录');
+          navigate(`/cases/${caseId}`);
+          return;
+        }
+        setEnrollment(enr.enrollment);
+
+        if (isCreate) {
+          form.setFieldsValue({
+            occurredAt: dayjs(),
+            sampleCollectionDate: dayjs(),
+            testStatus: 'PENDING_CONFIRMATION',
+            orgUnit: enr.orgUnit,
+          });
+        } else {
+          const event = await getEvent(id!);
+          setStatusCompleted(event.status === 'COMPLETED');
+          const mapped = toTestForm(event.dataValues || []);
+          form.setFieldsValue({
+            occurredAt: event.occurredAt ? dayjs(event.occurredAt) : dayjs(),
+            orgUnit: event.orgUnit,
+            ...mapped,
+            pushLab: String(mapped.pushLab || '') === 'true',
+            pushLabDateTime: mapped.pushLabDateTime ? dayjs(mapped.pushLabDateTime) : undefined,
+          });
+        }
       } catch (e: any) {
         message.error(`加载失败: ${e.message}`);
         navigate(`/cases/${caseId}`);
@@ -65,10 +78,10 @@ const EditTestRecord = () => {
         setLoading(false);
       }
     })();
-  }, [caseId, id, navigate, form]);
+  }, [caseId, id, isCreate, navigate, form]);
 
   const handleSubmit = async () => {
-    if (!enrollment || !orgUnit || !id) {
+    if (!enrollment) {
       message.error('缺少必要的上下文信息');
       return;
     }
@@ -77,42 +90,88 @@ const EditTestRecord = () => {
       setSubmitting(true);
 
       const occurred = values.occurredAt?.format('YYYY-MM-DD') || dayjs().format('YYYY-MM-DD');
+      const sampleCollectionDate = values.sampleCollectionDate ? values.sampleCollectionDate.format('YYYY-MM-DD') : undefined;
+      const testDate = values.testDate ? values.testDate.format('YYYY-MM-DD') : undefined;
+      const pushLabDateTime = values.pushLabDateTime ? values.pushLabDateTime.toISOString() : undefined;
 
-      const dvs = buildTestUpdateDVs({
-        testNo: values.testNo,
-        sampleCollectionDate: values.sampleCollectionDate ? values.sampleCollectionDate.format('YYYY-MM-DD') : undefined,
-        sampleType: values.sampleType,
-        testType: values.testType,
-        testOrgName: values.testOrgName,
-        testDate: values.testDate ? values.testDate.format('YYYY-MM-DD') : undefined,
-        testResult: values.testResult,
-        pathogenDetected: values.pathogenDetected,
-        resultDetails: values.resultDetails,
-        testStatus: values.testStatus,
-        pushLab: values.pushLab,
-        pushLabDateTime: values.pushLabDateTime ? values.pushLabDateTime.toISOString() : undefined,
-        labReportUrl: values.labReportUrl,
-      });
-
-      const res = await updateEvents([
-        {
-          event: id,
-          program: 'PrgCaseMgt1',
-          programStage: PS.TEST,
+      if (isCreate) {
+        const res = await createTestEvent(
           enrollment,
-          orgUnit: values.orgUnit, // 使用表单中选择的机构
-          status: statusCompleted ? 'COMPLETED' : 'ACTIVE',
-          occurredAt: occurred,
-          dataValues: dvs,
-        },
-      ] as any);
+          values.orgUnit,
+          occurred,
+          {
+            testNo: values.testNo || `TEST-${dayjs().format('YYYYMMDD')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+            sampleCollectionDate: sampleCollectionDate!,
+            sampleType: values.sampleType,
+            testType: values.testType,
+            lab: values.testOrgName,
+            testDate,
+            result: values.testResult,
+            resultDetails: values.resultDetails,
+            pathogen: values.pathogenDetected,
+            testStatus: values.testStatus,
+            pushLab: values.pushLab,
+            pushLabDateTime,
+            labReportUrl: values.labReportUrl,
+          },
+          {
+            assignedUser: assignee
+              ? {
+                  uid: assignee.uid,
+                  displayName: assignee.displayName,
+                  username: assignee.username,
+                  firstName: assignee.firstName,
+                  surname: assignee.surname,
+                }
+              : undefined,
+            notes: (notes || []).map((n) => ({ value: n.value })),
+          }
+        );
 
-      if (res.status === 'OK') {
-        message.success('检测记录更新成功!');
-        navigate(`/cases/${caseId}`);
+        if (res.status === 'OK') {
+          message.success('检测记录创建成功!');
+          navigate(`/cases/${caseId}`);
+        } else {
+          message.error('创建失败，请检查数据');
+          console.error('Import result:', res);
+        }
       } else {
-        message.error('更新失败，请检查数据');
-        console.error('Import result:', res);
+        const dvs = buildTestUpdateDVs({
+          testNo: values.testNo,
+          sampleCollectionDate,
+          sampleType: values.sampleType,
+          testType: values.testType,
+          testOrgName: values.testOrgName,
+          testDate,
+          testResult: values.testResult,
+          pathogenDetected: values.pathogenDetected,
+          resultDetails: values.resultDetails,
+          testStatus: values.testStatus,
+          pushLab: values.pushLab,
+          pushLabDateTime,
+          labReportUrl: values.labReportUrl,
+        });
+
+        const res = await updateEvents([
+          {
+            event: id!,
+            program: 'PrgCaseMgt1',
+            programStage: PS.TEST,
+            enrollment,
+            orgUnit: values.orgUnit,
+            status: statusCompleted ? 'COMPLETED' : 'ACTIVE',
+            occurredAt: occurred,
+            dataValues: dvs,
+          },
+        ] as any);
+
+        if (res.status === 'OK') {
+          message.success('检测记录更新成功!');
+          navigate(`/cases/${caseId}`);
+        } else {
+          message.error('更新失败，请检查数据');
+          console.error('Import result:', res);
+        }
       }
     } catch (errorInfo: any) {
       message.error(errorInfo?.message || '请检查表单填写项。');
@@ -128,7 +187,7 @@ const EditTestRecord = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Card>
-        <Title level={4}>编辑检测记录</Title>
+        <Title level={4}>{isCreate ? '新增检测记录' : '编辑检测记录'}</Title>
         <Form form={form} layout="vertical">
           <Row gutter={16}>
             <Col span={12}>
@@ -140,20 +199,23 @@ const EditTestRecord = () => {
                 <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <Space size={4}>
-                    <span>Scheduled date</span>
-                    <Tooltip title="无法更改 已完成 事件的预定日期">
-                      <InfoCircleOutlined />
-                    </Tooltip>
-                  </Space>
-                }
-              >
-                <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" disabled placeholder="YYYY-MM-DD" />
-              </Form.Item>
-            </Col>
+
+            {!isCreate && (
+              <Col span={12}>
+                <Form.Item
+                  label={
+                    <Space size={4}>
+                      <span>Scheduled date</span>
+                      <Tooltip title="无法更改 已完成 事件的预定日期">
+                        <InfoCircleOutlined />
+                      </Tooltip>
+                    </Space>
+                  }
+                >
+                  <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" disabled placeholder="YYYY-MM-DD" />
+                </Form.Item>
+              </Col>
+            )}
 
             <Col span={12}>
               <Form.Item 
@@ -284,14 +346,24 @@ const EditTestRecord = () => {
               </Form.Item>
             </Col>
 
-            <Col span={24}>
-              <Checkbox checked={statusCompleted} onChange={(e) => setStatusCompleted(e.target.checked)}>
-                事件完成
-              </Checkbox>
-            </Col>
+            {!isCreate && (
+              <Col span={24}>
+                <Checkbox checked={statusCompleted} onChange={(e) => setStatusCompleted(e.target.checked)}>
+                  事件完成
+                </Checkbox>
+              </Col>
+            )}
           </Row>
         </Form>
       </Card>
+
+      {isCreate && (
+        <>
+          <NotesEditor notes={notes} onChange={setNotes} />
+          <AssigneeSelect value={assignee} onChange={setAssignee} />
+        </>
+      )}
+
       <div style={{ textAlign: 'right' }}>
         <Space>
           <Button onClick={handleCancel} disabled={submitting}>取消</Button>

@@ -21,9 +21,9 @@ const statusTagColor = (status?: string) => {
 };
 
 const genderMap: Record<string, string> = {
-  'MALE': '男',
-  'FEMALE': '女',
-  'UNKNOWN': '未知',
+  MALE: '男',
+  FEMALE: '女',
+  UNKNOWN: '未知',
 };
 
 const CaseDetail = () => {
@@ -52,13 +52,11 @@ const CaseDetail = () => {
   } = useCaseDetails(id!);
 
   useEffect(() => {
-    // read ?tab= query and set initial tab
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
-    if (tab && ['1','2','3','4','5','6','7'].includes(tab)) {
+    if (tab && ['1', '2', '3', '4', '5', '6', '7'].includes(tab)) {
       setActiveTab(tab);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
   useEffect(() => {
@@ -66,7 +64,6 @@ const CaseDetail = () => {
   }, [error]);
 
   useEffect(() => {
-    // 移除对已删除函数的调用，数据现在一次性加载
     if (activeTab === '7' && logs.tei.length === 0 && logs.event.length === 0) loadLogs();
   }, [activeTab]);
 
@@ -95,9 +92,9 @@ const CaseDetail = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Card>
-        <Descriptions 
-          title={`个案编号: ${header.caseNo || '-'}`} 
-          bordered 
+        <Descriptions
+          title={`个案编号: ${header.caseNo || '-'}`}
+          bordered
           column={2}
           extra={
             <Space>
@@ -106,27 +103,27 @@ const CaseDetail = () => {
                   编辑 <DownOutlined />
                 </Button>
               </Dropdown>
-              <Button 
-                onClick={async () => { 
-                  try { 
-                    await doPushEpi(); 
-                    message.success('已成功推送至流调系统'); 
-                  } catch (e: any) { 
-                    message.error(e.message || '推送失败'); 
-                  } 
+              <Button
+                onClick={async () => {
+                  try {
+                    await doPushEpi();
+                    message.success('已成功推送至流调系统');
+                  } catch (e: any) {
+                    message.error(e.message || '推送失败');
+                  }
                 }}
               >
                 推送流调
               </Button>
-              <Button 
-                danger 
-                onClick={async () => { 
-                  try { 
-                    await doCloseCase(); 
-                    message.success('已成功结案'); 
-                  } catch (e: any) { 
-                    message.error(e.message || '结案失败'); 
-                  } 
+              <Button
+                danger
+                onClick={async () => {
+                  try {
+                    await doCloseCase();
+                    message.success('已成功结案');
+                  } catch (e: any) {
+                    message.error(e.message || '结案失败');
+                  }
                 }}
               >
                 结案
