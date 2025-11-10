@@ -15,15 +15,10 @@ import AlertDetail from '../pages/AlertDetail'; // Specific Alert Detail
 import EditBasicInfo from '../pages/records/EditBasicInfo';
 import EditEpiInfo from '../pages/records/EditEpiInfo';
 import EditDiagnosis from '../pages/records/EditDiagnosis';
-// existing imports
-import NewFollowUp from '../pages/records/NewFollowUp';
-// import EditFollowUp from '../pages/records/EditFollowUp';
+
 import EditFollowUpContract from '../pages/records/EditFollowUpContract';
-import NewTreatment from '../pages/records/NewTreatment';
 import EditTreatment from '../pages/records/EditTreatment';
-import NewTestRecord from '../pages/records/NewTestRecord';
 import EditTestRecord from '../pages/records/EditTestRecord';
-import NewTrackingRecord from '../pages/records/NewTrackingRecord';
 import EditTrackingRecord from '../pages/records/EditTrackingRecord';
 import NewDiseaseCode from '../pages/records/NewDiseaseCode';
 import EditDiseaseCode from '../pages/records/EditDiseaseCode';
@@ -49,114 +44,113 @@ export const router = createBrowserRouter([
                 },
             },
             // Case Management
-            {
+           {
                 path: 'cases',
                 element: <CaseList />,
                 handle: {
-                    crumb: () => "个案列表",
+                crumb: () => '个案列表',
                 },
             },
             {
                 path: 'cases/new',
-                element: <NewCase />, // Specific form for new cases
+                element: <NewCase />,
                 handle: {
-                    crumb: () => "新增个案",
+                crumb: () => '新增个案',
                 },
             },
             {
                 path: 'cases/:id',
                 element: <CaseDetail />,
                 handle: {
-                    crumb: () => "个案详情",
+                crumb: () => '个案详情',
                 },
             },
             {
                 path: 'cases/:id/edit',
-                element: <EditCase />, // Specific edit page for a case
+                element: <EditCase />,
                 handle: {
-                    crumb: () => "编辑个案",
+                crumb: () => '编辑个案',
                 },
             },
-            // New edit pages for different sections
             {
                 path: 'cases/:id/edit-basic',
                 element: <EditBasicInfo />,
                 handle: {
-                    crumb: () => "编辑基本信息",
+                crumb: () => '编辑基本信息',
                 },
             },
             {
                 path: 'cases/:id/edit-epi',
                 element: <EditEpiInfo />,
                 handle: {
-                    crumb: () => "编辑流行病学信息",
+                crumb: () => '编辑流行病学信息',
                 },
             },
             {
                 path: 'cases/:id/edit-diagnosis',
                 element: <EditDiagnosis />,
                 handle: {
-                    crumb: () => "编辑诊断信息",
+                crumb: () => '编辑诊断信息',
                 },
             },
-            // Sub-records of cases
+
+            // Unified create/edit routes for sub-records
             {
                 path: 'cases/:caseId/follow-ups/new',
-                element: <NewFollowUp />,
+                element: <EditFollowUpContract />,
                 handle: {
-                    crumb: () => "新增随访记录",
+                crumb: () => '新增随访记录',
                 },
             },
             {
                 path: 'cases/:caseId/follow-ups/:id/edit',
                 element: <EditFollowUpContract />,
                 handle: {
-                    crumb: () => "编辑随访记录",
+                crumb: () => '编辑随访记录',
                 },
             },
             {
                 path: 'cases/:caseId/treatments/new',
-                element: <NewTreatment />,
+                element: <EditTreatment />,
                 handle: {
-                    crumb: () => "新增治疗记录",
+                crumb: () => '新增治疗记录',
                 },
             },
             {
                 path: 'cases/:caseId/treatments/:id/edit',
                 element: <EditTreatment />,
                 handle: {
-                    crumb: () => "编辑治疗记录",
+                crumb: () => '编辑治疗记录',
                 },
             },
             {
                 path: 'cases/:caseId/test-records/new',
-                element: <NewTestRecord />,
+                element: <EditTestRecord />,
                 handle: {
-                    crumb: () => "新增检测记录",
+                crumb: () => '新增检测记录',
                 },
             },
             {
                 path: 'cases/:caseId/test-records/:id/edit',
                 element: <EditTestRecord />,
                 handle: {
-                    crumb: () => "编辑检测记录",
+                crumb: () => '编辑检测记录',
                 },
             },
             {
                 path: 'cases/:caseId/tracking-records/new',
-                element: <NewTrackingRecord />,
+                element: <EditTrackingRecord />,
                 handle: {
-                    crumb: () => "新增追踪记录",
+                crumb: () => '新增追踪记录',
                 },
             },
             {
                 path: 'cases/:caseId/tracking-records/:id/edit',
                 element: <EditTrackingRecord />,
                 handle: {
-                    crumb: () => "编辑追踪记录",
+                crumb: () => '编辑追踪记录',
                 },
             },
-
             // Unknown Cases
             {
                 path: 'unknown-cases',
@@ -211,7 +205,7 @@ export const router = createBrowserRouter([
             // Test Records for Unknown Cases (legacy routes - kept for compatibility)
             {
                 path: 'unknown-cases/:unknownCaseId/test-records/new',
-                element: <NewTestRecord />,
+                element: <EditTestRecord />,
                 handle: {
                     crumb: () => "新增检测记录",
                 },
@@ -223,7 +217,6 @@ export const router = createBrowserRouter([
                     crumb: () => "编辑检测记录",
                 },
             },
-
             // Alert Management
             {
                 path: 'alerts',

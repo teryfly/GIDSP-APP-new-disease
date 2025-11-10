@@ -10,6 +10,9 @@ import { toTrackingForm, buildTrackingUpdateDVs } from '../../services/mappers/e
 import { PS } from '../../services/contractMapping';
 import { validateNotFuture, validateDateRange } from '../../utils/dateValidators';
 import type { OrgUnit } from '../../services/caseService';
+import NotesEditor, { type NoteItem } from '../../components/forms/NotesEditor';
+import AssigneeSelect from '../../components/forms/AssigneeSelect';
+import { createTrackingEvent } from '../../services/eventService';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -22,22 +25,25 @@ interface RegionOption {
 const EditTrackingRecord = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const { caseId, id } = useParams<{ caseId: string; id: string }>();
+  const { caseId, id } = useParams<{ caseId: string; id?: string }>();
+  const isCreate = !id;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [orgUnitOptions, setOrgUnitOptions] = useState<{ value: string; label: string }[]>([]);
 
   const [enrollment, setEnrollment] = useState<string | null>(null);
-  const [orgUnit, setOrgUnit] = useState<string | null>(null);
+  const [statusCompleted, setStatusCompleted] = useState<boolean>(false);
 
   const [regionOptions, setRegionOptions] = useState<RegionOption[]>([]);
   const [regionLoading, setRegionLoading] = useState(false);
-  const [statusCompleted, setStatusCompleted] = useState<boolean>(false);
+
+  const [notes, setNotes] = useState<NoteItem[]>([]);
+  const [assignee, setAssignee] = useState<{ uid: string; displayName: string; username: string; firstName: string; surname: string } | null>(null);
 
   const trackingType = Form.useWatch('trackingType', form);
 
   useEffect(() => {
-    if (!caseId || !id) {
+    if (!caseId) {
       message.error('缺少必要参数');
       navigate('/cases');
       return;
@@ -46,14 +52,14 @@ const EditTrackingRecord = () => {
     (async () => {
       setLoading(true);
       try {
-        // 并行加载事件数据、个案详情、机构数据和区域数据
-        const [event, tei, orgUnits, me] = await Promise.all([
-          getEvent(id),
-          getCaseDetails(caseId),
+        const [orgUnits, tei, me] = await Promise.all([
           getAllOrgUnits(),
+          getCaseDetails(caseId),
           getMe()
         ]);
-        
+
+        setOrgUnitOptions(orgUnits.map((o: OrgUnit) => ({ value: o.id, label: o.name })));
+
         const enr = tei.enrollments?.[0];
         if (!enr) {
           message.error('该个案没有入组记录');
@@ -61,20 +67,26 @@ const EditTrackingRecord = () => {
           return;
         }
         setEnrollment(enr.enrollment);
-        setOrgUnit(event.orgUnit);
-        setStatusCompleted(event.status === 'COMPLETED');
-        
-        // 设置机构选项
-        setOrgUnitOptions(orgUnits.map((o: OrgUnit) => ({ value: o.id, label: o.name })));
 
-        const mapped = toTrackingForm(event.dataValues || []);
-        form.setFieldsValue({
-          occurredAt: event.occurredAt ? dayjs(event.occurredAt) : dayjs(),
-          orgUnit: event.orgUnit,
-          ...mapped,
-          pushedToEpi: String(mapped.pushedToEpi || '') === 'true',
-          pushEpiDateTime: mapped.pushEpiDateTime ? dayjs(mapped.pushEpiDateTime) : undefined,
-        });
+        if (isCreate) {
+          form.setFieldsValue({
+            occurredAt: dayjs(),
+            startDate: dayjs(),
+            endDate: dayjs(),
+            orgUnit: enr.orgUnit,
+          });
+        } else {
+          const event = await getEvent(id!);
+          setStatusCompleted(event.status === 'COMPLETED');
+          const mapped = toTrackingForm(event.dataValues || []);
+          form.setFieldsValue({
+            occurredAt: event.occurredAt ? dayjs(event.occurredAt) : dayjs(),
+            orgUnit: event.orgUnit,
+            ...mapped,
+            pushedToEpi: String(mapped.pushedToEpi || '') === 'true',
+            pushEpiDateTime: mapped.pushEpiDateTime ? dayjs(mapped.pushEpiDateTime) : undefined,
+          });
+        }
 
         setRegionLoading(true);
         const path = me.organisationUnits?.[0]?.path || '';
@@ -90,10 +102,10 @@ const EditTrackingRecord = () => {
         setLoading(false);
       }
     })();
-  }, [caseId, id, navigate, form]);
+  }, [caseId, id, isCreate, navigate, form]);
 
   const handleSubmit = async () => {
-    if (!enrollment || !orgUnit || !id) {
+    if (!enrollment) {
       message.error('缺少必要的上下文信息（入组或机构或事件ID）');
       return;
     }
@@ -103,42 +115,84 @@ const EditTrackingRecord = () => {
       setSubmitting(true);
 
       const occurred = values.occurredAt?.format('YYYY-MM-DD') || dayjs().format('YYYY-MM-DD');
-
       const start = values.startDate ? values.startDate.format('YYYY-MM-DD') : undefined;
       const end = values.endDate ? values.endDate.format('YYYY-MM-DD') : undefined;
+      const pushEpiDateTime = values.pushEpiDateTime ? values.pushEpiDateTime.toISOString() : undefined;
 
-      const dvs = buildTrackingUpdateDVs({
-        trackingType: values.trackingType,
-        startDate: start,
-        endDate: end,
-        regionId: values.regionId,
-        locationDescription: values.locationDescription,
-        contactPersons: values.contactPersons,
-        exposureDetails: values.exposureDetails,
-        riskAssessment: values.riskAssessment,
-        pushedToEpi: values.pushedToEpi,
-        pushEpiDateTime: values.pushEpiDateTime ? values.pushEpiDateTime.toISOString() : undefined,
-      });
-
-      const res = await updateEvents([
-        {
-          event: id,
-          program: 'PrgCaseMgt1',
-          programStage: PS.TRACKING,
+      if (isCreate) {
+        const res = await createTrackingEvent(
           enrollment,
-          orgUnit: values.orgUnit, // 使用表单中选择的机构
-          status: statusCompleted ? 'COMPLETED' : 'ACTIVE',
-          occurredAt: occurred,
-          dataValues: dvs,
-        },
-      ] as any);
+          values.orgUnit,
+          occurred,
+          {
+            type: values.trackingType,
+            location: values.locationDescription,
+            description: values.exposureDetails,
+            startDate: start!,
+            endDate: end!,
+            riskAssessment: values.riskAssessment,
+            longitude: values.longitude ? Number(values.longitude) : undefined,
+            latitude: values.latitude ? Number(values.latitude) : undefined,
+            contactPersons: values.contactPersons,
+            regionId: values.regionId,
+            pushedToEpi: values.pushedToEpi,
+            pushEpiDateTime,
+          },
+          {
+            assignedUser: assignee
+              ? {
+                  uid: assignee.uid,
+                  displayName: assignee.displayName,
+                  username: assignee.username,
+                  firstName: assignee.firstName,
+                  surname: assignee.surname,
+                }
+              : undefined,
+            notes: (notes || []).map((n) => ({ value: n.value })),
+          }
+        );
 
-      if (res.status === 'OK') {
-        message.success('追踪记录更新成功!');
-        navigate(`/cases/${caseId}`);
+        if (res.status === 'OK') {
+          message.success('追踪记录创建成功!');
+          navigate(`/cases/${caseId}`);
+        } else {
+          message.error('创建失败，请检查数据');
+          console.error('Import result:', res);
+        }
       } else {
-        message.error('更新失败，请检查数据');
-        console.error('Import result:', res);
+        const dvs = buildTrackingUpdateDVs({
+          trackingType: values.trackingType,
+          startDate: start,
+          endDate: end,
+          regionId: values.regionId,
+          locationDescription: values.locationDescription,
+          contactPersons: values.contactPersons,
+          exposureDetails: values.exposureDetails,
+          riskAssessment: values.riskAssessment,
+          pushedToEpi: values.pushedToEpi,
+          pushEpiDateTime,
+        });
+
+        const res = await updateEvents([
+          {
+            event: id!,
+            program: 'PrgCaseMgt1',
+            programStage: PS.TRACKING,
+            enrollment,
+            orgUnit: values.orgUnit,
+            status: statusCompleted ? 'COMPLETED' : 'ACTIVE',
+            occurredAt: occurred,
+            dataValues: dvs,
+          },
+        ] as any);
+
+        if (res.status === 'OK') {
+          message.success('追踪记录更新成功!');
+          navigate(`/cases/${caseId}`);
+        } else {
+          message.error('更新失败，请检查数据');
+          console.error('Import result:', res);
+        }
       }
     } catch (errorInfo: any) {
       message.error(errorInfo?.message || '请检查表单填写项。');
@@ -158,7 +212,7 @@ const EditTrackingRecord = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Card>
-        <Title level={4}>编辑追踪记录</Title>
+        <Title level={4}>{isCreate ? '新增追踪记录' : '编辑追踪记录'}</Title>
         <Form form={form} layout="vertical">
           <Row gutter={16}>
             <Col span={12}>
@@ -170,20 +224,23 @@ const EditTrackingRecord = () => {
                 <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <Space size={4}>
-                    <span>Scheduled date</span>
-                    <Tooltip title="无法更改 已完成 事件的预定日期">
-                      <InfoCircleOutlined />
-                    </Tooltip>
-                  </Space>
-                }
-              >
-                <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" disabled placeholder="YYYY-MM-DD" />
-              </Form.Item>
-            </Col>
+
+            {!isCreate && (
+              <Col span={12}>
+                <Form.Item
+                  label={
+                    <Space size={4}>
+                      <span>Scheduled date</span>
+                      <Tooltip title="无法更改 已完成 事件的预定日期">
+                        <InfoCircleOutlined />
+                      </Tooltip>
+                    </Space>
+                  }
+                >
+                  <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" disabled placeholder="YYYY-MM-DD" />
+                </Form.Item>
+              </Col>
+            )}
 
             <Col span={12}>
               <Form.Item 
@@ -217,6 +274,22 @@ const EditTrackingRecord = () => {
                 label="结束日期"
                 name="endDate"
                 rules={[{ required: true, message: '请选择结束日期' }, { validator: validateNotFuture }]}
+              >
+                <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                label="起始日期"
+                name="startDate"
+                rules={[
+                  { required: true, message: '请选择起始日期' },
+                  ({ getFieldValue }) => ({
+                    validator: validateDateRange(() => getFieldValue('startDate'), '结束日期不能早于开始日期'),
+                  }),
+                  { validator: validateNotFuture },
+                ]}
               >
                 <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
               </Form.Item>
@@ -257,22 +330,6 @@ const EditTrackingRecord = () => {
             </Col>
 
             <Col span={12}>
-              <Form.Item
-                label="起始日期"
-                name="startDate"
-                rules={[
-                  { required: true, message: '请选择起始日期' },
-                  ({ getFieldValue }) => ({
-                    validator: validateDateRange(() => getFieldValue('startDate'), '结束日期不能早于开始日期'),
-                  }),
-                  { validator: validateNotFuture },
-                ]}
-              >
-                <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
               <Form.Item label="风险评估" name="riskAssessment" rules={[{ required: true, message: '请选择风险评估' }]}>
                 <Radio.Group>
                   <Radio value="HIGH">高风险</Radio>
@@ -299,14 +356,24 @@ const EditTrackingRecord = () => {
               </Form.Item>
             </Col>
 
-            <Col span={24}>
-              <Checkbox checked={statusCompleted} onChange={(e) => setStatusCompleted(e.target.checked)}>
-                事件完成
-              </Checkbox>
-            </Col>
+            {!isCreate && (
+              <Col span={24}>
+                <Checkbox checked={statusCompleted} onChange={(e) => setStatusCompleted(e.target.checked)}>
+                  事件完成
+                </Checkbox>
+              </Col>
+            )}
           </Row>
         </Form>
       </Card>
+
+      {isCreate && (
+        <>
+          <NotesEditor notes={notes} onChange={setNotes} />
+          <AssigneeSelect value={assignee} onChange={setAssignee} />
+        </>
+      )}
+
       <div style={{ textAlign: 'right' }}>
         <Space>
           <Button onClick={handleCancel} disabled={submitting}>取消</Button>

@@ -8,6 +8,14 @@ export interface CreateEventParams {
   orgUnit: string;
   occurredAt: string;
   dataValues: Array<{ dataElement: string; value: string | null }>;
+  assignedUser?: {
+    uid: string;
+    displayName: string;
+    username: string;
+    firstName: string;
+    surname: string;
+  } | null;
+  notes?: Array<{ value: string }>;
 }
 
 export interface UpdateEventParams extends CreateEventParams {
@@ -26,37 +34,43 @@ async function postTracker(body: any, params: Record<string, string>): Promise<I
 }
 
 export async function createEvent(params: CreateEventParams): Promise<ImportReport> {
-  const payload = {
-    events: [
-      {
-        program: PROGRAM_ID,
-        programStage: params.programStage,
-        enrollment: params.enrollment,
-        orgUnit: params.orgUnit,
-        status: 'ACTIVE' as const,
-        occurredAt: params.occurredAt,
-        dataValues: params.dataValues,
-      },
-    ],
+  const event: any = {
+    program: PROGRAM_ID,
+    programStage: params.programStage,
+    enrollment: params.enrollment,
+    orgUnit: params.orgUnit,
+    status: 'ACTIVE' as const,
+    occurredAt: params.occurredAt,
+    dataValues: params.dataValues,
   };
-  return postTracker(payload, { importStrategy: 'CREATE', atomicMode: 'OBJECT' });
+  if (params.assignedUser) {
+    event.assignedUser = params.assignedUser;
+  }
+  if (params.notes && params.notes.length) {
+    event.notes = params.notes;
+  }
+  const payload = { events: [event] };
+  return postTracker(payload, { importStrategy: 'CREATE', atomicMode: 'OBJECT', async: 'false' });
 }
 
 export async function updateEvent(params: UpdateEventParams): Promise<ImportReport> {
-  const payload = {
-    events: [
-      {
-        event: params.event,
-        program: PROGRAM_ID,
-        programStage: params.programStage,
-        enrollment: params.enrollment,
-        orgUnit: params.orgUnit,
-        status: params.status || 'ACTIVE',
-        occurredAt: params.occurredAt,
-        dataValues: params.dataValues,
-      },
-    ],
+  const event: any = {
+    event: params.event,
+    program: PROGRAM_ID,
+    programStage: params.programStage,
+    enrollment: params.enrollment,
+    orgUnit: params.orgUnit,
+    status: params.status || 'ACTIVE',
+    occurredAt: params.occurredAt,
+    dataValues: params.dataValues,
   };
+  if (params.assignedUser) {
+    event.assignedUser = params.assignedUser;
+  }
+  if (params.notes && params.notes.length) {
+    event.notes = params.notes;
+  }
+  const payload = { events: [event] };
   return postTracker(payload, { importStrategy: 'UPDATE', atomicMode: 'OBJECT' });
 }
 
@@ -76,7 +90,8 @@ export async function createFollowUpEvent(
   enrollment: string,
   orgUnit: string,
   occurredAt: string,
-  data: FollowUpEventData
+  data: FollowUpEventData,
+  extra?: { assignedUser?: CreateEventParams['assignedUser']; notes?: Array<{ value: string }> }
 ): Promise<ImportReport> {
   const dvs: Array<{ dataElement: string; value: string | null }> = [
     { dataElement: writeDV(DE_FOLLOWUP.METHOD), value: data.followUpMethod },
@@ -95,6 +110,8 @@ export async function createFollowUpEvent(
     orgUnit,
     occurredAt,
     dataValues: dvs,
+    assignedUser: extra?.assignedUser || null,
+    notes: extra?.notes || [],
   });
 }
 
@@ -143,7 +160,8 @@ export async function createTreatmentEvent(
   enrollment: string,
   orgUnit: string,
   occurredAt: string,
-  data: TreatmentEventData
+  data: TreatmentEventData,
+  extra?: { assignedUser?: CreateEventParams['assignedUser']; notes?: Array<{ value: string }> }
 ): Promise<ImportReport> {
   const dvs: Array<{ dataElement: string; value: string | null }> = [
     { dataElement: writeDV(DE_TREAT.TYPE), value: data.type },
@@ -163,6 +181,8 @@ export async function createTreatmentEvent(
     orgUnit,
     occurredAt,
     dataValues: dvs,
+    assignedUser: extra?.assignedUser || null,
+    notes: extra?.notes || [],
   });
 }
 
@@ -207,13 +227,17 @@ export interface TestEventData {
   resultDetails?: string;
   pathogen?: string;
   testStatus: string;
+  pushLab?: boolean;
+  pushLabDateTime?: string;
+  labReportUrl?: string;
 }
 
 export async function createTestEvent(
   enrollment: string,
   orgUnit: string,
   occurredAt: string,
-  data: TestEventData
+  data: TestEventData,
+  extra?: { assignedUser?: CreateEventParams['assignedUser']; notes?: Array<{ value: string }> }
 ): Promise<ImportReport> {
   const dvs: Array<{ dataElement: string; value: string | null }> = [
     { dataElement: writeDV(DE_TEST.TEST_NO), value: data.testNo },
@@ -227,6 +251,9 @@ export async function createTestEvent(
   if (data.result) dvs.push({ dataElement: writeDV(DE_TEST.RESULT), value: data.result });
   if (data.resultDetails) dvs.push({ dataElement: writeDV(DE_TEST.RESULT_DETAIL), value: data.resultDetails });
   if (data.pathogen) dvs.push({ dataElement: writeDV(DE_TEST.PATHOGEN), value: data.pathogen });
+  if (typeof data.pushLab === 'boolean') dvs.push({ dataElement: writeDV(DE_TEST.PUSH_LAB), value: String(data.pushLab) });
+  if (data.pushLabDateTime !== undefined) dvs.push({ dataElement: writeDV(DE_TEST.PUSH_LAB_DT), value: data.pushLabDateTime || null });
+  if (data.labReportUrl !== undefined) dvs.push({ dataElement: writeDV(DE_TEST.LAB_RPT_URL), value: data.labReportUrl || null });
 
   return createEvent({
     enrollment,
@@ -234,6 +261,8 @@ export async function createTestEvent(
     orgUnit,
     occurredAt,
     dataValues: dvs,
+    assignedUser: extra?.assignedUser || null,
+    notes: extra?.notes || [],
   });
 }
 
@@ -252,10 +281,13 @@ export async function updateTestEvent(
     { dataElement: writeDV(DE_TEST.ORG_NAME), value: data.lab },
     { dataElement: writeDV(DE_TEST.STATUS), value: data.testStatus },
   ];
-  if (data.testDate) dvs.push({ dataElement: writeDV(DE_TEST.TEST_DATE), value: data.testDate });
-  if (data.result) dvs.push({ dataElement: writeDV(DE_TEST.RESULT), value: data.result });
-  if (data.resultDetails) dvs.push({ dataElement: writeDV(DE_TEST.RESULT_DETAIL), value: data.resultDetails });
-  if (data.pathogen) dvs.push({ dataElement: writeDV(DE_TEST.PATHOGEN), value: data.pathogen });
+  if (data.testDate !== undefined) dvs.push({ dataElement: writeDV(DE_TEST.TEST_DATE), value: data.testDate || null });
+  if (data.result !== undefined) dvs.push({ dataElement: writeDV(DE_TEST.RESULT), value: data.result || null });
+  if (data.resultDetails !== undefined) dvs.push({ dataElement: writeDV(DE_TEST.RESULT_DETAIL), value: data.resultDetails || null });
+  if (data.pathogen !== undefined) dvs.push({ dataElement: writeDV(DE_TEST.PATHOGEN), value: data.pathogen || null });
+  if (data.pushLab !== undefined) dvs.push({ dataElement: writeDV(DE_TEST.PUSH_LAB), value: String(data.pushLab) });
+  if (data.pushLabDateTime !== undefined) dvs.push({ dataElement: writeDV(DE_TEST.PUSH_LAB_DT), value: data.pushLabDateTime || null });
+  if (data.labReportUrl !== undefined) dvs.push({ dataElement: writeDV(DE_TEST.LAB_RPT_URL), value: data.labReportUrl || null });
 
   return updateEvent({
     event,
@@ -279,13 +311,16 @@ export interface TrackingEventData {
   latitude?: number;
   contactPersons?: string;
   regionId?: string;
+  pushedToEpi?: boolean;
+  pushEpiDateTime?: string;
 }
 
 export async function createTrackingEvent(
   enrollment: string,
   orgUnit: string,
   occurredAt: string,
-  data: TrackingEventData
+  data: TrackingEventData,
+  extra?: { assignedUser?: CreateEventParams['assignedUser']; notes?: Array<{ value: string }> }
 ): Promise<ImportReport> {
   const dvs: Array<{ dataElement: string; value: string | null }> = [
     { dataElement: writeDV(DE_TRACK.TYPE), value: data.type },
@@ -299,6 +334,8 @@ export async function createTrackingEvent(
   if (data.longitude !== undefined) dvs.push({ dataElement: writeDV((DE_TRACK as any)['longitude'] || { id: 'DeLng' } as any), value: String(data.longitude) });
   if (data.latitude !== undefined) dvs.push({ dataElement: writeDV((DE_TRACK as any)['latitude'] || { id: 'DeLat' } as any), value: String(data.latitude) });
   if (data.contactPersons) dvs.push({ dataElement: writeDV(DE_TRACK.CONTACT_PERSONS), value: data.contactPersons });
+  if (typeof data.pushedToEpi === 'boolean') dvs.push({ dataElement: writeDV(DE_TRACK.PUSH_EPI), value: String(data.pushedToEpi) });
+  if (data.pushEpiDateTime !== undefined) dvs.push({ dataElement: writeDV(DE_TRACK.PUSH_EPI_DT), value: data.pushEpiDateTime || null });
 
   return createEvent({
     enrollment,
@@ -306,6 +343,8 @@ export async function createTrackingEvent(
     orgUnit,
     occurredAt,
     dataValues: dvs,
+    assignedUser: extra?.assignedUser || null,
+    notes: extra?.notes || [],
   });
 }
 
@@ -324,10 +363,12 @@ export async function updateTrackingEvent(
     { dataElement: writeDV(DE_TRACK.EXPOSURE_DETAIL), value: data.description },
     { dataElement: writeDV(DE_TRACK.RISK_ASSESS), value: data.riskAssessment },
   ];
-  if (data.regionId) dvs.push({ dataElement: writeDV(DE_TRACK.REGION), value: data.regionId });
+  if (data.regionId !== undefined) dvs.push({ dataElement: writeDV(DE_TRACK.REGION), value: data.regionId || null });
   if (data.longitude !== undefined) dvs.push({ dataElement: writeDV((DE_TRACK as any)['longitude'] || { id: 'DeLng' } as any), value: String(data.longitude) });
   if (data.latitude !== undefined) dvs.push({ dataElement: writeDV((DE_TRACK as any)['latitude'] || { id: 'DeLat' } as any), value: String(data.latitude) });
-  if (data.contactPersons) dvs.push({ dataElement: writeDV(DE_TRACK.CONTACT_PERSONS), value: data.contactPersons });
+  if (data.contactPersons !== undefined) dvs.push({ dataElement: writeDV(DE_TRACK.CONTACT_PERSONS), value: data.contactPersons || null });
+  if (data.pushedToEpi !== undefined) dvs.push({ dataElement: writeDV(DE_TRACK.PUSH_EPI), value: String(data.pushedToEpi) });
+  if (data.pushEpiDateTime !== undefined) dvs.push({ dataElement: writeDV(DE_TRACK.PUSH_EPI_DT), value: data.pushEpiDateTime || null });
 
   return updateEvent({
     event,
