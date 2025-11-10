@@ -17,10 +17,22 @@ export function toDayjs(value: any): Dayjs | null {
 export function validateNotFuture(_: any, value: any): Promise<void> {
   const date = toDayjs(value);
   if (!date) return Promise.resolve();
-  
   const today = dayjs().endOf('day');
   if (date.isAfter(today)) {
     return Promise.reject(new Error('日期不能晚于今天'));
+  }
+  return Promise.resolve();
+}
+
+/**
+ * 验证日期时间不能晚于当前时间
+ */
+export function validateNotFutureDateTime(_: any, value: any): Promise<void> {
+  const date = toDayjs(value);
+  if (!date) return Promise.resolve();
+  const now = dayjs();
+  if (date.isAfter(now)) {
+    return Promise.reject(new Error('时间不能晚于当前时间'));
   }
   return Promise.resolve();
 }
@@ -32,9 +44,7 @@ export function validateNotBefore(beforeDate: any, errorMsg: string) {
   return (_: any, value: any): Promise<void> => {
     const date = toDayjs(value);
     const before = toDayjs(beforeDate);
-    
     if (!date || !before) return Promise.resolve();
-    
     if (date.isBefore(before, 'day')) {
       return Promise.reject(new Error(errorMsg));
     }
@@ -49,9 +59,7 @@ export function validateNotAfter(afterDate: any, errorMsg: string) {
   return (_: any, value: any): Promise<void> => {
     const date = toDayjs(value);
     const after = toDayjs(afterDate);
-    
     if (!date || !after) return Promise.resolve();
-    
     if (date.isAfter(after, 'day')) {
       return Promise.reject(new Error(errorMsg));
     }
@@ -66,9 +74,7 @@ export function validateDateRange(getStartDate: () => any, errorMsg: string = '�
   return (_: any, value: any): Promise<void> => {
     const endDate = toDayjs(value);
     const startDate = toDayjs(getStartDate());
-    
     if (!endDate || !startDate) return Promise.resolve();
-    
     if (endDate.isBefore(startDate, 'day')) {
       return Promise.reject(new Error(errorMsg));
     }
@@ -85,19 +91,16 @@ export function validateSymptomOnsetDate(getReportDate: () => any) {
   return (_: any, value: any): Promise<void> => {
     const symptomDate = toDayjs(value);
     if (!symptomDate) return Promise.resolve();
-    
     // 不能晚于今天
     const today = dayjs().endOf('day');
     if (symptomDate.isAfter(today)) {
       return Promise.reject(new Error('症状开始日期不能晚于今天'));
     }
-    
     // 不能晚于报告日期
     const reportDate = toDayjs(getReportDate());
     if (reportDate && symptomDate.isAfter(reportDate, 'day')) {
       return Promise.reject(new Error('症状开始日期不能晚于报告日期'));
     }
-    
     return Promise.resolve();
   };
 }

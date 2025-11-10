@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Card, Descriptions, Tabs, Tag, Space, Button, Empty, Typography, message, Spin, Dropdown } from 'antd';
 import { DownOutlined, EditOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
@@ -21,14 +21,15 @@ const statusTagColor = (status?: string) => {
 };
 
 const genderMap: Record<string, string> = {
-  'MALE': '男',
-  'FEMALE': '女',
-  'UNKNOWN': '未知',
+  MALE: '男',
+  FEMALE: '女',
+  UNKNOWN: '未知',
 };
 
 const CaseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('1');
 
   const {
@@ -45,24 +46,24 @@ const CaseDetail = () => {
     trackings,
     trackPager,
     logs,
-    loadFollowUps,
-    loadTreatments,
-    loadTests,
-    loadTrackings,
     loadLogs,
     doPushEpi,
     doCloseCase,
   } = useCaseDetails(id!);
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab && ['1', '2', '3', '4', '5', '6', '7'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
+
+  useEffect(() => {
     if (error) message.error(error);
   }, [error]);
 
   useEffect(() => {
-    if (activeTab === '3' && followUps.length === 0) loadFollowUps(1);
-    if (activeTab === '4' && treatments.length === 0) loadTreatments(1);
-    if (activeTab === '5' && tests.length === 0) loadTests(1);
-    if (activeTab === '6' && trackings.length === 0) loadTrackings(1);
     if (activeTab === '7' && logs.tei.length === 0 && logs.event.length === 0) loadLogs();
   }, [activeTab]);
 
@@ -91,9 +92,9 @@ const CaseDetail = () => {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Card>
-        <Descriptions 
-          title={`个案编号: ${header.caseNo || '-'}`} 
-          bordered 
+        <Descriptions
+          title={`个案编号: ${header.caseNo || '-'}`}
+          bordered
           column={2}
           extra={
             <Space>
@@ -102,27 +103,27 @@ const CaseDetail = () => {
                   编辑 <DownOutlined />
                 </Button>
               </Dropdown>
-              <Button 
-                onClick={async () => { 
-                  try { 
-                    await doPushEpi(); 
-                    message.success('已成功推送至流调系统'); 
-                  } catch (e: any) { 
-                    message.error(e.message || '推送失败'); 
-                  } 
+              <Button
+                onClick={async () => {
+                  try {
+                    await doPushEpi();
+                    message.success('已成功推送至流调系统');
+                  } catch (e: any) {
+                    message.error(e.message || '推送失败');
+                  }
                 }}
               >
                 推送流调
               </Button>
-              <Button 
-                danger 
-                onClick={async () => { 
-                  try { 
-                    await doCloseCase(); 
-                    message.success('已成功结案'); 
-                  } catch (e: any) { 
-                    message.error(e.message || '结案失败'); 
-                  } 
+              <Button
+                danger
+                onClick={async () => {
+                  try {
+                    await doCloseCase();
+                    message.success('已成功结案');
+                  } catch (e: any) {
+                    message.error(e.message || '结案失败');
+                  }
                 }}
               >
                 结案
@@ -177,28 +178,28 @@ const CaseDetail = () => {
             <Button type="primary" style={{ marginBottom: 16 }}>
               <Link to={`/cases/${id}/follow-ups/new`}>新增随访记录</Link>
             </Button>
-            <FollowUpList caseId={id} items={followUps} pager={followPager} onLoadMore={loadFollowUps} />
+            <FollowUpList caseId={id} items={followUps} pager={followPager} />
           </TabPane>
 
           <TabPane tab="治疗记录" key="4">
             <Button type="primary" style={{ marginBottom: 16 }}>
               <Link to={`/cases/${id}/treatments/new`}>新增治疗记录</Link>
             </Button>
-            <TreatmentList caseId={id} items={treatments} pager={treatPager} onLoadMore={loadTreatments} />
+            <TreatmentList caseId={id} items={treatments} pager={treatPager} />
           </TabPane>
 
           <TabPane tab="检测记录" key="5">
             <Button type="primary" style={{ marginBottom: 16 }}>
               <Link to={`/cases/${id}/test-records/new`}>新增检测记录</Link>
             </Button>
-            <TestList caseId={id} items={tests} pager={testPager} onLoadMore={loadTests} />
+            <TestList caseId={id} items={tests} pager={testPager} />
           </TabPane>
 
           <TabPane tab="追踪记录" key="6">
             <Button type="primary" style={{ marginBottom: 16 }}>
               <Link to={`/cases/${id}/tracking-records/new`}>新增追踪记录</Link>
             </Button>
-            <TrackingList caseId={id} items={trackings} pager={trackPager} onLoadMore={loadTrackings} />
+            <TrackingList caseId={id} items={trackings} pager={trackPager} />
           </TabPane>
 
           <TabPane tab="操作日志" key="7">

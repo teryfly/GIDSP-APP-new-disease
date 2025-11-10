@@ -7,34 +7,39 @@ import {
   getTeiChangeLogs,
   pushToEpiFlag,
   closeCase,
+  PROGRAM_ID,
+  PROGRAM_STAGE_INVESTIGATION_ID,
   STAGE_FOLLOW_UP,
   STAGE_TREATMENT,
   STAGE_TEST,
   STAGE_TRACKING,
-  PROGRAM_STAGE_INVESTIGATION_ID,
+  DE_PUSH_EPI,
+  DE_PUSH_EPI_DT,
+  DE_CASE_STATUS,
   type TrackerEvent,
   type EventsListResponse,
 } from '../services/caseDetailsService';
-import { mapInvestigationToEpiNarrative, mapFollowUps, mapTreatments, mapTests, mapTrackings } from '../services/mappers/eventMappers';
+import { mapInvestigationToEpiNarrative } from '../services/mappers/eventMappers';
+import { mapFollowUps } from '../services/mappers/eventMappers';
+import { mapTreatments } from '../services/mappers/eventMappers';
+import { mapTests } from '../services/mappers/eventMappers';
+import { mapTrackings } from '../services/mappers/eventMappers';
 
 export interface HeaderSummary {
   trackedEntity: string;
-  orgUnit: string;
-  caseNo?: string;
+  orgUnit?: string;
   fullName?: string;
   genderZh?: string;
   age?: string;
   nationalId?: string;
   phone?: string;
   address?: string;
+  caseNo?: string;
   diseaseCode?: string;
-  diseaseName?: string;
   reportDate?: string;
   reportOrgName?: string;
   symptomOnsetDate?: string;
   diagnosisDate?: string;
-  initialDiagnosis?: string;
-  finalDiagnosis?: string;
   caseSource?: string;
   statusTag?: string;
   enrollment?: string;
@@ -123,6 +128,33 @@ export function useCaseDetails(teiUid: string) {
         enrollment: enrollment?.enrollment,
         investigationEvent: investigationEvent?.event,
       });
+
+      // 从enrollment.events中筛选各类记录
+      const allEvents = enrollment?.events || [];
+      
+      // 随访记录 (PsFollowUp1)
+      const followUpEvents = allEvents.filter(e => e.programStage === STAGE_FOLLOW_UP);
+      const mappedFollowUps = mapFollowUps(followUpEvents);
+      setFollowUps(mappedFollowUps);
+      setFollowPager({ page: 1, pageSize: followUpEvents.length, total: followUpEvents.length });
+      
+      // 治疗记录 (PsTreatmnt1)
+      const treatmentEvents = allEvents.filter(e => e.programStage === STAGE_TREATMENT);
+      const mappedTreatments = mapTreatments(treatmentEvents);
+      setTreatments(mappedTreatments);
+      setTreatPager({ page: 1, pageSize: treatmentEvents.length, total: treatmentEvents.length });
+      
+      // 检测记录 (PsTest00001)
+      const testEvents = allEvents.filter(e => e.programStage === STAGE_TEST);
+      const mappedTests = mapTests(testEvents);
+      setTests(mappedTests);
+      setTestPager({ page: 1, pageSize: testEvents.length, total: testEvents.length });
+      
+      // 追踪记录 (PsTracking1)
+      const trackingEvents = allEvents.filter(e => e.programStage === STAGE_TRACKING);
+      const mappedTrackings = mapTrackings(trackingEvents);
+      setTrackings(mappedTrackings);
+      setTrackPager({ page: 1, pageSize: trackingEvents.length, total: trackingEvents.length });
     } catch (e: any) {
       setError(e.message || '加载个案详情失败');
     } finally {
@@ -130,52 +162,11 @@ export function useCaseDetails(teiUid: string) {
     }
   }, [teiUid]);
 
-  const loadPaged = useCallback(
-    async (stage: string, page: number, pageSize: number): Promise<EventsListResponse> => {
-      if (!enrollmentRef.current) throw new Error('缺少入组ID');
-      return listStageEvents({
-        enrollment: enrollmentRef.current,
-        programStage: stage,
-        page,
-        pageSize,
-        order: 'occurredAt:desc',
-      });
-    },
-    [],
-  );
-
-  const loadFollowUps = useCallback(async (nextPage = 1) => {
-    const res = await loadPaged(STAGE_FOLLOW_UP, nextPage, followPager.pageSize);
-    const mapped = mapFollowUps(res.events);
-    setFollowUps((prev) => (nextPage === 1 ? mapped : prev.concat(mapped)));
-    setFollowPager({ page: res.pager.page, pageSize: res.pager.pageSize, total: res.pager.total || 0 });
-  }, [loadPaged, followPager.pageSize]);
-
-  const loadTreatments = useCallback(async (nextPage = 1) => {
-    const res = await loadPaged(STAGE_TREATMENT, nextPage, treatPager.pageSize);
-    const mapped = mapTreatments(res.events);
-    setTreatments((prev) => (nextPage === 1 ? mapped : prev.concat(mapped)));
-    setTreatPager({ page: res.pager.page, pageSize: res.pager.pageSize, total: res.pager.total || 0 });
-  }, [loadPaged, treatPager.pageSize]);
-
-  const loadTests = useCallback(async (nextPage = 1) => {
-    const res = await loadPaged(STAGE_TEST, nextPage, testPager.pageSize);
-    const mapped = mapTests(res.events);
-    setTests((prev) => (nextPage === 1 ? mapped : prev.concat(mapped)));
-    setTestPager({ page: res.pager.page, pageSize: res.pager.pageSize, total: res.pager.total || 0 });
-  }, [loadPaged, testPager.pageSize]);
-
-  const loadTrackings = useCallback(async (nextPage = 1) => {
-    const res = await loadPaged(STAGE_TRACKING, nextPage, trackPager.pageSize);
-    const mapped = mapTrackings(res.events);
-    setTrackings((prev) => (nextPage === 1 ? mapped : prev.concat(mapped)));
-    setTrackPager({ page: res.pager.page, pageSize: res.pager.pageSize, total: res.pager.total || 0 });
-  }, [loadPaged, trackPager.pageSize]);
-
   const reloadAll = useCallback(async () => {
     await loadHeaderAndEpi();
-    await Promise.allSettled([loadFollowUps(1), loadTreatments(1), loadTests(1), loadTrackings(1)]);
-  }, [loadHeaderAndEpi, loadFollowUps, loadTreatments, loadTests, loadTrackings]);
+    // 删除分页加载调用，因为数据已经在loadHeaderAndEpi中加载
+    // await Promise.allSettled([loadFollowUps(1), loadTreatments(1), loadTests(1), loadTrackings(1)]);
+  }, [loadHeaderAndEpi/*, loadFollowUps, loadTreatments, loadTests, loadTrackings*/]);
 
   const loadLogs = useCallback(async () => {
     if (!header?.trackedEntity) return;
@@ -232,12 +223,8 @@ export function useCaseDetails(teiUid: string) {
     trackPager,
     logs,
     reloadAll,
-    loadFollowUps,
-    loadTreatments,
-    loadTests,
-    loadTrackings,
     loadLogs,
     doPushEpi,
     doCloseCase,
   };
-}
+};

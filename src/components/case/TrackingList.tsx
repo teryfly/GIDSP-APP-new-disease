@@ -7,7 +7,7 @@ interface Props {
   caseId: string;
   items: TrackingItem[];
   pager: { page: number; pageSize: number; total: number };
-  onLoadMore: (nextPage: number) => void;
+  onLoadMore?: (nextPage: number) => void; // 使onLoadMore变为可选
 }
 
 const TrackingList = ({ caseId, items, pager, onLoadMore }: Props) => {
@@ -35,7 +35,7 @@ const TrackingList = ({ caseId, items, pager, onLoadMore }: Props) => {
         style={{ marginTop: 16 }}
         dataSource={items}
         loadMore={
-          canLoadMore ? (
+          canLoadMore && onLoadMore ? ( // 检查onLoadMore是否存在
             <div style={{ textAlign: 'center', marginTop: 16 }}>
               <Button onClick={() => onLoadMore(pager.page + 1)}>加载更多...</Button>
             </div>
