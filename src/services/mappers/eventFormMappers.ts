@@ -27,17 +27,17 @@ export function toFollowUpForm(dvs: Array<{ dataElement: string; value: any }>) 
 export function buildFollowUpUpdateDVs(data: {
   followUpMethod?: string;
   healthStatus?: string;
-  temperature?: number;
+  temperature?: number | null;
   symptoms?: string;
   treatmentCompliance?: string;
-  nextFollowUpDate?: string; // YYYY-MM-DD
+  nextFollowUpDate?: string | null; // YYYY-MM-DD
   remarks?: string;
 }): DV[] {
   const out: DV[] = [];
-  if (data.followUpMethod) out.push({ dataElement: writeDV(DE_FOLLOWUP.METHOD), value: data.followUpMethod });
-  if (data.healthStatus) out.push({ dataElement: writeDV(DE_FOLLOWUP.HEALTH_STATUS), value: data.healthStatus });
-  if (data.treatmentCompliance) out.push({ dataElement: writeDV(DE_FOLLOWUP.TREAT_COMPLIANCE), value: data.treatmentCompliance });
-  if (data.temperature !== undefined) out.push({ dataElement: writeDV(DE_FOLLOWUP.TEMP), value: String(data.temperature) });
+  if (data.followUpMethod !== undefined) out.push({ dataElement: writeDV(DE_FOLLOWUP.METHOD), value: data.followUpMethod || null });
+  if (data.healthStatus !== undefined) out.push({ dataElement: writeDV(DE_FOLLOWUP.HEALTH_STATUS), value: data.healthStatus || null });
+  if (data.treatmentCompliance !== undefined) out.push({ dataElement: writeDV(DE_FOLLOWUP.TREAT_COMPLIANCE), value: data.treatmentCompliance || null });
+  if (data.temperature !== undefined) out.push({ dataElement: writeDV(DE_FOLLOWUP.TEMP), value: data.temperature !== undefined && data.temperature !== null ? String(data.temperature) : null });
   if (data.symptoms !== undefined) out.push({ dataElement: writeDV(DE_FOLLOWUP.SYMPTOMS), value: data.symptoms || null });
   if (data.nextFollowUpDate !== undefined) out.push({ dataElement: writeDV(DE_FOLLOWUP.NEXT_DATE), value: data.nextFollowUpDate || null });
   if (data.remarks !== undefined) out.push({ dataElement: writeDV(DE_FOLLOWUP.REMARKS), value: data.remarks || null });

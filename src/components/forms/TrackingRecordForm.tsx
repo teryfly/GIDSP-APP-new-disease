@@ -1,7 +1,10 @@
-import { Form, Input, Select, DatePicker, Radio, Row, Col, Card, Typography } from 'antd';
+import { useEffect, useState } from 'react';
+import { Form, Input, Select, DatePicker, Radio, Row, Col, Card, Typography, Spin, message } from 'antd';
 import type { FormInstance } from 'antd';
 import moment from 'moment';
 import type { TrackingRecordFormData } from '../../types/forms';
+import { getAllOrgUnits } from '../../services/caseService';
+import type { OrgUnit } from '../../services/caseService';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -14,6 +17,28 @@ interface TrackingRecordFormProps {
 
 const TrackingRecordForm = ({ form, initialValues, caseId }: TrackingRecordFormProps) => {
     const trackingType = Form.useWatch('trackingType', form);
+    const [orgUnitOptions, setOrgUnitOptions] = useState<{ value: string; label: string }[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        loadOrgUnits();
+    }, []);
+
+    const loadOrgUnits = async () => {
+        setLoading(true);
+        try {
+            const orgUnits = await getAllOrgUnits();
+            setOrgUnitOptions(orgUnits.map((o: OrgUnit) => ({ value: o.id, label: o.name })));
+        } catch (e: any) {
+            message.error(`加载机构数据失败: ${e.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return <Spin size="large" style={{ display: 'block', margin: '50px auto' }} />;
+    }
 
     return (
         <Card>
@@ -77,6 +102,22 @@ const TrackingRecordForm = ({ form, initialValues, caseId }: TrackingRecordFormP
                             ]}
                         >
                             <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" disabledDate={(current) => current && current > moment().endOf('day')} />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item
+                            label="机构"
+                            name="orgUnit"
+                            rules={[{ required: true, message: '请选择机构' }]}
+                        >
+                            <Select
+                                showSearch
+                                placeholder="请选择机构"
+                                options={orgUnitOptions}
+                                filterOption={(input, option) =>
+                                    (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
+                                }
+                            />
                         </Form.Item>
                     </Col>
                     <Col span={24}>

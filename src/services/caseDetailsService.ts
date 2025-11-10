@@ -113,6 +113,18 @@ export async function getCaseDetails(teiUid: string): Promise<TrackedEntityDetai
   });
 }
 
+export async function getAllEvents(teiUid: string): Promise<TrackedEntityDetails> {
+  const fields = buildFieldsParam([
+    'trackedEntity,trackedEntityType,orgUnit',
+    'attributes[attribute,value,displayName,valueType]',
+    'enrollments[enrollment,program,status,orgUnit,enrolledAt,occurredAt,attributes[attribute,value],events[event,programStage,occurredAt,status,orgUnit,dataValues[dataElement,value]]]',
+  ]);
+  return dhis2Client.get<TrackedEntityDetails>(`/api/tracker/trackedEntities/${teiUid}`, {
+    program: PROGRAM_ID,
+    fields,
+  });
+}
+
 export async function getEnrollment(enrollmentUid: string) {
   return dhis2Client.get<any>(`/api/tracker/enrollments/${enrollmentUid}`, { fields: '*' });
 }

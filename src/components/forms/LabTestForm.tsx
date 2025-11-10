@@ -4,7 +4,7 @@ import type { FormInstance } from 'antd';
 import dayjs from 'dayjs';
 import type { LabTestFormData } from '../../types/labTest';
 import { getDHIS2MetadataInfo } from '../../utils/dhis2MetadataUtils';
-import { getAllOrgUnits } from '../../services/unknownCase/create';
+import { getAllOrgUnits } from '../../services/caseService';
 
 const { Title } = Typography;
 
@@ -46,7 +46,7 @@ const LabTestForm = ({ form, initialValues, mode, defaultOrgUnit }: LabTestFormP
       setTestStatusOptions(testStatusOs?.options?.map((o: any) => ({ value: o.code, label: o.name })) || []);
       setTestResultOptions(testResultOs?.options?.map((o: any) => ({ value: o.code, label: o.name })) || []);
       setPathogenOptions(pathogenOs?.options?.map((o: any) => ({ value: o.code, label: o.name })) || []);
-      setOrgUnitOptions(orgUnits.map((o) => ({ value: o.id, label: o.displayName })));
+      setOrgUnitOptions(orgUnits.map((o: any) => ({ value: o.id, label: o.name })));
 
       // 设置默认值
       if (mode === 'create') {
