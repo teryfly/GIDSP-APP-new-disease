@@ -1,0 +1,473 @@
+# 背景：
+在首页/个案详情页中现有多个TAB页，其中随访记录、治疗记录、检测记录、追踪记录这4个TAB的数据列表显、编辑已经有界面，且已经修改调用了真实的后台API。
+但是新增（新增随访记录、新增治疗记录、新增检测记录、新增追踪记录）还是旧界面，无法满足现在需要的新增功能要求。我将重新描述文档新增要求，摒弃之前的新增代码逻辑，按照以下要求重新实现功能。
+# 目标：
+摒弃之前的新增，按照下面的要求重新实现新增随访记录、新增治疗记录、新增检测记录、新增追踪记录功能。
+新增直接在之前的编辑页基础上添加新增功能，点击新增时，表单界面标题为“新增XX记录”，点击编辑时，表单界面为“编辑xx记录”。
+新增比编辑多了"笔记"和"分配者"，缺少"Scheduled date"和"状态"属性。
+编辑页新增加新增，但要确保之前的编辑功能不受影响，依旧能够正确的修改保存。
+
+# 每个TAB页新增表单及使用接口
+## 随访记录
+### 新增
+    1.首页/个案详情/随访记录，添加“新增随访记录”按钮，点击进入随访记录新增页
+    2.随访记录的新增页表单信息（*为必填）
+    基本信息：
+        Report date *
+        机构 *
+        治疗依从性
+        健康状态 *
+        随访方式 *
+        症状描述
+        下次随访日期（"不允许将来的日期"）
+        备注
+        体温
+    笔记：点击“编写说明”显示文本框，“编写说明”按钮变为“添加笔记”/"取消"，
+        -- 编辑输入文本框，点击“添加笔记”，调取/api/42/me?fields=firstName%2Csurname%2Cusername，获得{
+            "username": "admin",
+            "surname": "admin",
+            "firstName": "admin"
+        }，添加一条数据显示eg:admin admin 'value'。可编写多条
+    分配者：
+        分配的用户
+            -- 输入数据，调取接口api/42/userLookup?query=ad 
+            -- 获得：
+                {
+                    "users": [
+                        {
+                            "id": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin",
+                            "displayName": "admin admin"
+                        },
+                        {
+                            "id": "UserAdmin01",
+                            "username": "admin1",
+                            "firstName": "系统",
+                            "surname": "管理员",
+                            "displayName": "系统 管理员"
+                        }
+                    ]
+                }
+            -- 获取到数据后，可直接选择。若无可选数据，输入框下方提示“没有结果”
+    
+    3.提交保存调用示例：
+    /api/42/tracker?async=false
+    {
+        "events": [
+            {
+                "orgUnit": "OuMianyang1",
+                "occurredAt": "2025-11-01",
+                "assignedUser": {
+                    "uid": "M5zQapPyTZI",
+                    "displayName": "admin admin",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "notes": [
+                    {
+                        "value": "任天野"
+                    },
+                    {
+                        "value": "超负荷"
+                    }
+                ],
+                "status": "COMPLETED",
+                "event": "zW15H86zSs3",
+                "program": "PrgCaseMgt1",
+                "programStage": "PsFollowUp1",
+                "orgUnitName": "绵阳市",
+                "trackedEntity": "rGuyAeff4aD",
+                "enrollment": "erYpje4XClA",
+                "updatedAt": "2025-11-09T06:26:20",
+                "dataValues": [
+                    {
+                        "dataElement": "DeTrtCompl1",
+                        "value": "GOOD"
+                    },
+                    {
+                        "dataElement": "DeHlthStat1",
+                        "value": "NORMAL"
+                    },
+                    {
+                        "dataElement": "DeFlwUpMthd",
+                        "value": "ON_SITE"
+                    },
+                    {
+                        "dataElement": "DeSymptoms1",
+                        "value": "描述症状"
+                    },
+                    {
+                        "dataElement": "DeNxtFlwDt1",
+                        "value": "2025-11-08"
+                    },
+                    {
+                        "dataElement": "DeRemarks01",
+                        "value": "成功后"
+                    },
+                    {
+                        "dataElement": "DeTemp00001",
+                        "value": "38"
+                    }
+                ]
+            }
+        ]
+    }
+
+## 治疗记录
+### 新增
+    1.首页/个案详情/治疗记录/“新增治疗记录”按钮，点击进入治疗记录新增页
+    2.治疗记录的新增页表单信息（*为必填）
+    基本信息：
+        Report date *
+        机构 *
+        医生姓名
+        诊断结果 *
+        医院名称
+        治疔转归
+        治疗方案
+        治疔类型 *
+        科室名称
+        出院日期（不允许将来的日期）
+        用药情况
+    笔记：点击“编写说明”显示文本框，“编写说明”按钮变为“添加笔记”/"取消"
+    分配者：
+        分配的用户
+    3.提交保存调用示例：
+    /api/42/tracker?async=false
+    {
+        "events": [
+            {
+                "orgUnit": "OuMianyang1",
+                "occurredAt": "2025-11-01",
+                "assignedUser": {
+                    "uid": "M5zQapPyTZI",
+                    "displayName": "admin admin",
+                    "username": "admin",
+                    "firstName": "admin",
+                    "surname": "admin"
+                },
+                "notes": [
+                    {
+                        "value": "的容颜"
+                    },
+                    {
+                        "value": "地图"
+                    }
+                ],
+                "status": "COMPLETED",
+                "event": "ijKLvpQl7DP",
+                "program": "PrgCaseMgt1",
+                "programStage": "PsTreatmnt1",
+                "orgUnitName": "绵阳市",
+                "trackedEntity": "rGuyAeff4aD",
+                "enrollment": "erYpje4XClA",
+                "updatedAt": "2025-11-09T06:35:10",
+                "dataValues": [
+                    {
+                        "dataElement": "DeDocNm0001",
+                        "value": "王医生"
+                    },
+                    {
+                        "dataElement": "DeDiagnos01",
+                        "value": "热热结合客户日历诊断结果"
+                    },
+                    {
+                        "dataElement": "DeHospNm001",
+                        "value": "医生的名称"
+                    },
+                    {
+                        "dataElement": "DeTrtOutcm1",
+                        "value": "IMPROVED"
+                    },
+                    {
+                        "dataElement": "DeTrtPlan01",
+                        "value": "未复工也不溶解"
+                    },
+                    {
+                        "dataElement": "DeTrtType01",
+                        "value": "INPATIENT"
+                    },
+                    {
+                        "dataElement": "DeDeptNm001",
+                        "value": "计划位科室"
+                    },
+                    {
+                        "dataElement": "DeDiscDt001",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "dataElement": "DeMedicat01",
+                        "value": "对日元图"
+                    }
+                ]
+            }
+        ]
+    }
+
+## 检测记录
+### 新增
+    1.首页/个案详情/检测记录/“新增检测记录”按钮，点击进入检测记录新增页
+    2.检测记录的新增页表单信息（*为必填）
+    基本信息：
+        Report date*
+        机构*
+        样本类型*
+        推送实验室时间（日期+时间。时间要求eg:08:00,“请输入有效时间”）
+        已推送实验室（单选：是/否）
+        检测类型*
+        检测状态*
+        检测编号*
+        结果详情
+        实验室报告URL（请提供有效的URL）
+        检测到的病原体
+        样本采集日期*（不允许将来的日期）
+        检测机构
+        检测日期（不允许将来的日期）
+        检测结果
+    笔记：点击“编写说明”显示文本框，“编写说明”按钮变为“添加笔记”/"取消"
+    分配者：
+        分配的用户
+    3.提交保存调用示例：
+    /api/42/tracker?async=false
+    {
+        "events": [
+            {
+                "orgUnit": "OuMianyang1",
+                "occurredAt": "2025-11-01",
+                "notes": [
+                    {
+                        "value": "虽然有"
+                    }
+                ],
+                "status": "COMPLETED",
+                "event": "LFhKed5Dyqd",
+                "program": "PrgCaseMgt1",
+                "programStage": "PsTest00001",
+                "orgUnitName": "绵阳市",
+                "trackedEntity": "rGuyAeff4aD",
+                "enrollment": "erYpje4XClA",
+                "updatedAt": "2025-11-09T07:07:36",
+                "dataValues": [
+                    {
+                        "dataElement": "DeSmplType1",
+                        "value": "THROAT_SWAB"
+                    },
+                    {
+                        "dataElement": "DePushLabDt",
+                        "value": "2025-11-02T00:00:00.000Z"
+                    },
+                    {
+                        "dataElement": "DePushLab01",
+                        "value": "false"
+                    },
+                    {
+                        "dataElement": "DeTestType1",
+                        "value": "NAT"
+                    },
+                    {
+                        "dataElement": "DeTestStat1",
+                        "value": "PENDING_CONFIRMATION"
+                    },
+                    {
+                        "dataElement": "DeTestNo001",
+                        "value": "111111"
+                    },
+                    {
+                        "dataElement": "DeRsltDtl01",
+                        "value": "绕太阳发"
+                    },
+                    {
+                        "dataElement": "DePathogen1",
+                        "value": "V002"
+                    },
+                    {
+                        "dataElement": "DeSmplColDt",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "dataElement": "DeTestOrg01",
+                        "value": "玩填入而已"
+                    },
+                    {
+                        "dataElement": "DeTestDt001",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "dataElement": "DeTestRslt1",
+                        "value": "NEGATIVE"
+                    }
+                ]
+            }
+        ]
+    }
+   
+## 追踪记录
+### 新增
+    1.首页/个案详情/追踪记录，添加“新增追踪记录”按钮，点击进入追踪记录新增页
+    2.追踪记录的新增页表单信息（*为必填）
+    基本信息：
+        Report date*
+        机构*
+        地点描述*
+        结束日期*（不允许将来的日期）
+        接触人员
+        暴露详情
+        已推送流调系统-2
+        关联地区
+        起始日期*（不允许将来的日期）
+        风险评估*
+        推送流调时间-2
+        追踪类型*
+    笔记：点击“编写说明”显示文本框，“编写说明”按钮变为“添加笔记”/"取消"
+    分配者：
+        分配的用户
+    3.提交保存调用示例：
+    /api/42/tracker?async=false
+    {
+        "events": [
+            {
+                "orgUnit": "OuChengdu01",
+                "occurredAt": "2025-11-01",
+                "notes": [
+                    {
+                        "value": "srgffgh"
+                    }
+                ],
+                "status": "COMPLETED",
+                "event": "fY4khaGOmLa",
+                "program": "PrgCaseMgt1",
+                "programStage": "PsTracking1",
+                "orgUnitName": "成都市",
+                "trackedEntity": "rGuyAeff4aD",
+                "enrollment": "erYpje4XClA",
+                "updatedAt": "2025-11-09T07:32:32",
+                "dataValues": [
+                    {
+                        "dataElement": "DeLocDesc01",
+                        "value": "wefdrgy的任何"
+                    },
+                    {
+                        "dataElement": "DeEndDt0001",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "dataElement": "DeContPrsn1",
+                        "value": "是法国不超过"
+                    },
+                    {
+                        "dataElement": "DeExpDtl001",
+                        "value": "大太阳"
+                    },
+                    {
+                        "dataElement": "DeTrkPshEpi",
+                        "value": "false"
+                    },
+                    {
+                        "dataElement": "DeRelRgn001",
+                        "value": "OuMianyang1"
+                    },
+                    {
+                        "dataElement": "DeStartDt01",
+                        "value": "2025-11-01"
+                    },
+                    {
+                        "dataElement": "DeRiskAsmt1",
+                        "value": "HIGH"
+                    },
+                    {
+                        "dataElement": "DeTrkPshDt1",
+                        "value": "2025-11-01T01:00:00.000Z"
+                    },
+                    {
+                        "dataElement": "DeTrackTp01",
+                        "value": "CONTACT_HISTORY"
+                    }
+                ]
+            }
+        ]
+    }
+
+# 补充说明
+## 每个TAB(共4个)的新增表单中关于"笔记"和"分配者"描述
+    笔记：点击“编写说明”显示文本框，“编写说明”按钮变为“添加笔记”/"取消"，
+        -- 编辑输入文本框，点击“添加笔记”，调取/api/42/me?fields=firstName%2Csurname%2Cusername，获得{
+            "username": "admin",
+            "surname": "admin",
+            "firstName": "admin"
+        }，添加一条数据显示eg:admin admin 'value'。可编写多条
+    分配者：
+        分配的用户
+            -- 输入数据，调取接口api/42/userLookup?query=ad 
+            -- 获得：
+                {
+                    "users": [
+                        {
+                            "id": "M5zQapPyTZI",
+                            "username": "admin",
+                            "firstName": "admin",
+                            "surname": "admin",
+                            "displayName": "admin admin"
+                        },
+                        {
+                            "id": "UserAdmin01",
+                            "username": "admin1",
+                            "firstName": "系统",
+                            "surname": "管理员",
+                            "displayName": "系统 管理员"
+                        }
+                    ]
+                }
+            -- 获取到数据后，可直接选择。若无可选数据，输入框下方提示“没有结果”
+    
+   
+## dhis2MetadataUtils.ts 
+  项目中dhis2MetadataUtils.ts文件提供了方法可以查询:程序信息/阶段信息/数据元素信息/选项集信息。
+  上述新增/编辑表单中某些属性是值域集，可使用该方法查询。
+  ### 以获取“不明病例状态”的场景示例：
+    const unknownCaseStatusOptions = await getDHIS2MetadataInfo('', '', '', 'OsUnkStat01');
+    console.log('不明病例状态选项集:', unknownCaseStatusOptions);
+    获得：
+    {
+        "id": "OsUnkStat01",
+        "name": "不明病例状态",
+        "valueType": "TEXT",
+        "options": [
+            {
+                "id": "OptPendTst1",
+                "code": "PENDING_TEST",
+                "name": "待检测",
+                "sortOrder": 1
+            },
+            {
+                "id": "OptTesting1",
+                "code": "TESTING",
+                "name": "检测中",
+                "sortOrder": 2
+            },
+            {
+                "id": "OptConfirm2",
+                "code": "CONFIRMED",
+                "name": "已确诊",
+                "sortOrder": 3
+            },
+            {
+                "id": "OptExclude1",
+                "code": "EXCLUDED",
+                "name": "排除",
+                "sortOrder": 4
+            }
+        ]
+    }
+ ### 需求用到的元数据id:
+   -- 项目（已知疾病个案管理）id=PrgCaseMgt1
+   -- 阶段：
+     PsFollowUp1：随访记录
+     PsTreatmnt1：治疗记录
+     PsTest00001：检测记录
+     PsTracking1：追踪记录
+### 方法调用示例
+   -- getDHIS2MetadataInfo('', 'PsFollowUp1', '', '') 
+      可查询到该阶段下的所有数据元素/选项集/元素/值域集
