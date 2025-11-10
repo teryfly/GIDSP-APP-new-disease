@@ -46,10 +46,6 @@ const CaseDetail = () => {
     trackings,
     trackPager,
     logs,
-    loadFollowUps,
-    loadTreatments,
-    loadTests,
-    loadTrackings,
     loadLogs,
     doPushEpi,
     doCloseCase,
@@ -70,10 +66,7 @@ const CaseDetail = () => {
   }, [error]);
 
   useEffect(() => {
-    if (activeTab === '3' && followUps.length === 0) loadFollowUps(1);
-    if (activeTab === '4' && treatments.length === 0) loadTreatments(1);
-    if (activeTab === '5' && tests.length === 0) loadTests(1);
-    if (activeTab === '6' && trackings.length === 0) loadTrackings(1);
+    // 移除对已删除函数的调用，数据现在一次性加载
     if (activeTab === '7' && logs.tei.length === 0 && logs.event.length === 0) loadLogs();
   }, [activeTab]);
 
@@ -188,28 +181,28 @@ const CaseDetail = () => {
             <Button type="primary" style={{ marginBottom: 16 }}>
               <Link to={`/cases/${id}/follow-ups/new`}>新增随访记录</Link>
             </Button>
-            <FollowUpList caseId={id} items={followUps} pager={followPager} onLoadMore={loadFollowUps} />
+            <FollowUpList caseId={id} items={followUps} pager={followPager} />
           </TabPane>
 
           <TabPane tab="治疗记录" key="4">
             <Button type="primary" style={{ marginBottom: 16 }}>
               <Link to={`/cases/${id}/treatments/new`}>新增治疗记录</Link>
             </Button>
-            <TreatmentList caseId={id} items={treatments} pager={treatPager} onLoadMore={loadTreatments} />
+            <TreatmentList caseId={id} items={treatments} pager={treatPager} />
           </TabPane>
 
           <TabPane tab="检测记录" key="5">
             <Button type="primary" style={{ marginBottom: 16 }}>
               <Link to={`/cases/${id}/test-records/new`}>新增检测记录</Link>
             </Button>
-            <TestList caseId={id} items={tests} pager={testPager} onLoadMore={loadTests} />
+            <TestList caseId={id} items={tests} pager={testPager} />
           </TabPane>
 
           <TabPane tab="追踪记录" key="6">
             <Button type="primary" style={{ marginBottom: 16 }}>
               <Link to={`/cases/${id}/tracking-records/new`}>新增追踪记录</Link>
             </Button>
-            <TrackingList caseId={id} items={trackings} pager={trackPager} onLoadMore={loadTrackings} />
+            <TrackingList caseId={id} items={trackings} pager={trackPager} />
           </TabPane>
 
           <TabPane tab="操作日志" key="7">
