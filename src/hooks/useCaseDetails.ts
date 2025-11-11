@@ -2,28 +2,21 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import {
   getCaseDetails,
-  listStageEvents,
   getEventChangeLogs,
   getTeiChangeLogs,
   pushToEpiFlag,
   closeCase,
-  PROGRAM_ID,
   PROGRAM_STAGE_INVESTIGATION_ID,
   STAGE_FOLLOW_UP,
   STAGE_TREATMENT,
   STAGE_TEST,
   STAGE_TRACKING,
-  DE_PUSH_EPI,
-  DE_PUSH_EPI_DT,
-  DE_CASE_STATUS,
   type TrackerEvent,
-  type EventsListResponse,
 } from '../services/caseDetailsService';
 import { mapInvestigationToEpiNarrative } from '../services/mappers/eventMappers';
-import { mapFollowUps } from '../services/mappers/eventMappers';
-import { mapTreatments } from '../services/mappers/eventMappers';
-import { mapTests } from '../services/mappers/eventMappers';
-import { mapTrackings } from '../services/mappers/eventMappers';
+import { mapFollowUps, mapTreatments, mapTests, mapTrackings } from '../services/mappers/eventMappers';
+import { geocodeAddress, getCachedGeocode } from '../utils/amapGeocode';
+import { getOrgUnitsByPath, getMe } from '../services/caseService2';
 
 export interface HeaderSummary {
   trackedEntity: string;
@@ -52,6 +45,15 @@ export interface PagerState {
   total: number;
 }
 
+type TrackingWithGeo = ReturnType<typeof mapTrackings>[number] & {
+  latitude?: number;
+  longitude?: number;
+  geocodePending?: boolean;
+  geocodeError?: string | null;
+  regionId?: string;
+  regionName?: string; // 关联地区中文名称
+};
+
 export function useCaseDetails(teiUid: string) {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +61,6 @@ export function useCaseDetails(teiUid: string) {
   const [header, setHeader] = useState<HeaderSummary | null>(null);
   const [epi, setEpi] = useState<ReturnType<typeof mapInvestigationToEpiNarrative> | null>(null);
 
-  // lists with pagination
   const [followUps, setFollowUps] = useState<ReturnType<typeof mapFollowUps>>([]);
   const [followPager, setFollowPager] = useState<PagerState>({ page: 1, pageSize: 10, total: 0 });
 
@@ -69,10 +70,9 @@ export function useCaseDetails(teiUid: string) {
   const [tests, setTests] = useState<ReturnType<typeof mapTests>>([]);
   const [testPager, setTestPager] = useState<PagerState>({ page: 1, pageSize: 10, total: 0 });
 
-  const [trackings, setTrackings] = useState<ReturnType<typeof mapTrackings>>([]);
+  const [trackings, setTrackings] = useState<TrackingWithGeo[]>([]);
   const [trackPager, setTrackPager] = useState<PagerState>({ page: 1, pageSize: 10, total: 0 });
 
-  // logs
   const [logs, setLogs] = useState<{ tei: any[]; event: any[] }>({ tei: [], event: [] });
 
   const enrollmentRef = useRef<string | null>(null);
@@ -84,17 +84,10 @@ export function useCaseDetails(teiUid: string) {
     setError(null);
     try {
       const tei = await getCaseDetails(teiUid);
-      
-      // TEI级别属性
+
       const teiAttrs = new Map(tei.attributes.map((a) => [a.attribute, a.value]));
-      
-      // 获取enrollment
       const enrollment = tei.enrollments?.find((enr) => enr.program === 'PrgCaseMgt1') || tei.enrollments?.[0];
-      
-      // Enrollment级别属性
       const enrAttrs = new Map((enrollment?.attributes || []).map((a) => [a.attribute, a.value]));
-      
-      // 获取调查事件
       const investigationEvent = enrollment?.events?.find((ev) => ev.programStage === PROGRAM_STAGE_INVESTIGATION_ID) || enrollment?.events?.[0];
 
       enrollmentRef.current = enrollment?.enrollment || null;
@@ -104,18 +97,15 @@ export function useCaseDetails(teiUid: string) {
       const epiNarrative = mapInvestigationToEpiNarrative(investigationEvent as unknown as TrackerEvent);
       setEpi(epiNarrative);
 
-      // 构建完整的header数据
       setHeader({
         trackedEntity: tei.trackedEntity,
         orgUnit: tei.orgUnit,
-        // TEI属性
         fullName: teiAttrs.get('AtrFullNm01'),
         genderZh: teiAttrs.get('AtrGender01'),
         age: teiAttrs.get('AtrAge00001'),
         nationalId: teiAttrs.get('AtrNatnlId1'),
         phone: teiAttrs.get('AtrPhone001'),
         address: teiAttrs.get('AtrAddr0001'),
-        // Enrollment属性
         caseNo: enrAttrs.get('AtrCaseNo01'),
         diseaseCode: enrAttrs.get('AtrDiseaCd1'),
         reportDate: enrAttrs.get('AtrRptDt001'),
@@ -123,37 +113,62 @@ export function useCaseDetails(teiUid: string) {
         symptomOnsetDate: enrAttrs.get('AtrSymptDt1'),
         diagnosisDate: enrAttrs.get('AtrDiagDt01'),
         caseSource: enrAttrs.get('AtrCaseSrc1'),
-        // 从调查事件获取状态
         statusTag: epiNarrative?.caseStatus || enrollment?.status || 'ACTIVE',
         enrollment: enrollment?.enrollment,
         investigationEvent: investigationEvent?.event,
       });
 
-      // 从enrollment.events中筛选各类记录
       const allEvents = enrollment?.events || [];
-      
-      // 随访记录 (PsFollowUp1)
+
       const followUpEvents = allEvents.filter(e => e.programStage === STAGE_FOLLOW_UP);
-      const mappedFollowUps = mapFollowUps(followUpEvents);
-      setFollowUps(mappedFollowUps);
+      setFollowUps(mapFollowUps(followUpEvents));
       setFollowPager({ page: 1, pageSize: followUpEvents.length, total: followUpEvents.length });
-      
-      // 治疗记录 (PsTreatmnt1)
+
       const treatmentEvents = allEvents.filter(e => e.programStage === STAGE_TREATMENT);
-      const mappedTreatments = mapTreatments(treatmentEvents);
-      setTreatments(mappedTreatments);
+      setTreatments(mapTreatments(treatmentEvents));
       setTreatPager({ page: 1, pageSize: treatmentEvents.length, total: treatmentEvents.length });
-      
-      // 检测记录 (PsTest00001)
+
       const testEvents = allEvents.filter(e => e.programStage === STAGE_TEST);
-      const mappedTests = mapTests(testEvents);
-      setTests(mappedTests);
+      setTests(mapTests(testEvents));
       setTestPager({ page: 1, pageSize: testEvents.length, total: testEvents.length });
-      
-      // 追踪记录 (PsTracking1)
+
       const trackingEvents = allEvents.filter(e => e.programStage === STAGE_TRACKING);
       const mappedTrackings = mapTrackings(trackingEvents);
-      setTrackings(mappedTrackings);
+
+      // Build a map of orgUnitId -> name for regionId, to pass as city to geocoder
+      let regionNameMap = new Map<string, string>();
+      try {
+        const me = await getMe();
+        const path = me.organisationUnits?.[0]?.path || '';
+        const parentPath = path.substring(0, path.lastIndexOf('/')) || path;
+        const ous = await getOrgUnitsByPath(parentPath);
+        regionNameMap = new Map((ous || []).map((ou) => [ou.id, ou.name]));
+      } catch {
+        regionNameMap = new Map<string, string>();
+      }
+
+      const enriched: TrackingWithGeo[] = await Promise.all(mappedTrackings.map(async (t) => {
+        const lat = (t as any).latitude;
+        const lng = (t as any).longitude;
+        const regionId = (t as any).regionId as string | undefined;
+        const regionName = regionId ? regionNameMap.get(regionId) : undefined;
+
+        if (typeof lat === 'number' && typeof lng === 'number') {
+          return { ...t, latitude: lat, longitude: lng, regionId, regionName, geocodePending: false, geocodeError: null };
+        }
+        const addressText = t.location || '';
+        const cached = getCachedGeocode(addressText);
+        if (cached) {
+          return { ...t, latitude: cached.lat, longitude: cached.lng, regionId, regionName, geocodePending: false, geocodeError: null };
+        }
+        const ll = await geocodeAddress(addressText, regionName); // pass regionName as city
+        if (ll) {
+          return { ...t, latitude: ll.lat, longitude: ll.lng, regionId, regionName, geocodePending: false, geocodeError: null };
+        }
+        return { ...t, regionId, regionName, geocodePending: false, geocodeError: '未解析到坐标' };
+      }));
+
+      setTrackings(enriched);
       setTrackPager({ page: 1, pageSize: trackingEvents.length, total: trackingEvents.length });
     } catch (e: any) {
       setError(e.message || '加载个案详情失败');
@@ -164,9 +179,7 @@ export function useCaseDetails(teiUid: string) {
 
   const reloadAll = useCallback(async () => {
     await loadHeaderAndEpi();
-    // 删除分页加载调用，因为数据已经在loadHeaderAndEpi中加载
-    // await Promise.allSettled([loadFollowUps(1), loadTreatments(1), loadTests(1), loadTrackings(1)]);
-  }, [loadHeaderAndEpi/*, loadFollowUps, loadTreatments, loadTests, loadTrackings*/]);
+  }, [loadHeaderAndEpi]);
 
   const loadLogs = useCallback(async () => {
     if (!header?.trackedEntity) return;
@@ -204,6 +217,44 @@ export function useCaseDetails(teiUid: string) {
     await loadHeaderAndEpi();
   }, [loadHeaderAndEpi]);
 
+  const retryGeocodeTracking = useCallback(async (index: number, addressOverride?: string) => {
+    let addressToUse = '';
+    let regionNameToUse: string | undefined = undefined;
+
+    setTrackings((prev) => {
+      const copy = [...prev];
+      const item = copy[index];
+      if (!item) return prev;
+      addressToUse = (addressOverride && addressOverride.trim()) || item.location || '';
+      regionNameToUse = item.regionName;
+      copy[index] = { ...item, geocodePending: true, geocodeError: null };
+      return copy;
+    });
+
+    try {
+      const ll = await geocodeAddress(addressToUse, regionNameToUse);
+      setTrackings((prev) => {
+        const copy = [...prev];
+        const item = copy[index];
+        if (!item) return prev;
+        if (ll) {
+          copy[index] = { ...item, latitude: ll.lat, longitude: ll.lng, geocodePending: false, geocodeError: null };
+        } else {
+          copy[index] = { ...item, geocodePending: false, geocodeError: '未解析到坐标' };
+        }
+        return copy;
+      });
+    } catch (e: any) {
+      setTrackings((prev) => {
+        const copy = [...prev];
+        const item = copy[index];
+        if (!item) return prev;
+        copy[index] = { ...item, geocodePending: false, geocodeError: e?.message || '解析失败' };
+        return copy;
+      });
+    }
+  }, []);
+
   useEffect(() => {
     reloadAll();
   }, [reloadAll]);
@@ -226,5 +277,6 @@ export function useCaseDetails(teiUid: string) {
     loadLogs,
     doPushEpi,
     doCloseCase,
+    retryGeocodeTracking,
   };
-};
+}

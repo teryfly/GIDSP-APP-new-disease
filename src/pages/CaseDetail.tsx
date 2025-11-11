@@ -49,6 +49,7 @@ const CaseDetail = () => {
     loadLogs,
     doPushEpi,
     doCloseCase,
+    retryGeocodeTracking,
   } = useCaseDetails(id!);
 
   useEffect(() => {
@@ -199,7 +200,12 @@ const CaseDetail = () => {
             <Button type="primary" style={{ marginBottom: 16 }}>
               <Link to={`/cases/${id}/tracking-records/new`}>新增追踪记录</Link>
             </Button>
-            <TrackingList caseId={id} items={trackings} pager={trackPager} />
+            <TrackingList
+              caseId={id}
+              items={trackings as any}
+              pager={trackPager}
+              onRetryGeocode={(idx, addrOverride) => retryGeocodeTracking(idx)}
+            />
           </TabPane>
 
           <TabPane tab="操作日志" key="7">
