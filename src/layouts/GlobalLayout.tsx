@@ -38,6 +38,26 @@ function getItem(
 
 const menuItems: MenuItem[] = [
     getItem(<Link to="/">首页</Link>, '/', <PieChartOutlined />),
+    getItem('个案管理', 'sub1', <UserOutlined />, [
+        getItem(<Link to="/cases">个案列表</Link>, '/cases'),
+    ]),
+    getItem('不明原因疾病', 'sub2', <ExperimentOutlined />, [
+        getItem(<Link to="/unknown-cases">病例列表</Link>, '/unknown-cases'),
+    ]),
+    getItem('预警管理', 'sub3', <AlertOutlined />, [
+        getItem(<Link to="/alerts">预警列表</Link>, '/alerts'),
+    ]),
+    getItem('统计分析', 'sub4', <DesktopOutlined />, [
+        getItem(<Link to="/statistics">疾病统计</Link>, '/statistics'),
+    ]),
+    getItem('基础数据管理', 'sub5', <DatabaseOutlined />, [
+        getItem(<Link to="/disease-codes">疾病编码管理</Link>, '/disease-codes'),
+        getItem(<Link to="/pathogens">病原微生物管理</Link>, '/pathogens', <BugOutlined />),
+    ]),
+    getItem('系统管理', 'sub6', <SettingOutlined />, [
+        getItem('用户管理', '11'),
+        getItem('角色权限管理', '12'),
+    ]),
 ];
 
 const userMenuItems = [
