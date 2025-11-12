@@ -2,12 +2,8 @@ import config from '../config.json';
 
 /**
  * Simple DHIS2 API client using basic auth from config.json
- * Only for browser usage with CORS enabled on DHIS2 side.
- * Cache disabled globally to avoid 304 and stale data.
+ * Auto-detects if running inside DHIS2 app environment
  */
-
-// "baseUrl": "http://192.168.120.233:8080",
-// "baseUrl": "http://10.241.5.145:8089",
 
 export interface Dhis2Pager {
   page?: number;
@@ -18,11 +14,18 @@ export interface Dhis2Pager {
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-// 根据dhis2.useUrlIs配置决定是否使用config.dhis2
-// 当useUrlIs为true时，使用配置的baseUrl；为false时使用相对路径
-const useUrlConfig = config.dhis2?.useUrlIs === true;
+// 检测是否在DHIS2应用环境中运行
+const isDhis2AppEnvironment = (): boolean => {
+  const path = window.location.pathname;
+  return path.includes('/api/apps/') || path.includes('/dhis-web-apps/');
+};
+
+// 根据环境决定配置
+const inDhis2 = isDhis2AppEnvironment();
+const useUrlConfig = !inDhis2 && config.dhis2?.useUrlIs === true;
+
 const { baseUrl, username, password } = useUrlConfig ? config.dhis2 : { 
-  baseUrl: '',  // 将在请求时使用相对路径
+  baseUrl: inDhis2 ? '../..' : '',  // DHIS2环境中使用相对路径
   username: '',
   password: ''
 };
@@ -31,6 +34,7 @@ const base = baseUrl.replace(/\/+$/, '');
 
 function authHeader(): string {
   // 只有在useUrlIs模式下才使用basic auth
+  // DHIS2环境会自动使用session认证
   if (useUrlConfig && username && password) {
     const token = btoa(`${username}:${password}`);
     return `Basic ${token}`;
@@ -39,7 +43,6 @@ function authHeader(): string {
 }
 
 async function rawFetch(url: string, options: RequestInit): Promise<Response> {
-  // enforce no-cache headers
   const baseHeaders: HeadersInit = {
     'Accept': (options.headers as any)?.Accept || 'application/json',
     'Content-Type': (options.headers as any)?.['Content-Type'] || 'application/json',
@@ -52,20 +55,18 @@ async function rawFetch(url: string, options: RequestInit): Promise<Response> {
     (baseHeaders as any).Authorization = authHeader();
   }
 
-  // Remove validators to reduce 304 chance
   const finalOptions: RequestInit = {
     ...options,
     headers: {
       ...baseHeaders,
       ...(options.headers || {}),
     },
-    cache: 'no-store', // extra hint for browser
-    credentials: 'include', // 添加credentials选项，类似于fetchWithAuth1
+    cache: 'no-store',
+    credentials: 'include', // 重要：使用DHIS2的session认证
   };
 
   const resp = await fetch(url, finalOptions);
   if (resp.status === 304) {
-    // Retry once with explicit no-cache headers (defensive, although already set)
     const retryHeaders: HeadersInit = {
       ...(finalOptions.headers as any),
       'Cache-Control': 'no-cache',
@@ -77,8 +78,14 @@ async function rawFetch(url: string, options: RequestInit): Promise<Response> {
 }
 
 async function request<T>(path: string, method: HttpMethod = 'GET', body?: any, params?: Record<string, any>, signal?: AbortSignal): Promise<T> {
-  // 在非useUrlIs模式下，使用相对路径
-  const url = useUrlConfig ? new URL(`${base}${path}`) : new URL(path, window.location.origin);
+  // 构建完整的API路径
+  let fullPath = path;
+  if (inDhis2) {
+    // 在DHIS2环境中，确保API路径正确
+    fullPath = path.startsWith('/api') ? path : `/api${path}`;
+  }
+  
+  const url = useUrlConfig ? new URL(`${base}${fullPath}`) : new URL(fullPath, window.location.origin);
 
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
@@ -91,9 +98,7 @@ async function request<T>(path: string, method: HttpMethod = 'GET', body?: any, 
     });
   }
 
-  const headers: HeadersInit = {
-    // auth & defaults are merged in rawFetch
-  };
+  const headers: HeadersInit = {};
 
   const resp = await rawFetch(url.toString(), {
     method,

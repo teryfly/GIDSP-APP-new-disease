@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createHashRouter } from 'react-router-dom';
 import GlobalLayout from '../layouts/GlobalLayout';
 import Dashboard from '../pages/Dashboard';
 import CaseList from '../pages/CaseList';
@@ -31,7 +31,8 @@ import EditUnknownCaseRegister from '../pages/records/EditUnknownCaseRegister';
 import NewLabTest from '../pages/records/NewLabTest';
 import EditLabTest from '../pages/records/EditLabTest';
 
-export const router = createBrowserRouter([
+// 使用 HashRouter 避免 DHIS2 路径冲突
+export const router = createHashRouter([
     {
         path: '/',
         element: <GlobalLayout />,

@@ -1,25 +1,28 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  server: {
-    host: '0.0.0.0',
-    port: 5179,
-  },
-  // 添加基础路径配置，支持部署在子路径下
-  base: './',
+  base: './', // 使用相对路径
   build: {
-    // 确保资源路径正确
+    outDir: 'build',
     assetsDir: 'assets',
+    // 关键配置：确保完全编译，移除 import.meta
+    target: 'es2015',
+    // 禁用代码分割，确保单一bundle
     rollupOptions: {
       output: {
-        // 确保入口文件名一致
-        entryFileNames: 'assets/[name].js',
-        chunkFileNames: 'assets/[name].js',
-        assetFileNames: 'assets/[name].[ext]'
+        manualChunks: undefined,
       }
+    },
+    // 确保所有模块都被编译
+    commonjsOptions: {
+      transformMixedEsModules: true
     }
+  },
+  // 预览时也使用相对路径
+  preview: {
+    port: 5179
   }
 })
