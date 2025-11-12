@@ -6,6 +6,7 @@ import type { DiseaseCodeFormData } from '../../types/forms';
 import { listOptions, updateOption } from '../../api/optionsService';
 import { fromDiseaseFormToPayload } from '../../utils/optionMapping';
 import { OPTION_SET_IDS, ATTRIBUTE_IDS } from '../../types/dhis2';
+import { dhis2Client } from '../../api/dhis2Client';
 
 const { Title } = Typography;
 
@@ -71,21 +72,13 @@ const EditDiseaseCode = () => {
       const values = await form.validateFields();
       const payload = fromDiseaseFormToPayload(values as any, sortOrder);
       // Use PUT for editing with mergeMode=REPLACE
-      const url = `/api/29/options/${id}?mergeMode=REPLACE`;
-      const resp = await fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...(payload as any),
-          id,
-          code: codeValue,
-        }),
-        credentials: 'include',
-      });
-      if (!resp.ok) {
-        const txt = await resp.text();
-        throw new Error(txt || '保存失败');
-      }
+      const path = `/api/29/options/${id}`;
+      const params = { mergeMode: 'REPLACE' };
+      await dhis2Client.put(path, {
+        ...(payload as any),
+        id,
+        code: codeValue,
+      }, params);
       message.success('疾病编码更新成功!');
       navigate('/disease-codes');
     } catch (error: any) {

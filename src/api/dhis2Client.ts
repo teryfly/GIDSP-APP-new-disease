@@ -121,6 +121,7 @@ async function request<T>(path: string, method: HttpMethod = 'GET', body?: any, 
 export const dhis2Client = {
   get: <T>(path: string, params?: Record<string, any>, signal?: AbortSignal) => request<T>(path, 'GET', undefined, params, signal),
   post: <T>(path: string, body?: any, params?: Record<string, any>, signal?: AbortSignal) => request<T>(path, 'POST', body, params, signal),
+  put: <T>(path: string, body?: any, params?: Record<string, any>, signal?: AbortSignal) => request<T>(path, 'PUT', body, params, signal),
   delete: <T>(path: string, params?: Record<string, any>, signal?: AbortSignal) => request<T>(path, 'DELETE', undefined, params, signal),
 };
 
