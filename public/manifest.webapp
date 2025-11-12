@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "name": "新发传染病监测系统",
+  "description": "DHIS2 新发传染病监测与管理系统",
+  "launch_path": "index.html",
+  "appType": "APP",
+  "icons": {
+    "16": "logo.svg",
+    "48": "logo.svg",
+    "128": "logo.svg"
+  },
+  "developer": {
+    "name": "CDC Developer",
+    "url": ""
+  },
+  "default_locale": "zh",
+  "activities": {
+    "dhis": {
+      "href": "*"
+    }
+  }
+}

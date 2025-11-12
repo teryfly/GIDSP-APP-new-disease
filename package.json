@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "lint": "eslint .",
+    "build": "tsc && vite build && npm run copy-manifest",
+    "copy-manifest": "xcopy public\\manifest.webapp build\\ /Y",
     "preview": "vite preview"
   },
   "dependencies": {
