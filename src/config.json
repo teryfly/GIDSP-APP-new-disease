@@ -1,11 +1,19 @@
 {
   "dhis2": {
     "baseUrl": "http://192.168.120.233:8080",
-    "username": "admin",
-    "password": "district",
-    "useUrlIs": true
+  "username": "admin",
+  "password": "district",
+  "useUrlIs": true
   },
   "tracker": {
     "debug": false
+  },
+  "amap": {
+    "key": "e2ff18a8f1cb9f860a9a55a9a9983810",
+    "defaultCity": "成都",
+    "fallbackCenter": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    }
   }
 }
