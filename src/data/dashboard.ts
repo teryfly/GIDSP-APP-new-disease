@@ -1,6 +1,6 @@
 export const metrics = [
     { title: '本月新增个案', value: 156, trend: 15, unit: '%' },
-    { title: '待核实个案', value: 3, link: '/cases?status=待核实' },
+    { title: '已核实个案', value: 3, link: '/cases?status=已核实' },
     { title: '处理中个案', value: 12, link: '/cases?status=处理中' },
     { title: '本月预警事件', value: 2, link: '/alerts?status=待处理' },
 ];
@@ -8,7 +8,7 @@ export const metrics = [
 export const todoItems = [
     { 
         id: 'todo-1',
-        category: '待核实个案',
+        category: '已核实个案',
         count: 3,
         items: [
             'CAS-2024-156 | 李四 | 新冠肺炎 | 2024-01-15',

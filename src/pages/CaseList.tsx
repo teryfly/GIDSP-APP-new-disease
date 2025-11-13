@@ -151,12 +151,12 @@ const CaseList = () => {
       sorter: true,
       render: (text: string) => text || '-',
     },
-    {
-      title: '个案状态',
-      dataIndex: 'statusTag',
-      key: 'status',
-      render: (status: CaseRow['statusTag']) => <Tag color={statusTagColor(status)}>{status || '处理中'}</Tag>,
-    },
+    // {
+    //   title: '个案状态',
+    //   dataIndex: 'statusTag',
+    //   key: 'status',
+    //   render: (status: CaseRow['statusTag']) => <Tag color={statusTagColor(status)}>{status || '处理中'}</Tag>,
+    // },
     {
       title: '操作',
       key: 'action',
@@ -165,7 +165,7 @@ const CaseList = () => {
       render: (_, record) => (
         <Space size="middle">
           <Link to={`/cases/${record.trackedEntity}`}>查看</Link>
-          <a onClick={(e) => { e.stopPropagation(); onDelete(record); }}>删除</a>
+          {/* <a onClick={(e) => { e.stopPropagation(); onDelete(record); }}>删除</a> */}
           <a onClick={(e) => { e.stopPropagation(); onPush([record]); }}>推送</a>
         </Space>
       ),
@@ -312,7 +312,7 @@ const CaseList = () => {
                 <RangePicker style={{ width: '100%' }} />
               </Form.Item>
             </Col>
-            <Col span={6}>
+            {/* <Col span={6}>
               <Form.Item label="个案状态" name="statusCodeEq">
                 <Select
                   allowClear
@@ -320,7 +320,7 @@ const CaseList = () => {
                   options={(statusOS?.options || []).map((o) => ({ value: o.code, label: o.name }))}
                 />
               </Form.Item>
-            </Col>
+            </Col> */}
             <Col span={6}>
               <Form.Item label="报告单位" name="orgUnitId">
                 <OrgUnitSelect />
@@ -332,7 +332,7 @@ const CaseList = () => {
               <Space>
                 <Button type="primary" onClick={() => fetchData.current(1, pager.pageSize)}>查询</Button>
                 <Button onClick={resetFilters}>重置</Button>
-                <Button>高级筛选</Button>
+                {/* <Button>高级筛选</Button> */}
               </Space>
             </Col>
           </Row>
@@ -346,7 +346,7 @@ const CaseList = () => {
               <Button type="primary">
                 <Link to="/cases/new">新增个案</Link>
               </Button>
-              <Button disabled>批量导入</Button>
+              {/* <Button disabled>批量导入</Button> */}
               <Button onClick={handleExportSelected}>导出Excel</Button>
             </Space>
           </Col>

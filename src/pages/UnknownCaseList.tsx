@@ -156,14 +156,14 @@ export default function UnknownCaseList() {
         render: (text: string) => text || '-',
         sorter: true,
       },
-      {
-        title: '病例状态',
-        dataIndex: 'statusName',
-        key: 'statusName',
-        render: (_: any, record: UnknownCaseRow) => (
-          <Tag color={statusTagColor(record.statusCode)}>{record.statusName || '-'}</Tag>
-        ),
-      },
+      // {
+      //   title: '病例状态',
+      //   dataIndex: 'statusName',
+      //   key: 'statusName',
+      //   render: (_: any, record: UnknownCaseRow) => (
+      //     <Tag color={statusTagColor(record.statusCode)}>{record.statusName || '-'}</Tag>
+      //   ),
+      // },
       {
         title: '紧急度',
         dataIndex: 'urgency',
@@ -173,7 +173,7 @@ export default function UnknownCaseList() {
       {
         title: '操作',
         key: 'action',
-        width: 240,
+        width: 120,
         render: (_: any, record: UnknownCaseRow) => {
           const code = (record.statusCode || '').toUpperCase();
           const isConfirmed = code === 'CONFIRMED';
@@ -182,8 +182,8 @@ export default function UnknownCaseList() {
           return (
             <Space size="middle">
               <Link to={`/unknown-cases/${record.trackedEntity}`}>查看</Link>
-              {isPendingOrTesting && <Link to={`/unknown-cases/${record.trackedEntity}/edit`}>编辑</Link>}
-              {isPendingOrTesting && <a>上报</a>}
+              {/* {isPendingOrTesting && <Link to={`/unknown-cases/${record.trackedEntity}/edit`}>编辑</Link>} */}
+              {/* {isPendingOrTesting && <a>上报</a>} */}
               {isConfirmed && <a>推送</a>}
             </Space>
           );
@@ -253,7 +253,7 @@ export default function UnknownCaseList() {
                 <RangePicker style={{ width: '100%' }} />
               </Form.Item>
             </Col>
-            <Col span={6}>
+            {/* <Col span={6}>
               <Form.Item label="病例状态" name="statusCodeEq">
                 <Select
                   allowClear
@@ -261,7 +261,7 @@ export default function UnknownCaseList() {
                   options={(statusOS?.options || []).map((o) => ({ value: o.code, label: o.name }))}
                 />
               </Form.Item>
-            </Col>
+            </Col> */}
             <Col span={6}>
               <Form.Item label="报告单位" name="orgUnitId">
                 <OrgUnitSelect />
