@@ -8,7 +8,7 @@ import FollowUpList from '../components/case/FollowUpList';
 import TreatmentList from '../components/case/TreatmentList';
 import TestList from '../components/case/TestList';
 import TrackingList from '../components/case/TrackingList';
-import OperationLogs from '../components/case/OperationLogs';
+// import OperationLogs from '../components/case/OperationLogs';
 
 const { TabPane } = Tabs;
 
@@ -208,9 +208,9 @@ const CaseDetail = () => {
             />
           </TabPane>
 
-          <TabPane tab="操作日志" key="7">
+          {/* <TabPane tab="操作日志" key="7">
             <OperationLogs teiLogs={logs.tei} eventLogs={logs.event} />
-          </TabPane>
+          </TabPane> */}
         </Tabs>
       </Card>
     </Space>

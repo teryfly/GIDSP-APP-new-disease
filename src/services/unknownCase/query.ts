@@ -1,5 +1,5 @@
 import { dhis2Client, buildFieldsParam } from '../../api/dhis2Client';
-import { PROGRAM_UNKNOWN_ID, ATR_UNK_NO, ATR_FULL_NAME } from './constants';
+import { PROGRAM_UNKNOWN_ID, ATR_UNK_NO, ATR_FULL_NAME, ATR_RPT_DATE } from './constants';
 import type { TEIQueryResponse } from './types';
 
 export async function queryUnknownCases(params: {
@@ -9,8 +9,7 @@ export async function queryUnknownCases(params: {
   order?: 'createdAt:asc' | 'createdAt:desc' | 'updatedAt:asc' | 'updatedAt:desc' | 'enrolledAt:asc' | 'enrolledAt:desc';
   caseNoLike?: string;
   patientNameLike?: string;
-  enrolledAfter?: string;   // YYYY-MM-DD
-  enrolledBefore?: string;  // YYYY-MM-DD
+  reportDateEq?: string;   // YYYY-MM-DD - 新增：报告日期精确匹配
   statusCodeEq?: string;    // Ignored by TEI query in current contract
 }) {
   const fields = buildFieldsParam([
@@ -29,12 +28,11 @@ export async function queryUnknownCases(params: {
     order: params.order || 'createdAt:desc',
     totalPages: 'true',
   };
-  if (params.enrolledAfter) query.enrollmentEnrolledAfter = params.enrolledAfter;
-  if (params.enrolledBefore) query.enrollmentEnrolledBefore = params.enrolledBefore;
 
   const filters: string[] = [];
   if (params.caseNoLike) filters.push(`${ATR_UNK_NO}:ilike:${params.caseNoLike}`);
   if (params.patientNameLike) filters.push(`${ATR_FULL_NAME}:ilike:${params.patientNameLike}`);
+  if (params.reportDateEq) filters.push(`${ATR_RPT_DATE}:eq:${params.reportDateEq}`); // 新增：报告日期精确匹配
 
   filters.forEach((f) => {
     query['filter'] = (query['filter'] || []).concat(f);

@@ -5,8 +5,7 @@ export async function exportUnknownCasesCsv(params: {
   ouId: string;
   caseNoLike?: string;
   patientNameLike?: string;
-  enrolledAfter?: string;
-  enrolledBefore?: string;
+  reportDateEq?: string; // YYYY-MM-DD - 新增：报告日期精确匹配
 }) {
   const query: Record<string, any> = {
     program: 'PrgUnknown1',
@@ -17,11 +16,10 @@ export async function exportUnknownCasesCsv(params: {
   const filters: string[] = [];
   if (params.caseNoLike) filters.push(`AtrUnkNo001:ilike:${params.caseNoLike}`);
   if (params.patientNameLike) filters.push(`AtrFullNm01:ilike:${params.patientNameLike}`);
+  if (params.reportDateEq) filters.push(`AtrRptDt001:eq:${params.reportDateEq}`); // 新增：报告日期精确匹配
   filters.forEach((f) => {
     query['filter'] = (query['filter'] || []).concat(f);
   });
-  if (params.enrolledAfter) query.enrollmentEnrolledAfter = params.enrolledAfter;
-  if (params.enrolledBefore) query.enrollmentEnrolledBefore = params.enrolledBefore;
 
   const { default: cfg } = await import('../../config.json');
   const baseUrl = cfg.dhis2.baseUrl.replace(/\/+$/, '');

@@ -16,7 +16,6 @@ import {
 } from '../services/unknownCaseService';
 import { mapTEIsToUnknownRows, enrichWithLabEvent, type UnknownCaseRow } from '../services/mappers/unknownCaseMappers';
 
-const { RangePicker } = DatePicker;
 const { Text } = Typography;
 
 const statusTagColor = (code?: string) => {
@@ -45,7 +44,7 @@ export default function UnknownCaseList() {
   // filters
   const caseNoLike = Form.useWatch('caseNoLike', form);
   const patientNameLike = Form.useWatch('patientNameLike', form);
-  const dateRange = Form.useWatch('dateRange', form);
+  const reportDateEq = Form.useWatch('reportDateEq', form);
   const orgUnitId = Form.useWatch('orgUnitId', form);
   const statusCodeEq = Form.useWatch('statusCodeEq', form);
 
@@ -79,8 +78,7 @@ export default function UnknownCaseList() {
 
   fetchData.current = async (page = pager.page, pageSize = pager.pageSize) => {
     if (!orgUnitId && !meOrgUnitId) return;
-    const enrolledAfter = dateRange?.[0] ? dayjs(dateRange[0]).format('YYYY-MM-DD') : undefined;
-    const enrolledBefore = dateRange?.[1] ? dayjs(dateRange[1]).format('YYYY-MM-DD') : undefined;
+    const formattedReportDate = reportDateEq ? dayjs(reportDateEq).format('YYYY-MM-DD') : undefined;
 
     try {
       setLoading(true);
@@ -91,8 +89,7 @@ export default function UnknownCaseList() {
         order,
         caseNoLike: debouncedCaseNo,
         patientNameLike: debouncedName,
-        enrolledAfter,
-        enrolledBefore,
+        reportDateEq: formattedReportDate,
         statusCodeEq,
       });
       const rows: UnknownCaseRow[] = res.trackedEntities.map((tei) => mapTEIsToUnknownRows(tei, statusCodeMap));
@@ -129,7 +126,7 @@ export default function UnknownCaseList() {
   useEffect(() => {
     if (!meOrgUnitId) return;
     fetchData.current(1, pager.pageSize);
-  }, [debouncedCaseNo, debouncedName, dateRange, orgUnitId, order, statusCodeEq, meOrgUnitId]);
+  }, [debouncedCaseNo, debouncedName, reportDateEq, orgUnitId, order, statusCodeEq, meOrgUnitId]);
 
   const columns = useMemo(() => {
     return [
@@ -202,14 +199,12 @@ export default function UnknownCaseList() {
 
   const handleExport = async () => {
     try {
-      const enrolledAfter = dateRange?.[0] ? dayjs(dateRange[0]).format('YYYY-MM-DD') : undefined;
-      const enrolledBefore = dateRange?.[1] ? dayjs(dateRange[1]).format('YYYY-MM-DD') : undefined;
+      const formattedReportDate = reportDateEq ? dayjs(reportDateEq).format('YYYY-MM-DD') : undefined;
       const blob = await exportUnknownCasesCsv({
         ouId: orgUnitId || meOrgUnitId!,
         caseNoLike: debouncedCaseNo,
         patientNameLike: debouncedName,
-        enrolledAfter,
-        enrolledBefore,
+        reportDateEq: formattedReportDate,
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -249,8 +244,8 @@ export default function UnknownCaseList() {
               </Form.Item>
             </Col>
             <Col span={6}>
-              <Form.Item label="报告日期" name="dateRange">
-                <RangePicker style={{ width: '100%' }} />
+              <Form.Item label="报告日期" name="reportDateEq">
+                <DatePicker style={{ width: '100%' }} placeholder="请选择日期" />
               </Form.Item>
             </Col>
             {/* <Col span={6}>

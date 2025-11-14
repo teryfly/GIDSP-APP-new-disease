@@ -53,7 +53,7 @@ const AlertDetail = () => {
                     <Descriptions.Item label="状态">{getStatusTag(alertData.status)}</Descriptions.Item>
                     <Descriptions.Item label="检测时间">{alertData.detectionTime}</Descriptions.Item>
                     <Descriptions.Item label="位置">{alertData.location}</Descriptions.Item>
-                    <Descriptions.Item label="关联病例">{alertData.relatedCases} 例</Descriptions.Item>
+                    {/* <Descriptions.Item label="关联病例">{alertData.relatedCases} 例</Descriptions.Item> */}
                     <Descriptions.Item label="触发规则" span={2}>{alertData.triggerRule}</Descriptions.Item>
                     <Descriptions.Item label="摘要" span={2}>{alertData.summary}</Descriptions.Item>
                 </Descriptions>

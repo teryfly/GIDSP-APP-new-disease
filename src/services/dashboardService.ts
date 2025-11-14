@@ -103,7 +103,7 @@ export async function getNewCasesCount(orgUnit: string = 'OuSichuan10') {
     } else if (currentMonthCount > 0) {
       // 如果上个月为0，本月有数据，则增长100%
       trend = 100;
-    }
+    } 
 
     return { count: Math.round(currentMonthCount), trend };
   } catch (error) {
@@ -111,3 +111,85 @@ export async function getNewCasesCount(orgUnit: string = 'OuSichuan10') {
     return { count: 0, trend: 0 };
   }
 }
+
+// 本月预警事件统计
+export async function getAlertEventsCount(orgUnit: string = 'OuSichuan10') {
+  const currentYearMonth = getCurrentYearMonth();
+  const path = '/api/42/analytics';
+  const params = {
+    dimension: `dx:TxTHLGnndT7,pe:${currentYearMonth}`,
+    filter: `ou:${orgUnit}`,
+    displayProperty: 'NAME',
+    includeNumDen: 'true',
+    skipMeta: 'true',
+    skipData: 'false'
+  };
+
+  try {
+    const response: any = await dhis2Client.get(path, params);
+    // rows数组的长度即为本月预警事件的数量
+    return response.rows ? response.rows.length : 0;
+  } catch (error) {
+    console.error('获取本月预警事件数据失败:', error);
+    return 0;
+  }
+}
+
+// 获取已核实个案待办事项数据
+export async function getVerifiedCasesTodo() {
+  const path = '/api/tracker/events';
+  const params = {
+    filter: 'DeCaseStat1:eq:VERIFIED',
+    fields: 'trackedEntity,event'
+  };
+
+  try {
+    const response: any = await dhis2Client.get(path, params);
+    return response.events || [];
+  } catch (error) {
+    console.error('获取已核实个案待办数据失败:', error);
+    return [];
+  }
+}
+
+// 获取待确认检测待办事项数据
+export async function getPendingConfirmationTestsTodo() {
+  const path = '/api/tracker/events';
+  const params = {
+    filter: 'DeUnkTstSt1:eq:PENDING_CONFIRMATION',
+    fields: 'trackedEntity,event'
+  };
+
+  try {
+    const response: any = await dhis2Client.get(path, params);
+    return response.events || [];
+  } catch (error) {
+    console.error('获取待确认检测待办数据失败:', error);
+    return [];
+  }
+}
+
+// 获取跟踪实体详细信息
+export async function getTrackedEntityDetails(trackedEntityId: string) {
+  const path = `/api/42/tracker/trackedEntities/${trackedEntityId}`;
+  const params = {
+    fields: 'enrollments'
+  };
+
+  try {
+    const response: any = await dhis2Client.get(path, params);
+    return response;
+  } catch (error) {
+    console.error(`获取跟踪实体${trackedEntityId}详细信息失败:`, error);
+    return null;
+  }
+}
+
+export default {
+  getProcessingCasesCount,
+  getVerifiedCasesCount,
+  getNewCasesCount,
+  getAlertEventsCount,
+  getVerifiedCasesTodo,
+  getPendingConfirmationTestsTodo
+};

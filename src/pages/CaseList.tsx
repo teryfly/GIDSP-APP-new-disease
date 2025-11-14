@@ -21,7 +21,6 @@ import OrgUnitSelect from '../components/common/OrgUnitSelect';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import dayjs from 'dayjs';
 
-const { RangePicker } = DatePicker;
 const { Text } = Typography;
 
 const statusTagColor = (status?: CaseRow['statusTag']) => {
@@ -75,7 +74,7 @@ const CaseList = () => {
   const caseNoLike = Form.useWatch('caseNoLike', form);
   const patientNameLike = Form.useWatch('patientNameLike', form);
   const diseaseCodeEq = Form.useWatch('diseaseCodeEq', form);
-  const dateRange = Form.useWatch('dateRange', form);
+  const reportDateEq = Form.useWatch('reportDateEq', form);
   const orgUnitId = Form.useWatch('orgUnitId', form);
 
   const debouncedCaseNo = useDebouncedValue(caseNoLike, 500);
@@ -85,8 +84,7 @@ const CaseList = () => {
 
   fetchData.current = async (page = pager.page, pageSize = pager.pageSize) => {
     if (!diseaseOS) return;
-    const enrolledAfter = dateRange?.[0] ? dayjs(dateRange[0]).format('YYYY-MM-DD') : undefined;
-    const enrolledBefore = dateRange?.[1] ? dayjs(dateRange[1]).format('YYYY-MM-DD') : undefined;
+    const formattedReportDate = reportDateEq ? dayjs(reportDateEq).format('YYYY-MM-DD') : undefined;
 
     try {
       setLoading(true);
@@ -95,8 +93,7 @@ const CaseList = () => {
           caseNoLike: debouncedCaseNo,
           patientNameLike: debouncedPatientName,
           diseaseCodeEq,
-          enrolledAfter,
-          enrolledBefore,
+          reportDateEq: formattedReportDate,
           orgUnitId: orgUnitId || meOrgUnitId,
           page,
           pageSize,
@@ -119,7 +116,7 @@ const CaseList = () => {
     if (!diseaseOS) return;
     fetchData.current(1, pager.pageSize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [diseaseOS, debouncedCaseNo, debouncedPatientName, diseaseCodeEq, dateRange, orgUnitId, order]);
+  }, [diseaseOS, debouncedCaseNo, debouncedPatientName, diseaseCodeEq, reportDateEq, orgUnitId, order]);
 
   const columns: ColumnsType<CaseRow> = useMemo(() => [
     {
@@ -166,7 +163,7 @@ const CaseList = () => {
         <Space size="middle">
           <Link to={`/cases/${record.trackedEntity}`}>查看</Link>
           {/* <a onClick={(e) => { e.stopPropagation(); onDelete(record); }}>删除</a> */}
-          <a onClick={(e) => { e.stopPropagation(); onPush([record]); }}>推送</a>
+          {/* <a onClick={(e) => { e.stopPropagation(); onPush([record]); }}>推送</a> */}
         </Space>
       ),
     },
@@ -308,8 +305,8 @@ const CaseList = () => {
               </Form.Item>
             </Col>
             <Col span={6}>
-              <Form.Item label="报告日期" name="dateRange">
-                <RangePicker style={{ width: '100%' }} />
+              <Form.Item label="报告日期" name="reportDateEq">
+                <DatePicker style={{ width: '100%' }} placeholder="请选择日期" />
               </Form.Item>
             </Col>
             {/* <Col span={6}>
