@@ -151,7 +151,7 @@ export interface UpdateRegisterEventPayload {
   pushedToCase: boolean;
   pushedToEpi: boolean;
   pushedCaseId?: string;
-  pushedToEmergency: number; // 修改为数字类型：1表示YES，2表示NO
+  pushedToEmergency: number; // 修改为数字类型：1表示是，2表示否
   emergencyTime?: string; // ISO datetime
   pushCaseTime?: string; // ISO datetime
   pushEpiTime?: string; // ISO datetime
