@@ -142,8 +142,7 @@ export interface CaseFilters {
   caseNoLike?: string;
   patientNameLike?: string;
   diseaseCodeEq?: string; // option code
-  enrolledAfter?: string; // YYYY-MM-DD
-  enrolledBefore?: string; // YYYY-MM-DD
+  reportDateEq?: string; // YYYY-MM-DD - 新增：报告日期精确匹配
   statusCodeEq?: string; // not directly filterable via enrollment, provided to support future; main list status is stage data element
   orgUnitId?: string;
   page?: number;
@@ -156,8 +155,7 @@ export async function queryTrackedEntities(filters: CaseFilters, signal?: AbortS
     caseNoLike,
     patientNameLike,
     diseaseCodeEq,
-    enrolledAfter,
-    enrolledBefore,
+    reportDateEq, // 新增：报告日期精确匹配
     orgUnitId,
     page = 1,
     pageSize = 50,
@@ -182,13 +180,12 @@ export async function queryTrackedEntities(filters: CaseFilters, signal?: AbortS
   };
 
   if (orgUnitId) params.orgUnits = orgUnitId;
-  if (enrolledAfter) params.enrollmentEnrolledAfter = enrolledAfter;
-  if (enrolledBefore) params.enrollmentEnrolledBefore = enrolledBefore;
 
   const filterArr: string[] = [];
   if (caseNoLike) filterArr.push(`${ATR_CASE_NO}:like:${caseNoLike}`);
   if (patientNameLike) filterArr.push(`${ATR_FULL_NAME}:like:${patientNameLike}`);
   if (diseaseCodeEq) filterArr.push(`${ATR_DISEASE_CODE}:eq:${diseaseCodeEq}`);
+  if (reportDateEq) filterArr.push(`${ATR_RPT_DATE}:eq:${reportDateEq}`); // 新增：报告日期精确匹配
 
   const searchParams: Record<string, any> = { ...params };
   filterArr.forEach((f) => {

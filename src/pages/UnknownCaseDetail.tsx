@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { Card, Descriptions, Tabs, Tag, Space, Button, Empty, Typography, Modal, Steps, message } from 'antd';
 import { useUnknownCaseDetails } from '../hooks/useUnknownCaseDetails';
 import LabTestList from '../components/unknownCase/LabTestList';
@@ -30,7 +30,8 @@ const statusTagColor = (code?: string) => {
 
 export default function UnknownCaseDetail() {
   const { id } = useParams<{ id: string }>();
-  const [active, setActive] = useState('1');
+  const location = useLocation();
+  const [active, setActive] = useState<string>('1');
   const [pushing, setPushing] = useState(false);
   const [createdEnrollment, setCreatedEnrollment] = useState<string | null>(null);
 
@@ -140,6 +141,17 @@ export default function UnknownCaseDetail() {
     });
   };
 
+  // 根据URL参数设置默认Tab
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const from = params.get('from');
+    if (from === 'pending-test') {
+      setActive('3'); // 检测记录Tab
+    } else {
+      setActive('1'); // 基本信息Tab
+    }
+  }, [location.search]);
+
   return (
     <>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -201,7 +213,7 @@ export default function UnknownCaseDetail() {
               </Space>
             </TabPane>
 
-            <TabPane tab="推送记录" key="4">
+            {/* <TabPane tab="推送记录" key="4">
               <Button onClick={ctx.loadLogs} style={{ marginBottom: 12 }}>刷新</Button>
               <Descriptions bordered column={1} title="Enrollment 变更日志">
                 <Descriptions.Item label="日志">
@@ -213,7 +225,7 @@ export default function UnknownCaseDetail() {
                   <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(ctx.logs.regEvt, null, 2)}</pre>
                 </Descriptions.Item>
               </Descriptions>
-            </TabPane>
+            </TabPane> */}
           </Tabs>
         </Card>
       </Space>

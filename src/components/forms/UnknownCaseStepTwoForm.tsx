@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Form, Select, DatePicker, Row, Col, Card, Typography, Checkbox, Input, message, Spin } from 'antd';
+import { Form, Select, DatePicker, Row, Col, Card, Typography, Checkbox, Input, message, Spin, TimePicker } from 'antd';
 import type { FormInstance } from 'antd';
 import dayjs from 'dayjs';
 import { getUnknownStatusOptions } from '../../services/unknownCase/create';
+import { dhis2Client } from '../../api/dhis2Client';
 
 const { Title } = Typography;
 
@@ -21,6 +22,18 @@ export interface StepTwoFormData {
   pushEpiTime?: string;
   status: string; // 不明病例状态 code
   completeEvent: boolean;
+  
+  // 新增属性（当pushedToEmergency为true时显示）
+  alertId?: string;        // 预警ID
+  alertTitle?: string;     // 标题
+  alertContent?: string;   // 内容
+  alertTypeName?: string;  // 预警类型名称
+  alertSource?: string;    // 来源（固定值为"SCLOWCODE"）
+  alertDateTime?: dayjs.Dayjs; // 预警时间（日期部分）
+  alertTime?: string;      // 预警时间（时间部分）
+  alertEventId?: string;   // 事件ID
+  alertModifyType?: string; // 添加或修改类型
+  alertStatus?: string;    // 预警状态
 }
 
 interface Props {
@@ -31,6 +44,8 @@ interface Props {
 const UnknownCaseStepTwoForm = ({ form, orgUnit }: Props) => {
   const [loading, setLoading] = useState(false);
   const [statusOptions, setStatusOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [modifyTypeOptions, setModifyTypeOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [alertStatusOptions, setAlertStatusOptions] = useState<Array<{ value: string; label: string }>>([]);
 
   useEffect(() => {
     loadInitialData();
@@ -39,9 +54,39 @@ const UnknownCaseStepTwoForm = ({ form, orgUnit }: Props) => {
   const loadInitialData = async () => {
     setLoading(true);
     try {
-      // 加载状态选项
-      const options = await getUnknownStatusOptions();
-      setStatusOptions(options.map((o) => ({ value: o.code, label: o.displayName })));
+      // 并行加载所有需要的数据
+      const results = await Promise.allSettled([
+        getUnknownStatusOptions(),
+        dhis2Client.get<any>('/api/29/optionSets/Oskn9LFm9QF?fields=%3Aall%2CattributeValues%5B%3Aall%2Cattribute%5Bid%2Cname%2CdisplayName%5D%5D%2Coptions%5Bid%2Cname%2CdisplayName%2Ccode%2Cstyle%5D'),
+        dhis2Client.get<any>('/api/29/optionSets/BhfOVWv5NbH?fields=%3Aall%2CattributeValues%5B%3Aall%2Cattribute%5Bid%2Cname%2CdisplayName%5D%5D%2Coptions%5Bid%2Cname%2CdisplayName%2Ccode%2Cstyle%5D')
+      ]);
+
+      // 处理状态选项
+      const statusOptionsResult = results[0];
+      if (statusOptionsResult.status === 'fulfilled') {
+        const options = statusOptionsResult.value.map((o: any) => ({ value: o.code, label: o.displayName }));
+        setStatusOptions(options);
+      }
+
+      // 处理添加或修改类型选项
+      const modifyTypeResult = results[1];
+      if (modifyTypeResult.status === 'fulfilled' && modifyTypeResult.value) {
+        const modifyTypeOpts = modifyTypeResult.value.options?.map((option: any) => ({
+          value: option.code,
+          label: option.name,
+        })) || [];
+        setModifyTypeOptions(modifyTypeOpts);
+      }
+
+      // 处理预警状态选项
+      const alertStatusResult = results[2];
+      if (alertStatusResult.status === 'fulfilled' && alertStatusResult.value) {
+        const alertStatusOpts = alertStatusResult.value.options?.map((option: any) => ({
+          value: option.code,
+          label: option.name,
+        })) || [];
+        setAlertStatusOptions(alertStatusOpts);
+      }
 
       // 设置默认值 - 使用 dayjs 对象
       form.setFieldsValue({
@@ -50,6 +95,7 @@ const UnknownCaseStepTwoForm = ({ form, orgUnit }: Props) => {
         pushedToEpi: false,
         pushedToEmergency: false,
         completeEvent: false,
+        alertSource: 'SCLOWCODE' // 固定值
       });
     } catch (e: any) {
       message.error(`加载初始数据失败: ${e.message}`);
@@ -57,6 +103,9 @@ const UnknownCaseStepTwoForm = ({ form, orgUnit }: Props) => {
       setLoading(false);
     }
   };
+
+  // 获取表单值以判断是否显示新增属性
+  const pushedToEmergency = Form.useWatch('pushedToEmergency', form);
 
   if (loading) {
     return <Spin size="large" style={{ display: 'block', margin: '50px auto' }} />;
@@ -107,6 +156,69 @@ const UnknownCaseStepTwoForm = ({ form, orgUnit }: Props) => {
               <Select options={[{ value: true, label: 'YES' }, { value: false, label: 'NO' }]} />
             </Form.Item>
           </Col>
+          
+          {/* 新增属性，仅在已上报应急系统为YES时显示 */}
+          {pushedToEmergency === true && (
+            <>
+              <Col span={12}>
+                <Form.Item label="预警ID" name="alertId">
+                  <Input placeholder="预警ID" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item label="标题" name="alertTitle">
+                  <Input placeholder="标题" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item label="内容" name="alertContent">
+                  <Input placeholder="内容" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item label="预警类型名称" name="alertTypeName">
+                  <Input placeholder="预警类型名称" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item label="来源" name="alertSource">
+                  <Input placeholder="来源" disabled />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item label="预警时间 (Date)" name="alertDateTime">
+                  <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+                </Form.Item>
+              </Col>
+              <Col span={4}>
+                <Form.Item label="Time" name="alertTime">
+                  <Input placeholder="8:00" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item label="事件ID" name="alertEventId">
+                  <Input placeholder="事件ID" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item label="添加或修改类型" name="alertModifyType">
+                  <Select 
+                    placeholder="请选择添加或修改类型" 
+                    options={modifyTypeOptions} 
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item label="预警状态" name="alertStatus">
+                  <Select 
+                    placeholder="请选择预警状态" 
+                    options={alertStatusOptions} 
+                  />
+                </Form.Item>
+              </Col>
+            </>
+          )}
+          
           <Col span={8}>
             <Form.Item label="上报应急时间 (Date)" name="emergencyDate">
               <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />

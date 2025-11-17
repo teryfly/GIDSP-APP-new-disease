@@ -85,10 +85,10 @@ const AlertList = () => {
                                 <Text type="secondary">{item.detectionTime}</Text>
                                 <Text>{item.location}</Text>
                                 <Text><strong>摘要:</strong> {item.summary}</Text>
-                                <Row justify="space-between">
+                                {/* <Row justify="space-between">
                                     <Text type="secondary">关联病例: {item.relatedCases}例</Text>
                                     {getStatusTag(item.status)}
-                                </Row>
+                                </Row> */}
                             </Space>
                         </Card>
                     </List.Item>

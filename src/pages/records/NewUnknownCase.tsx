@@ -105,6 +105,14 @@ const NewUnknownCase = () => {
       const values = await formTwo.validateFields();
       setSubmitting(true);
 
+      // 合并日期和时间的辅助函数
+      const combineDateTime = (date?: dayjs.Dayjs, time?: string): string | undefined => {
+        if (!date || !time) return undefined;
+        // 解析时间字符串 (HH:mm)
+        const [hours, minutes] = time.split(':').map(Number);
+        return date.hour(hours).minute(minutes).second(0).millisecond(0).toISOString();
+      };
+
       // 转换日期时间格式
       const occurredAt = dayjs(values.occurredAt).format('YYYY-MM-DD');
       const scheduledAt = dayjs(values.scheduledAt).format('YYYY-MM-DD');
@@ -119,6 +127,11 @@ const NewUnknownCase = () => {
 
       const pushEpiTime = values.pushEpiDate && values.pushEpiTime
         ? `${dayjs(values.pushEpiDate).format('YYYY-MM-DD')}T${values.pushEpiTime}:00.000Z`
+        : undefined;
+
+      // 合并预警时间
+      const alertTime = values.pushedToEmergency 
+        ? combineDateTime(values.alertDateTime, values.alertTime) 
         : undefined;
 
       // 更新登记事件
@@ -138,6 +151,17 @@ const NewUnknownCase = () => {
         pushEpiTime,
         status: values.status,
         completeEvent: values.completeEvent,
+        
+        // 新增属性（仅当pushedToEmergency为true时传递）
+        alertId: values.pushedToEmergency ? values.alertId : undefined,
+        alertTitle: values.pushedToEmergency ? values.alertTitle : undefined,
+        alertContent: values.pushedToEmergency ? values.alertContent : undefined,
+        alertTypeName: values.pushedToEmergency ? values.alertTypeName : undefined,
+        alertSource: values.pushedToEmergency ? values.alertSource : undefined,
+        alertTime: values.pushedToEmergency ? alertTime : undefined,
+        alertEventId: values.pushedToEmergency ? values.alertEventId : undefined,
+        alertModifyType: values.pushedToEmergency ? values.alertModifyType : undefined,
+        alertStatus: values.pushedToEmergency ? values.alertStatus : undefined,
       });
 
       // 检查响应状态
