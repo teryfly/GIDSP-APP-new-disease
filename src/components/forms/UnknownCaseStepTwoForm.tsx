@@ -13,7 +13,7 @@ export interface StepTwoFormData {
   pushedToCase: boolean;
   pushedToEpi: boolean;
   pushedCaseId?: string;
-  pushedToEmergency: boolean;
+  pushedToEmergency: number; // 修改为数字类型：1表示YES，2表示NO
   emergencyDate?: dayjs.Dayjs;
   emergencyTime?: string;
   pushCaseDate?: dayjs.Dayjs;
@@ -23,7 +23,7 @@ export interface StepTwoFormData {
   status: string; // 不明病例状态 code
   completeEvent: boolean;
   
-  // 新增属性（当pushedToEmergency为true时显示）
+  // 新增属性（当pushedToEmergency为1时显示）
   alertId?: string;        // 预警ID
   alertTitle?: string;     // 标题
   alertContent?: string;   // 内容
@@ -93,7 +93,7 @@ const UnknownCaseStepTwoForm = ({ form, orgUnit }: Props) => {
         scheduledAt: dayjs(),
         pushedToCase: false,
         pushedToEpi: false,
-        pushedToEmergency: false,
+        pushedToEmergency: 2, // 修改为数字类型：2表示NO
         completeEvent: false,
         alertSource: 'SCLOWCODE' // 固定值
       });
@@ -153,12 +153,12 @@ const UnknownCaseStepTwoForm = ({ form, orgUnit }: Props) => {
           </Col>
           <Col span={12}>
             <Form.Item label="已上报应急系统" name="pushedToEmergency" valuePropName="checked">
-              <Select options={[{ value: true, label: 'YES' }, { value: false, label: 'NO' }]} />
+              <Select options={[{ value: 1, label: 'YES' }, { value: 2, label: 'NO' }]} />
             </Form.Item>
           </Col>
           
           {/* 新增属性，仅在已上报应急系统为YES时显示 */}
-          {pushedToEmergency === true && (
+          {pushedToEmergency === 1 && (
             <>
               <Col span={12}>
                 <Form.Item label="预警ID" name="alertId">

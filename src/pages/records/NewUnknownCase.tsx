@@ -145,23 +145,23 @@ const NewUnknownCase = () => {
         pushedToCase: values.pushedToCase,
         pushedToEpi: values.pushedToEpi,
         pushedCaseId: values.pushedCaseId,
-        pushedToEmergency: values.pushedToEmergency,
+        pushedToEmergency: values.pushedToEmergency, // 直接传递数字值
         emergencyTime,
         pushCaseTime,
         pushEpiTime,
         status: values.status,
         completeEvent: values.completeEvent,
         
-        // 新增属性（仅当pushedToEmergency为true时传递）
-        alertId: values.pushedToEmergency ? values.alertId : undefined,
-        alertTitle: values.pushedToEmergency ? values.alertTitle : undefined,
-        alertContent: values.pushedToEmergency ? values.alertContent : undefined,
-        alertTypeName: values.pushedToEmergency ? values.alertTypeName : undefined,
-        alertSource: values.pushedToEmergency ? values.alertSource : undefined,
-        alertTime: values.pushedToEmergency ? alertTime : undefined,
-        alertEventId: values.pushedToEmergency ? values.alertEventId : undefined,
-        alertModifyType: values.pushedToEmergency ? values.alertModifyType : undefined,
-        alertStatus: values.pushedToEmergency ? values.alertStatus : undefined,
+        // 新增属性（仅当pushedToEmergency为1时传递）
+        alertId: values.pushedToEmergency === 1 ? values.alertId : undefined,
+        alertTitle: values.pushedToEmergency === 1 ? values.alertTitle : undefined,
+        alertContent: values.pushedToEmergency === 1 ? values.alertContent : undefined,
+        alertTypeName: values.pushedToEmergency === 1 ? values.alertTypeName : undefined,
+        alertSource: values.pushedToEmergency === 1 ? values.alertSource : undefined,
+        alertTime: values.pushedToEmergency === 1 ? alertTime : undefined,
+        alertEventId: values.pushedToEmergency === 1 ? values.alertEventId : undefined,
+        alertModifyType: values.pushedToEmergency === 1 ? values.alertModifyType : undefined,
+        alertStatus: values.pushedToEmergency === 1 ? values.alertStatus : undefined,
       });
 
       // 检查响应状态

@@ -153,9 +153,9 @@ export const EditUnknownCaseRegister: React.FC = () => {
       const alertTime: string | undefined = alertDateTimeStr ? extractTime(alertDateTimeStr) : undefined;
 
       // 设置表单值
-      const pushedToEmergencyValue = dvMap.get('DePushEmg01') === 'true';
-      setPushedToEmergency(pushedToEmergencyValue);
-      
+      const pushedToEmergencyValue = dvMap.get('DePushEmg01') === '1' ? 1 : 2;
+      setPushedToEmergency(pushedToEmergencyValue === 1);
+
       form.setFieldsValue({
         occurredAt: eventRes.occurredAt ? dayjs(eventRes.occurredAt) : dayjs(),
         scheduledAt: eventRes.scheduledAt ? dayjs(eventRes.scheduledAt) : dayjs(),
@@ -336,12 +336,12 @@ export const EditUnknownCaseRegister: React.FC = () => {
             </Col>
             <Col span={12}>
               <Form.Item label="已上报应急系统" name="pushedToEmergency" valuePropName="checked">
-                <Select options={[{ value: true, label: '是' }, { value: false, label: '否' }]} />
+                <Select options={[{ value: 1, label: '是' }, { value: 2, label: '否' }]} />
               </Form.Item>
             </Col>
             
             {/* 新增属性，仅在已上报应急系统为YES时显示 */}
-            {pushedToEmergencyValue === true && (
+            {pushedToEmergencyValue === 1 && (
               <>
                 <Col span={12}>
                   <Form.Item label="预警ID" name="alertId">
