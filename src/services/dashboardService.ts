@@ -169,6 +169,23 @@ export async function getPendingConfirmationTestsTodo() {
   }
 }
 
+// 获取待处理预警数据
+export async function getPendingAlertsTodo() {
+  const path = '/api/42/tracker/events';
+  const params = {
+    programStage: 'PsRegister1',
+    filter: ['DePushEmg01:eq:1', 'YAhyASn12MH:eq:1']
+  };
+
+  try {
+    const response: any = await dhis2Client.get(path, params);
+    return response.events || [];
+  } catch (error) {
+    console.error('获取待处理预警数据失败:', error);
+    return [];
+  }
+}
+
 // 获取跟踪实体详细信息
 export async function getTrackedEntityDetails(trackedEntityId: string) {
   const path = `/api/42/tracker/trackedEntities/${trackedEntityId}`;

@@ -2,7 +2,7 @@ import { ArrowUpOutlined } from '@ant-design/icons';
 import { Card, Col, Row, Statistic, List, Space, Typography, Button, Divider } from 'antd';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { getProcessingCasesCount, getVerifiedCasesCount, getNewCasesCount, getAlertEventsCount, getVerifiedCasesTodo, getPendingConfirmationTestsTodo, getTrackedEntityDetails } from '../services/dashboardService';
+import { getProcessingCasesCount, getVerifiedCasesCount, getNewCasesCount, getAlertEventsCount, getVerifiedCasesTodo, getPendingConfirmationTestsTodo, getTrackedEntityDetails, getPendingAlertsTodo } from '../services/dashboardService';
 import { recentVisits, quickAccess } from '../data/dashboard';
 
 const { Title, Text } = Typography;
@@ -14,6 +14,7 @@ const Dashboard = () => {
     const [alertEvents, setAlertEvents] = useState(0);
     const [verifiedCasesTodo, setVerifiedCasesTodo] = useState<any[]>([]); // 已核实个案待办数据
     const [pendingTestsTodo, setPendingTestsTodo] = useState<any[]>([]); // 待确认检测待办数据
+    const [pendingAlertsTodo, setPendingAlertsTodo] = useState<any[]>([]); // 待处理预警待办数据
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -25,14 +26,16 @@ const Dashboard = () => {
                     newCasesData, 
                     alertEventsCount,
                     verifiedCasesData,
-                    pendingTestsData
+                    pendingTestsData,
+                    pendingAlertsData
                 ] = await Promise.all([
                     getProcessingCasesCount(),
                     getVerifiedCasesCount(),
                     getNewCasesCount(),
                     getAlertEventsCount(),
                     getVerifiedCasesTodo(),
-                    getPendingConfirmationTestsTodo()
+                    getPendingConfirmationTestsTodo(),
+                    getPendingAlertsTodo()
                 ]);
                 
                 setProcessingCases(processingCount);
@@ -62,8 +65,19 @@ const Dashboard = () => {
                     })
                 );
                 
+                // 获取待处理预警的详细信息
+                const pendingAlertsWithDetails = await Promise.all(
+                    pendingAlertsData.map(async (item: any) => {
+                        // 对于预警数据，我们直接使用事件数据中的信息
+                        return {
+                            ...item
+                        };
+                    })
+                );
+                
                 setVerifiedCasesTodo(verifiedCasesWithDetails);
                 setPendingTestsTodo(pendingTestsWithDetails);
+                setPendingAlertsTodo(pendingAlertsWithDetails);
             } catch (error) {
                 console.error('获取仪表盘数据失败:', error);
             } finally {
@@ -74,11 +88,31 @@ const Dashboard = () => {
         fetchData();
     }, []);
 
+    // 解析预警数据中的字段
+    const parseAlertData = (dataValues: any[]) => {
+        const dataMap: Record<string, string> = {};
+        dataValues.forEach(item => {
+            dataMap[item.dataElement] = item.value;
+        });
+        
+        return {
+            alertId: dataMap['a4N9z9gZaJc'] || '', // 预警ID
+            title: dataMap['rG1gIAVrgKK'] || '', // 标题
+            type: dataMap['liKIghiuKTt'] || '', // 预警类型名称
+            content: dataMap['pjYdGWLER7d'] || '', // 内容
+            source: dataMap['m9Pa8zeSCNG'] || '', // 来源
+            time: dataMap['O5kMFPyrkmj'] || '', // 预警时间
+            eventId: dataMap['QOk13DNk20K'] || '', // 事件ID
+            modifyType: dataMap['wOlEjbF6Ija'] || '', // 添加或修改类型
+            status: dataMap['YAhyASn12MH'] || '' // 预警状态
+        };
+    };
+
     const metrics = [
         { title: '本月新增个案', value: newCases.count, trend: newCases.trend, unit: '%' },
         { title: '已核实个案', value: verifiedCases, link: '/cases?status=已核实' },
         { title: '处理中个案', value: processingCases, link: '/cases?status=处理中' },
-        { title: '本月预警事件', value: alertEvents, link: '/alerts?status=待处理' },
+        { title: '本月预警事件', value: alertEvents, link: '/alerts' },
     ];
 
     // 构造待办事项数据
@@ -101,6 +135,16 @@ const Dashboard = () => {
                 trackedEntity: event.trackedEntity,
                 type: 'unknown-case',
                 details: event.details
+            }))
+        },
+        {
+            id: 'todo-3',
+            category: '待处理预警',
+            count: pendingAlertsTodo.length,
+            items: pendingAlertsTodo.map((event: any) => ({
+                event: event.event,
+                type: 'alert',
+                dataValues: event.dataValues
             }))
         }
     ];
@@ -140,7 +184,7 @@ const Dashboard = () => {
                                 renderItem={(subItem: any) => {
                                     // 提取显示信息
                                     let displayText = subItem.trackedEntity;
-                                    if (subItem.details && subItem.details.enrollments && subItem.details.enrollments.length > 0) {
+                                    if (subItem.type === 'case' && subItem.details && subItem.details.enrollments && subItem.details.enrollments.length > 0) {
                                         const attributes = subItem.details.enrollments[0].attributes || [];
                                         const attrMap = new Map(attributes.map((attr: any) => [attr.attribute, attr.value]));
                                         
@@ -159,14 +203,22 @@ const Dashboard = () => {
                                             const reportDate = attrMap.get('AtrRptDt001') || '';
                                             displayText = `${unkNo} | ${name} | ${age} | ${reportDate}`;
                                         }
+                                    } else if (subItem.type === 'alert' && subItem.dataValues) {
+                                        // 待处理预警显示格式: 标题|预警类型名称|内容|预警时间
+                                        const alertData = parseAlertData(subItem.dataValues);
+                                        // 格式化时间显示
+                                        const formattedTime = alertData.time ? alertData.time.split('T')[0] : '';
+                                        displayText = `${alertData.title} | ${alertData.type} | ${alertData.content} | ${formattedTime}`;
                                     }
                                     
                                     return (
                                         <List.Item>
                                             {subItem.type === 'case' ? (
                                                 <Link to={`/cases/${subItem.trackedEntity}`}>{displayText}</Link>
-                                            ) : (
+                                            ) : subItem.type === 'unknown-case' ? (
                                                 <Link to={`/unknown-cases/${subItem.trackedEntity}?from=pending-test`}>{displayText}</Link>
+                                            ) : (
+                                                <Link to={`/alerts`}>{displayText}</Link>
                                             )}
                                         </List.Item>
                                     );
