@@ -48,8 +48,15 @@ export const EditUnknownCaseRegister: React.FC = () => {
   const [eventData, setEventData] = useState<any>(null);
   const [statusOptions, setStatusOptions] = useState<any[]>([]);
   const [orgUnitOptions, setOrgUnitOptions] = useState<any[]>([]);
-  const [modifyTypeOptions, setModifyTypeOptions] = useState<any[]>([]);
-  const [alertStatusOptions, setAlertStatusOptions] = useState<any[]>([]);
+  const [modifyTypeOptions, setModifyTypeOptions] = useState<any[]>([
+    { value: '0', label: '默认' },
+    { value: '1', label: '添加' },
+    { value: '2', label: '修改' }
+  ]);
+  const [alertStatusOptions, setAlertStatusOptions] = useState<any[]>([
+    { value: '1', label: '预警中' },
+    { value: '2', label: '已结束' }
+  ]);
   
   // 用于控制新增属性的显示
   const [pushedToEmergency, setPushedToEmergency] = useState<boolean>(false);
@@ -68,12 +75,10 @@ export const EditUnknownCaseRegister: React.FC = () => {
     
     setLoading(true);
     try {
-      // 并行加载所有需要的数据
+      // 并行加载需要的数据（移除了选项集的加载）
       const results = await Promise.allSettled([
         getDHIS2MetadataInfo('', '', '', 'OsUnkStat01'),
         getAllOrgUnits(),
-        dhis2Client.get<any>('/api/29/optionSets/Oskn9LFm9QF?fields=%3Aall%2CattributeValues%5B%3Aall%2Cattribute%5Bid%2Cname%2CdisplayName%5D%5D%2Coptions%5Bid%2Cname%2CdisplayName%2Ccode%2Cstyle%5D'),
-        dhis2Client.get<any>('/api/29/optionSets/BhfOVWv5NbH?fields=%3Aall%2CattributeValues%5B%3Aall%2Cattribute%5Bid%2Cname%2CdisplayName%5D%5D%2Coptions%5Bid%2Cname%2CdisplayName%2Ccode%2Cstyle%5D'),
         dhis2Client.get<any>(`/api/42/tracker/events/${eventId}`)
       ]);
 
@@ -93,28 +98,8 @@ export const EditUnknownCaseRegister: React.FC = () => {
         setOrgUnitOptions(orgUnitsResult.value.map((o: any) => ({ value: o.id, label: o.displayName })));
       }
 
-      // 处理添加或修改类型选项
-      const modifyTypeSetResult = results[2];
-      if (modifyTypeSetResult.status === 'fulfilled' && modifyTypeSetResult.value) {
-        const modifyTypeOpts = modifyTypeSetResult.value.options?.map((option: any) => ({
-          value: option.code,
-          label: option.name,
-        })) || [];
-        setModifyTypeOptions(modifyTypeOpts);
-      }
-
-      // 处理预警状态选项
-      const alertStatusSetResult = results[3];
-      if (alertStatusSetResult.status === 'fulfilled' && alertStatusSetResult.value) {
-        const alertStatusOpts = alertStatusSetResult.value.options?.map((option: any) => ({
-          value: option.code,
-          label: option.name,
-        })) || [];
-        setAlertStatusOptions(alertStatusOpts);
-      }
-
       // 处理事件数据
-      const eventResult = results[4];
+      const eventResult = results[2];
       if (eventResult.status === 'rejected') {
         throw new Error('加载事件数据失败');
       }
@@ -153,9 +138,9 @@ export const EditUnknownCaseRegister: React.FC = () => {
       const alertTime: string | undefined = alertDateTimeStr ? extractTime(alertDateTimeStr) : undefined;
 
       // 设置表单值
-      const pushedToEmergencyValue = dvMap.get('DePushEmg01') === 'true';
-      setPushedToEmergency(pushedToEmergencyValue);
-      
+      const pushedToEmergencyValue = dvMap.get('DePushEmg01') === '1' ? 1 : 2;
+      setPushedToEmergency(pushedToEmergencyValue === 1);
+
       form.setFieldsValue({
         occurredAt: eventRes.occurredAt ? dayjs(eventRes.occurredAt) : dayjs(),
         scheduledAt: eventRes.scheduledAt ? dayjs(eventRes.scheduledAt) : dayjs(),
@@ -336,12 +321,12 @@ export const EditUnknownCaseRegister: React.FC = () => {
             </Col>
             <Col span={12}>
               <Form.Item label="已上报应急系统" name="pushedToEmergency" valuePropName="checked">
-                <Select options={[{ value: true, label: '是' }, { value: false, label: '否' }]} />
+                <Select options={[{ value: 1, label: '是' }, { value: 2, label: '否' }]} />
               </Form.Item>
             </Col>
             
-            {/* 新增属性，仅在已上报应急系统为YES时显示 */}
-            {pushedToEmergencyValue === true && (
+            {/* 新增属性，仅在已上报应急系统为是时显示 */}
+            {pushedToEmergencyValue === 1 && (
               <>
                 <Col span={12}>
                   <Form.Item label="预警ID" name="alertId">

@@ -1,99 +1,113 @@
-import { Card, Col, DatePicker, Form, Input, Row, Select, Space, Button, List, Tag, Typography } from 'antd';
-import { type Alert, alerts } from '../data/alerts';
-import { Link } from 'react-router-dom'; // Import Link
+import { useEffect, useState } from 'react';
+import { Card, Col, Row, Space, List, Tag, Typography, Spin, Button } from 'antd';
+import { getAlertEvents, type AlertData } from '../services/alertService';
 
-const { RangePicker } = DatePicker;
+// 添加日期时间格式化函数
+const formatDateTime = (dateTimeStr: string): string => {
+  if (!dateTimeStr) return '';
+  
+  try {
+    // 尝试解析ISO格式的日期时间字符串
+    const date = new Date(dateTimeStr);
+    if (isNaN(date.getTime())) {
+      // 如果不是有效的日期格式，直接返回原字符串
+      return dateTimeStr;
+    }
+    
+    // 格式化为 YYYY-MM-DD HH:mm
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  } catch (error) {
+    // 如果解析出错，直接返回原字符串
+    return dateTimeStr;
+  }
+};
+
 const { Text } = Typography;
 
 const AlertList = () => {
+    const [loading, setLoading] = useState(false);
+    const [alerts, setAlerts] = useState<AlertData[]>([]);
 
-    const getLevelTag = (level: string) => {
-        let color = 'default';
-        if (level === '一级') color = 'red';
-        if (level === '二级') color = 'orange';
-        if (level === '三级') color = 'gold';
-        if (level === '四级') color = 'blue';
-        return <Tag color={color}>{level}</Tag>;
+    // 组件加载时获取数据
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const { alerts } = await getAlertEvents();
+            setAlerts(alerts); // 显示所有数据
+        } catch (error) {
+            console.error('获取预警数据失败:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSearch = async () => {
+        // 刷新数据
+        await loadData();
     };
 
     const getStatusTag = (status: string) => {
+        // 根据预警状态值设置不同颜色和文本
         let color = 'default';
-        if (status === '待处理') color = 'gold';
-        if (status === '处理中') color = 'blue';
-        if (status === '已核实') color = 'success';
-        if (status === '误报') color = 'default';
+        if (status === '预警中')  color = 'red';
+        if (status === '已结束') color = 'gold';
+        if (status === '添加') color = 'blue';
+        if (status === '修改') color = 'success';
+        if (status === '默认') color = 'default';
         return <Tag color={color}>{status}</Tag>;
     };
 
     return (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <Card>
-                <Form layout="vertical">
-                    <Row gutter={16}>
-                        <Col span={6}>
-                            <Form.Item label="预警编号">
-                                <Input placeholder="请输入" />
-                            </Form.Item>
-                        </Col>
-                        <Col span={6}>
-                            <Form.Item label="预警类型">
-                                <Select placeholder="请选择" />
-                            </Form.Item>
-                        </Col>
-                        <Col span={6}>
-                            <Form.Item label="预警等级">
-                                <Select placeholder="请选择" />
-                            </Form.Item>
-                        </Col>
-                        <Col span={6}>
-                            <Form.Item label="预警状态">
-                                <Select placeholder="请选择" />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col span={24} style={{ textAlign: 'right' }}>
-                            <Space>
-                                <Button type="primary">查询</Button>
-                                <Button>重置</Button>
-                            </Space>
-                        </Col>
-                    </Row>
-                </Form>
+                <Row gutter={16}>
+                    <Col span={24}>
+                        <Typography.Title level={4}>预警列表</Typography.Title>
+                        <Button type="primary" onClick={handleSearch}>查询</Button>
+                    </Col>
+                </Row>
             </Card>
 
-            <List
-                grid={{ gutter: 16, xs: 1, sm: 1, md: 2, lg: 2, xl: 3, xxl: 3 }}
-                dataSource={alerts}
-                renderItem={(item: Alert) => (
-                    <List.Item>
-                        <Card
-                            title={item.alertNo}
-                            extra={
-                                <Button type="primary" ghost={item.status !== '待处理'} size="small">
-                                    <Link to={`/alerts/${item.id}/detail`}> {/* Updated link */}
-                                        {item.status === '待处理' ? '处理' : '查看'}
-                                    </Link>
-                                </Button>
-                            }
-                        >
-                            <Space direction="vertical" style={{ width: '100%' }}>
-                                <Row justify="space-between">
-                                    <Text strong>{item.type}</Text>
-                                    {getLevelTag(item.level)}
-                                </Row>
-                                <Text type="secondary">{item.detectionTime}</Text>
-                                <Text>{item.location}</Text>
-                                <Text><strong>摘要:</strong> {item.summary}</Text>
-                                {/* <Row justify="space-between">
-                                    <Text type="secondary">关联病例: {item.relatedCases}例</Text>
-                                    {getStatusTag(item.status)}
-                                </Row> */}
-                            </Space>
-                        </Card>
-                    </List.Item>
-                )}
-            />
+            {loading ? (
+                <Spin size="large" style={{ display: 'block', margin: '50px auto' }} />
+            ) : (
+                <List
+                    grid={{ gutter: 16, xs: 1, sm: 1, md: 2, lg: 2, xl: 3, xxl: 3 }}
+                    dataSource={alerts}
+                    renderItem={(item: AlertData) => (
+                        <List.Item>
+                            <Card
+                                title={`标题: ${item.alertNo}`}
+                            >
+                                <Space direction="vertical" style={{ width: '100%' }}>
+                                    <Row justify="space-between">
+                                        <Text strong>预警类型名称: {item.type}</Text>
+                                        {getStatusTag(item.status)}
+                                    </Row>
+                                    <Text type="secondary">预警时间: {formatDateTime(item.detectionTime)}</Text>
+                                    <Text>来源: {item.location}</Text>
+                                    <Text><strong>内容:</strong> {item.summary}</Text>
+                                    <Text>预警ID: {item.id}</Text>
+                                    <Row justify="space-between">
+                                        <Text>添加或修改类型: {item.level}</Text>
+                                        {getStatusTag(item.level)}
+                                    </Row>
+                                </Space>
+                            </Card>
+                        </List.Item>
+                    )}
+                />
+            )}
         </Space>
     );
 };

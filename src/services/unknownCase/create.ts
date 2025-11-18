@@ -151,14 +151,14 @@ export interface UpdateRegisterEventPayload {
   pushedToCase: boolean;
   pushedToEpi: boolean;
   pushedCaseId?: string;
-  pushedToEmergency: boolean;
+  pushedToEmergency: number; // 修改为数字类型：1表示是，2表示否
   emergencyTime?: string; // ISO datetime
   pushCaseTime?: string; // ISO datetime
   pushEpiTime?: string; // ISO datetime
   status: string; // 不明病例状态 code
   completeEvent: boolean; // Complete event 复选框
   
-  // 新增属性（当pushedToEmergency为true时传值）
+  // 新增属性（当pushedToEmergency为1时传值）
   alertId?: string;        // 预警ID
   alertTitle?: string;     // 标题
   alertContent?: string;   // 内容
@@ -176,15 +176,15 @@ export async function updateRegisterEvent(payload: UpdateRegisterEventPayload) {
     { dataElement: 'DePushCase1', value: String(payload.pushedToCase) },
     { dataElement: 'DeUnkPshEpi', value: String(payload.pushedToEpi) },
     { dataElement: 'DePushCsId1', value: payload.pushedCaseId || null },
-    { dataElement: 'DePushEmg01', value: String(payload.pushedToEmergency) },
+    { dataElement: 'DePushEmg01', value: String(payload.pushedToEmergency) }, // 修改为数字类型
     { dataElement: 'DePushEmgDt', value: payload.emergencyTime || null },
     { dataElement: 'DePushCsDt1', value: payload.pushCaseTime || null },
     { dataElement: 'DeUnkPshDt1', value: payload.pushEpiTime || null },
     { dataElement: 'DeUnkStat01', value: payload.status },
   ];
 
-  // 仅当已上报应急系统为true时，添加新增属性
-  if (payload.pushedToEmergency) {
+  // 仅当已上报应急系统为1时，添加新增属性
+  if (payload.pushedToEmergency === 1) {
     dataValues.push(
       { dataElement: 'a4N9z9gZaJc', value: payload.alertId || null },      // 预警ID
       { dataElement: 'rG1gIAVrgKK', value: payload.alertTitle || null },   // 标题

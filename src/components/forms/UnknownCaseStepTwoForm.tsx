@@ -13,7 +13,7 @@ export interface StepTwoFormData {
   pushedToCase: boolean;
   pushedToEpi: boolean;
   pushedCaseId?: string;
-  pushedToEmergency: boolean;
+  pushedToEmergency: number; // 修改为数字类型：1表示是，2表示否
   emergencyDate?: dayjs.Dayjs;
   emergencyTime?: string;
   pushCaseDate?: dayjs.Dayjs;
@@ -23,7 +23,7 @@ export interface StepTwoFormData {
   status: string; // 不明病例状态 code
   completeEvent: boolean;
   
-  // 新增属性（当pushedToEmergency为true时显示）
+  // 新增属性（当pushedToEmergency为1时显示）
   alertId?: string;        // 预警ID
   alertTitle?: string;     // 标题
   alertContent?: string;   // 内容
@@ -44,8 +44,15 @@ interface Props {
 const UnknownCaseStepTwoForm = ({ form, orgUnit }: Props) => {
   const [loading, setLoading] = useState(false);
   const [statusOptions, setStatusOptions] = useState<Array<{ value: string; label: string }>>([]);
-  const [modifyTypeOptions, setModifyTypeOptions] = useState<Array<{ value: string; label: string }>>([]);
-  const [alertStatusOptions, setAlertStatusOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [modifyTypeOptions, setModifyTypeOptions] = useState<Array<{ value: string; label: string }>>([
+    { value: '0', label: '默认' },
+    { value: '1', label: '添加' },
+    { value: '2', label: '修改' }
+  ]);
+  const [alertStatusOptions, setAlertStatusOptions] = useState<Array<{ value: string; label: string }>>([
+    { value: '1', label: '预警中' },
+    { value: '2', label: '已结束' }
+  ]);
 
   useEffect(() => {
     loadInitialData();
@@ -54,46 +61,17 @@ const UnknownCaseStepTwoForm = ({ form, orgUnit }: Props) => {
   const loadInitialData = async () => {
     setLoading(true);
     try {
-      // 并行加载所有需要的数据
-      const results = await Promise.allSettled([
-        getUnknownStatusOptions(),
-        dhis2Client.get<any>('/api/29/optionSets/Oskn9LFm9QF?fields=%3Aall%2CattributeValues%5B%3Aall%2Cattribute%5Bid%2Cname%2CdisplayName%5D%5D%2Coptions%5Bid%2Cname%2CdisplayName%2Ccode%2Cstyle%5D'),
-        dhis2Client.get<any>('/api/29/optionSets/BhfOVWv5NbH?fields=%3Aall%2CattributeValues%5B%3Aall%2Cattribute%5Bid%2Cname%2CdisplayName%5D%5D%2Coptions%5Bid%2Cname%2CdisplayName%2Ccode%2Cstyle%5D')
-      ]);
-
-      // 处理状态选项
-      const statusOptionsResult = results[0];
-      if (statusOptionsResult.status === 'fulfilled') {
-        const options = statusOptionsResult.value.map((o: any) => ({ value: o.code, label: o.displayName }));
-        setStatusOptions(options);
-      }
-
-      // 处理添加或修改类型选项
-      const modifyTypeResult = results[1];
-      if (modifyTypeResult.status === 'fulfilled' && modifyTypeResult.value) {
-        const modifyTypeOpts = modifyTypeResult.value.options?.map((option: any) => ({
-          value: option.code,
-          label: option.name,
-        })) || [];
-        setModifyTypeOptions(modifyTypeOpts);
-      }
-
-      // 处理预警状态选项
-      const alertStatusResult = results[2];
-      if (alertStatusResult.status === 'fulfilled' && alertStatusResult.value) {
-        const alertStatusOpts = alertStatusResult.value.options?.map((option: any) => ({
-          value: option.code,
-          label: option.name,
-        })) || [];
-        setAlertStatusOptions(alertStatusOpts);
-      }
+      // 只加载状态选项，不再加载添加或修改类型和预警状态选项
+      const statusOptions = await getUnknownStatusOptions();
+      const options = statusOptions.map((o: any) => ({ value: o.code, label: o.displayName }));
+      setStatusOptions(options);
 
       // 设置默认值 - 使用 dayjs 对象
       form.setFieldsValue({
         scheduledAt: dayjs(),
         pushedToCase: false,
         pushedToEpi: false,
-        pushedToEmergency: false,
+        pushedToEmergency: 2, // 修改为数字类型：2表示否
         completeEvent: false,
         alertSource: 'SCLOWCODE' // 固定值
       });
@@ -138,12 +116,12 @@ const UnknownCaseStepTwoForm = ({ form, orgUnit }: Props) => {
           </Col>
           <Col span={12}>
             <Form.Item label="已推送个案管理" name="pushedToCase" valuePropName="checked">
-              <Select options={[{ value: true, label: 'YES' }, { value: false, label: 'NO' }]} />
+              <Select options={[{ value: true, label: '是' }, { value: false, label: '否' }]} />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item label="已推送流调系统-3" name="pushedToEpi" valuePropName="checked">
-              <Select options={[{ value: true, label: 'YES' }, { value: false, label: 'NO' }]} />
+              <Select options={[{ value: true, label: '是' }, { value: false, label: '否' }]} />
             </Form.Item>
           </Col>
           <Col span={12}>
@@ -153,12 +131,12 @@ const UnknownCaseStepTwoForm = ({ form, orgUnit }: Props) => {
           </Col>
           <Col span={12}>
             <Form.Item label="已上报应急系统" name="pushedToEmergency" valuePropName="checked">
-              <Select options={[{ value: true, label: 'YES' }, { value: false, label: 'NO' }]} />
+              <Select options={[{ value: 1, label: '是' }, { value: 2, label: '否' }]} />
             </Form.Item>
           </Col>
           
-          {/* 新增属性，仅在已上报应急系统为YES时显示 */}
-          {pushedToEmergency === true && (
+          {/* 新增属性，仅在已上报应急系统为是时显示 */}
+          {pushedToEmergency === 1 && (
             <>
               <Col span={12}>
                 <Form.Item label="预警ID" name="alertId">
