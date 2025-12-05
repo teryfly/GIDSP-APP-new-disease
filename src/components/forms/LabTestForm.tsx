@@ -195,13 +195,6 @@ const LabTestForm = ({ form, initialValues, mode, defaultOrgUnit }: LabTestFormP
               <Input.TextArea rows={3} placeholder="请输入结果详情" />
             </Form.Item>
           </Col>
-          {mode === 'edit' && (
-            <Col span={24}>
-              <Form.Item name="completeEvent" valuePropName="checked">
-                <Checkbox>Complete event</Checkbox>
-              </Form.Item>
-            </Col>
-          )}
         </Row>
       </Form>
     </Card>

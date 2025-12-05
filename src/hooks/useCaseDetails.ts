@@ -17,6 +17,7 @@ import { mapInvestigationToEpiNarrative } from '../services/mappers/eventMappers
 import { mapFollowUps, mapTreatments, mapTests, mapTrackings } from '../services/mappers/eventMappers';
 import { geocodeAddress, getCachedGeocode } from '../utils/amapGeocode';
 import { getOrgUnitsByPath, getMe } from '../services/caseService2';
+import { getOrgUnitName } from '../utils/orgUnitUtils';
 
 export interface HeaderSummary {
   trackedEntity: string;
@@ -95,7 +96,13 @@ export function useCaseDetails(teiUid: string) {
       investigationEventRef.current = investigationEvent?.event || null;
 
       const epiNarrative = mapInvestigationToEpiNarrative(investigationEvent as unknown as TrackerEvent);
-      setEpi(epiNarrative);
+      
+      // 获取报告单位中文名称
+      const orgUnitId = enrAttrs.get('AtrRptOrg01');
+      let reportOrgName = orgUnitId;
+      if (orgUnitId) {
+        reportOrgName = await getOrgUnitName(orgUnitId);
+      }
 
       setHeader({
         trackedEntity: tei.trackedEntity,
@@ -109,7 +116,7 @@ export function useCaseDetails(teiUid: string) {
         caseNo: enrAttrs.get('AtrCaseNo01'),
         diseaseCode: enrAttrs.get('AtrDiseaCd1'),
         reportDate: enrAttrs.get('AtrRptDt001'),
-        reportOrgName: enrAttrs.get('AtrRptOrg01'),
+        reportOrgName, // 使用中文名称
         symptomOnsetDate: enrAttrs.get('AtrSymptDt1'),
         diagnosisDate: enrAttrs.get('AtrDiagDt01'),
         caseSource: enrAttrs.get('AtrCaseSrc1'),

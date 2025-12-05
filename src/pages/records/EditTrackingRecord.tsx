@@ -17,6 +17,9 @@ import { createTrackingEvent } from '../../services/eventService';
 const { Title } = Typography;
 const { TextArea } = Input;
 
+// 定义用户类型
+type UserType = { uid: string; displayName: string; username: string; firstName: string; surname: string } | null;
+
 interface RegionOption {
   value: string;
   label: string;
@@ -32,13 +35,19 @@ const EditTrackingRecord = () => {
   const [orgUnitOptions, setOrgUnitOptions] = useState<{ value: string; label: string }[]>([]);
 
   const [enrollment, setEnrollment] = useState<string | null>(null);
-  const [statusCompleted, setStatusCompleted] = useState<boolean>(false);
+  // 移除statusCompleted状态，因为我们不再需要"事件完成"复选框
 
   const [regionOptions, setRegionOptions] = useState<RegionOption[]>([]);
   const [regionLoading, setRegionLoading] = useState(false);
 
   const [notes, setNotes] = useState<NoteItem[]>([]);
-  const [assignee, setAssignee] = useState<{ uid: string; displayName: string; username: string; firstName: string; surname: string } | null>(null);
+  const [assignee, setAssignee] = useState<UserType>(null);
+  
+  // 为AssigneeSelect创建兼容的onChange处理函数
+  const handleAssigneeChange = (user: UserType | undefined) => {
+    // 处理undefined情况，将其转换为null
+    setAssignee(user ?? null);
+  };
 
   const trackingType = Form.useWatch('trackingType', form);
 
@@ -77,7 +86,6 @@ const EditTrackingRecord = () => {
           });
         } else {
           const event = await getEvent(id!);
-          setStatusCompleted(event.status === 'COMPLETED');
           const mapped = toTrackingForm(event.dataValues || []);
           form.setFieldsValue({
             occurredAt: event.occurredAt ? dayjs(event.occurredAt) : dayjs(),
@@ -180,7 +188,8 @@ const EditTrackingRecord = () => {
             programStage: PS.TRACKING,
             enrollment,
             orgUnit: values.orgUnit,
-            status: statusCompleted ? 'COMPLETED' : 'ACTIVE',
+            // 编辑时默认传status: "ACTIVE"
+            status: 'ACTIVE',
             occurredAt: occurred,
             dataValues: dvs,
           },
@@ -355,14 +364,8 @@ const EditTrackingRecord = () => {
                 </Select>
               </Form.Item>
             </Col>
-
-            {!isCreate && (
-              <Col span={24}>
-                <Checkbox checked={statusCompleted} onChange={(e) => setStatusCompleted(e.target.checked)}>
-                  事件完成
-                </Checkbox>
-              </Col>
-            )}
+            
+            {/* 移除了"事件完成"复选框 */}
           </Row>
         </Form>
       </Card>
@@ -370,7 +373,7 @@ const EditTrackingRecord = () => {
       {isCreate && (
         <>
           <NotesEditor notes={notes} onChange={setNotes} />
-          <AssigneeSelect value={assignee} onChange={setAssignee} />
+          <AssigneeSelect value={assignee} onChange={handleAssigneeChange} />
         </>
       )}
 

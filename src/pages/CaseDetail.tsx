@@ -8,17 +8,10 @@ import FollowUpList from '../components/case/FollowUpList';
 import TreatmentList from '../components/case/TreatmentList';
 import TestList from '../components/case/TestList';
 import TrackingList from '../components/case/TrackingList';
+import { getCaseStatusLabel, statusTagColor } from '../utils/caseStatusUtils';
 // import OperationLogs from '../components/case/OperationLogs';
 
 const { TabPane } = Tabs;
-
-const statusTagColor = (status?: string) => {
-  if (!status) return 'default';
-  if (status === 'VERIFIED' || status === '处理中' || status === 'ACTIVE') return 'blue';
-  if (status === 'CLOSED' || status === '已关闭' || status === 'COMPLETED') return 'green';
-  if (status === '待核实' || status === 'CANCELLED') return 'gold';
-  return 'default';
-};
 
 const genderMap: Record<string, string> = {
   MALE: '男',
@@ -31,6 +24,7 @@ const CaseDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('1');
+  const [statusLabel, setStatusLabel] = useState<string>('');
 
   const {
     loading,
@@ -50,6 +44,7 @@ const CaseDetail = () => {
     doPushEpi,
     doCloseCase,
     retryGeocodeTracking,
+    reloadAll, // 添加reloadAll函数
   } = useCaseDetails(id!);
 
   useEffect(() => {
@@ -67,6 +62,18 @@ const CaseDetail = () => {
   useEffect(() => {
     if (activeTab === '7' && logs.tei.length === 0 && logs.event.length === 0) loadLogs();
   }, [activeTab]);
+
+  // 获取个案状态中文标签
+  useEffect(() => {
+    const fetchStatusLabel = async () => {
+      if (header?.statusTag) {
+        const label = await getCaseStatusLabel(header.statusTag);
+        setStatusLabel(label);
+      }
+    };
+    
+    fetchStatusLabel();
+  }, [header?.statusTag]);
 
   const editMenuItems: MenuProps['items'] = [
     {
@@ -135,11 +142,11 @@ const CaseDetail = () => {
         >
           <Descriptions.Item label="患者姓名">{header.fullName || '-'}</Descriptions.Item>
           <Descriptions.Item label="个案状态">
-            <Tag color={statusTagColor(header.statusTag)}>{header.statusTag || '-'}</Tag>
+            <Tag color={statusTagColor(header.statusTag)}>{statusLabel || header.statusTag || '-'}</Tag>
           </Descriptions.Item>
           <Descriptions.Item label="疾病编码">{header.diseaseCode || '-'}</Descriptions.Item>
           <Descriptions.Item label="报告日期">{header.reportDate || '-'}</Descriptions.Item>
-          <Descriptions.Item label="报告单位">{header.reportOrgName || '-'}</Descriptions.Item>
+          <Descriptions.Item label="报告机构">{header.reportOrgName || '-'}</Descriptions.Item>
           <Descriptions.Item label="症状开始日期">{header.symptomOnsetDate || '-'}</Descriptions.Item>
         </Descriptions>
       </Card>
@@ -179,21 +186,36 @@ const CaseDetail = () => {
             <Button type="primary" style={{ marginBottom: 16 }}>
               <Link to={`/cases/${id}/follow-ups/new`}>新增随访记录</Link>
             </Button>
-            <FollowUpList caseId={id} items={followUps} pager={followPager} />
+            <FollowUpList 
+              caseId={id} 
+              items={followUps} 
+              pager={followPager} 
+              onRefresh={reloadAll} // 添加刷新回调
+            />
           </TabPane>
 
           <TabPane tab="治疗记录" key="4">
             <Button type="primary" style={{ marginBottom: 16 }}>
               <Link to={`/cases/${id}/treatments/new`}>新增治疗记录</Link>
             </Button>
-            <TreatmentList caseId={id} items={treatments} pager={treatPager} />
+            <TreatmentList 
+              caseId={id} 
+              items={treatments} 
+              pager={treatPager} 
+              onRefresh={reloadAll} // 添加刷新回调
+            />
           </TabPane>
 
           <TabPane tab="检测记录" key="5">
             <Button type="primary" style={{ marginBottom: 16 }}>
               <Link to={`/cases/${id}/test-records/new`}>新增检测记录</Link>
             </Button>
-            <TestList caseId={id} items={tests} pager={testPager} />
+            <TestList 
+              caseId={id} 
+              items={tests} 
+              pager={testPager} 
+              onRefresh={reloadAll} // 添加刷新回调
+            />
           </TabPane>
 
           <TabPane tab="追踪记录" key="6">
@@ -205,6 +227,7 @@ const CaseDetail = () => {
               items={trackings as any}
               pager={trackPager}
               onRetryGeocode={(idx, addrOverride) => retryGeocodeTracking(idx)}
+              onRefresh={reloadAll} // 添加刷新回调
             />
           </TabPane>
 

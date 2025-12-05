@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Card, Col, DatePicker, Form, Input, Row, Select, Space, Table, Tag, Tooltip, message, Modal, Typography } from 'antd';
+import { Button, Card, Col, DatePicker, Form, Input, Row, Select, Space, Table, Tag, Tooltip, message, Typography, App } from 'antd';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -7,7 +7,6 @@ import {
   getOptionSet,
   getMe,
   queryTrackedEntities,
-  deleteTrackedEntity,
   batchPushToEpi,
   PROGRAM_ID,
   PROGRAM_STAGE_INVESTIGATION_ID,
@@ -15,6 +14,7 @@ import {
   OS_CASE_STATUS_ID,
   DE_PUSH_EPI,
 } from '../services/caseService2';
+import { getCaseDetails, updateTrackedEntities } from '../services/caseDetailsService';
 import type { OptionSet } from '../services/caseService2';
 import { mapTEIsToRows, type CaseRow } from '../services/mappers/caseMappers';
 import OrgUnitSelect from '../components/common/OrgUnitSelect';
@@ -32,6 +32,7 @@ const statusTagColor = (status?: CaseRow['statusTag']) => {
 
 const CaseList = () => {
   const navigate = useNavigate();
+  const { modal, message: messageApi } = App.useApp();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
@@ -162,7 +163,7 @@ const CaseList = () => {
       render: (_, record) => (
         <Space size="middle">
           <Link to={`/cases/${record.trackedEntity}`}>查看</Link>
-          {/* <a onClick={(e) => { e.stopPropagation(); onDelete(record); }}>删除</a> */}
+          <a onClick={(e) => { e.stopPropagation();onDelete(record); }} style={{ color: 'red' }}>删除</a>
           {/* <a onClick={(e) => { e.stopPropagation(); onPush([record]); }}>推送</a> */}
         </Space>
       ),
@@ -178,29 +179,57 @@ const CaseList = () => {
     fetchData.current(current, pageSize);
   };
 
-  const onDelete = (record: CaseRow) => {
-    Modal.confirm({
+  const onDelete = async (record: CaseRow) => {
+    modal.confirm({
       title: '确认删除',
       content: (
         <div>
           <p>您确定要删除以下个案吗？</p>
           <p><strong>个案编号：</strong>{record.caseNo || '-'}</p>
           <p><strong>患者姓名：</strong>{record.patientName || '-'}</p>
-          <p style={{ color: '#ff4d4f', marginTop: 12 }}>
-            ⚠️ 此操作将执行级联删除，删除该个案及其所有关联记录（随访、治疗、检测、追踪等），且无法恢复！
-          </p>
         </div>
       ),
-      okText: '确认删除',
+      okText: '确认',
       cancelText: '取消',
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await deleteTrackedEntity(record.trackedEntity);
-          message.success('删除成功');
-          fetchData.current();
+          // 1. 调接口查询该条数据的详情
+          const teiDetails = await getCaseDetails(record.trackedEntity);
+          
+          // 2. 构造更新数据，将"删除"属性设置为true
+          const attributes = teiDetails.attributes.map(attr => ({
+            attribute: attr.attribute,
+            value: attr.value
+          }));
+          
+          // 查找并更新"删除"属性，如果不存在则添加
+          const deleteAttrIndex = attributes.findIndex(attr => attr.attribute === 'QRTY172dH9F');
+          if (deleteAttrIndex >= 0) {
+            attributes[deleteAttrIndex].value = 'true';
+          } else {
+            attributes.push({ attribute: 'QRTY172dH9F', value: 'true' });
+          }
+          
+          // 3. 调用更新接口
+          const result = await updateTrackedEntities([{
+            trackedEntity: record.trackedEntity,
+            trackedEntityType: teiDetails.trackedEntityType,
+            orgUnit: teiDetails.orgUnit,
+            attributes,
+          }]);
+          
+          if (result.status === 'OK') {
+            messageApi.success('删除成功');
+            // 延迟500毫秒再刷新数据，确保后端处理完成
+            setTimeout(() => {
+              fetchData.current();
+            }, 500);
+          } else {
+            messageApi.error('删除失败，请重试');
+          }
         } catch (e: any) {
-          message.error(`删除失败: ${e.message}`);
+          messageApi.error(`删除失败: ${e.message}`);
         }
       },
     });
@@ -225,19 +254,19 @@ const CaseList = () => {
       }));
 
     if (!events.length) {
-      message.warning('所选记录缺少Enrollment或机构信息，无法推送。');
+      messageApi.warning('所选记录缺少Enrollment或机构信息，无法推送。');
       return;
     }
 
     try {
       const res = await batchPushToEpi(events);
       if (res.status === 'OK') {
-        message.success(`推送完成：更新 ${res.stats.updated} 条`);
+        messageApi.success(`推送完成：更新 ${res.stats.updated} 条`);
       } else {
-        message.warning(`推送完成：状态 ${res.status}，请检查对象报告`);
+        messageApi.warning(`推送完成：状态 ${res.status}，请检查对象报告`);
       }
     } catch (e: any) {
-      message.error(`推送失败: ${e.message}`);
+      messageApi.error(`推送失败: ${e.message}`);
     }
   };
 
@@ -249,7 +278,7 @@ const CaseList = () => {
   const handleBatchPush = () => {
     const rows = data.filter((r) => selectedRowKeys.includes(r.key));
     if (!rows.length) {
-      message.info('请先选择要推送的个案');
+      messageApi.info('请先选择要推送的个案');
       return;
     }
     onPush(rows);

@@ -3,6 +3,7 @@ import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { useEffect } from 'react';
 import { validateNotFuture, validateSymptomOnsetDate } from '../../utils/dateValidators';
+import OrgUnitSelect from '../common/OrgUnitSelect';
 
 const { Title } = Typography;
 
@@ -69,6 +70,15 @@ export default function StepBasicInfo({ form, diseaseOptions, defaultOrg, onVali
         form.setFieldsValue({ dob, age });
       }
     }
+  };
+
+  // 自定义处理OrgUnitSelect的变化事件
+  const handleOrgUnitChange = (value: string | undefined, option?: { value: string; label: string }) => {
+    // 同时更新reportOrgId和reportOrgName字段
+    form.setFieldsValue({
+      reportOrgId: value || '',
+      reportOrgName: option?.label || value || ''
+    });
   };
 
   return (
@@ -207,10 +217,14 @@ export default function StepBasicInfo({ form, diseaseOptions, defaultOrg, onVali
           </Col>
 
           <Col span={12}>
-            <Form.Item label="报告单位" name="reportOrgName">
-              <Input readOnly placeholder="自动填充" disabled style={{ color: 'rgba(0, 0, 0, 0.85)' }} />
+            <Form.Item 
+              label="报告机构" 
+              name="reportOrgId" 
+              rules={[{ required: true, message: '请选择报告机构' }]}
+            >
+              <OrgUnitSelect onChange={handleOrgUnitChange} />
             </Form.Item>
-            <Form.Item name="reportOrgId" hidden>
+            <Form.Item name="reportOrgName" hidden>
               <Input />
             </Form.Item>
           </Col>

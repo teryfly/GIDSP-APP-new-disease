@@ -75,18 +75,18 @@ const EditUnknownCasePersonInfo = () => {
       // 设置表单值
       form.setFieldsValue({
         enrolledAt: enrollment?.enrolledAt ? dayjs(enrollment.enrolledAt) : dayjs(),
-        symptomDate: attrs.get('AtrSymptDt1') ? dayjs(attrs.get('AtrSymptDt1')) : dayjs(),
-        fullName: attrs.get('AtrFullNm01') || '',
-        nationalId: attrs.get('AtrNatnlId1') || '',
-        gender: attrs.get('AtrGender01') || '',
+        symptomDate: attrs.get('AtrSymptDt1') ? dayjs(attrs.get('AtrSymptDt1') as string) : dayjs(),
+        fullName: (attrs.get('AtrFullNm01') as string) || '',
+        nationalId: (attrs.get('AtrNatnlId1') as string) || '',
+        gender: (attrs.get('AtrGender01') as string) || '',
         age: attrs.get('AtrAge00001') ? Number(attrs.get('AtrAge00001')) : 0,
-        phone: attrs.get('AtrPhone001') || '',
-        address: attrs.get('AtrAddr0001') || '',
-        caseNo: attrs.get('AtrUnkNo001') || '',
-        reportOrg: attrs.get('AtrRptOrg01') || '',
-        reportDate: attrs.get('AtrRptDt001') ? dayjs(attrs.get('AtrRptDt001')) : dayjs(),
-        clinicalSymptoms: attrs.get('AtrUnkSymp1') || '',
-        suspectedPathogen: attrs.get('AtrUnkPath1') || '',
+        phone: (attrs.get('AtrPhone001') as string) || '',
+        address: (attrs.get('AtrAddr0001') as string) || '',
+        caseNo: (attrs.get('AtrUnkNo001') as string) || '',
+        reportOrg: (attrs.get('AtrRptOrg01') as string) || '',
+        reportDate: attrs.get('AtrRptDt001') ? dayjs(attrs.get('AtrRptDt001') as string) : dayjs(),
+        clinicalSymptoms: (attrs.get('AtrUnkSymp1') as string) || '',
+        suspectedPathogen: (attrs.get('AtrUnkPath1') as string) || '',
       });
     } catch (e: any) {
       message.error(`加载数据失败: ${e.message}`);
@@ -143,6 +143,8 @@ const EditUnknownCasePersonInfo = () => {
               { attribute: 'AtrSymptDt1', value: values.symptomDate.format('YYYY-MM-DD') },
               { attribute: 'AtrUnkSymp1', value: values.clinicalSymptoms },
               { attribute: 'AtrUnkPath1', value: values.suspectedPathogen || '' },
+              // 添加"删除"属性，值为false
+              { attribute: 'QRTY172dH9F', value: 'false' },
             ],
           },
         ],

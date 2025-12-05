@@ -33,6 +33,9 @@ export async function queryUnknownCases(params: {
   if (params.caseNoLike) filters.push(`${ATR_UNK_NO}:ilike:${params.caseNoLike}`);
   if (params.patientNameLike) filters.push(`${ATR_FULL_NAME}:ilike:${params.patientNameLike}`);
   if (params.reportDateEq) filters.push(`${ATR_RPT_DATE}:eq:${params.reportDateEq}`); // 新增：报告日期精确匹配
+  
+  // 默认添加"删除"属性过滤条件，只查询未删除的记录
+  filters.push(`QRTY172dH9F:eq:false`);
 
   filters.forEach((f) => {
     query['filter'] = (query['filter'] || []).concat(f);

@@ -10,17 +10,17 @@ const Statistics = () => {
         {
             id: '1',
             name: '病原微生物目录地区统计表',
-            path: '/apps/dashboard#/Sk8HZSxCfIx'
+            path: '/apps/dashboard#/I93ZNkHUk6n'
         },
         {
             id: '2',
             name: '病原微生物目录分类统计表',
-            path: '/apps/dashboard#/F6pt2kbYEL5'
+            path: '/apps/dashboard#/NwnDMX8dqs4'
         },
         {
             id: '3',
             name: '检疫传染病分地区统计表',
-            path: '/apps/dashboard#/h8gRLy29qKo'
+            path: '/apps/dashboard#/WSCjUvnv3xC'
         }
     ];
 
@@ -59,7 +59,7 @@ const Statistics = () => {
                 top: 0,
                 left: 0,
                 width: '100%',
-                height: '120px',
+                height: '85px',
                 backgroundColor: 'white',
                 zIndex: 10,
                 // boxShadow: '0 2px 4px rgba(0,0,0,0.1)',

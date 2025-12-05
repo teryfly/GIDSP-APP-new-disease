@@ -96,6 +96,8 @@ export async function createPersonWithEnrollment(payload: CreatePersonPayload) {
           { attribute: 'AtrSymptDt1', value: payload.symptomDate },
           { attribute: 'AtrUnkSymp1', value: payload.clinicalSymptoms },
           ...(payload.suspectedPathogen ? [{ attribute: 'AtrUnkPath1', value: payload.suspectedPathogen }] : []),
+          // 添加"删除"属性，值为false
+          { attribute: 'QRTY172dH9F', value: 'false' },
         ],
         enrollments: [
           {

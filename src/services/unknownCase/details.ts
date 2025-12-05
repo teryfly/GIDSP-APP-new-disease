@@ -10,15 +10,17 @@ export async function loadUnknownCaseDetails(teiUid: string) {
   return dhis2Client.get<any>(`/api/tracker/trackedEntities/${teiUid}`, { program: PROGRAM_UNKNOWN_ID, fields });
 }
 
-export async function listLabEventsByEnrollment(enrollmentUid: string, page = 1, pageSize = 10) {
+export async function listLabEventsByEnrollment(enrollmentUid: string, trackedEntity: string, page = 1, pageSize = 10) {
   return dhis2Client.get<{ pager: any; events: any[] }>('/api/tracker/events', {
     program: PROGRAM_UNKNOWN_ID,
     enrollment: enrollmentUid,
+    trackedEntity: trackedEntity, // 添加trackedEntity过滤条件
     programStage: STAGE_LABTEST_ID,
     order: 'occurredAt:desc',
     page,
     pageSize,
     totalPages: 'true',
+    status: 'ACTIVE', // 只返回status为"ACTIVE"的记录
   });
 }
 

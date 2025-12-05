@@ -120,6 +120,8 @@ const EditBasicInfo = () => {
                 { attribute: 'AtrGender01', value: genderCode },
                 { attribute: 'AtrNatnlId1', value: values.nationalId },
                 { attribute: 'AtrAddr0001', value: fullAddress },
+                // 添加"删除"属性，值为false
+                { attribute: 'QRTY172dH9F', value: false },
             ];
 
             if (values.age) {

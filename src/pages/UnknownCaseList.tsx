@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Card, Col, DatePicker, Form, Input, Row, Select, Space, Table, Tag, Typography, Tooltip, message } from 'antd';
+import { Button, Card, Col, DatePicker, Form, Input, Row, Select, Space, Table, Tag, Typography, Tooltip, message, Modal, App } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import OrgUnitSelect from '../components/common/OrgUnitSelect';
 import dayjs from 'dayjs';
@@ -15,6 +15,8 @@ import {
   type OptionSet,
 } from '../services/unknownCaseService';
 import { mapTEIsToUnknownRows, enrichWithLabEvent, type UnknownCaseRow } from '../services/mappers/unknownCaseMappers';
+import { loadUnknownCaseDetails } from '../services/unknownCase/details';
+import { updateTrackedEntities } from '../services/caseDetailsService';
 
 const { Text } = Typography;
 
@@ -30,6 +32,7 @@ const statusTagColor = (code?: string) => {
 const urgencyTagColor = (u?: UnknownCaseRow['urgency']) => (u === '高' ? 'red' : u === '低' ? 'green' : 'orange');
 
 export default function UnknownCaseList() {
+  const { modal, message: messageApi } = App.useApp();
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -101,7 +104,8 @@ export default function UnknownCaseList() {
         rows.map(async (r) => {
           if (!r.enrollment) return;
           try {
-            const ev = await fetchLatestLabByEnrollment(r.enrollment);
+            // 传递trackedEntity参数以过滤数据
+            const ev = await fetchLatestLabByEnrollment(r.enrollment, r.trackedEntity);
             const evt = ev.events?.[0];
             const enriched = enrichWithLabEvent({ ...r }, evt, statusCodeMap);
             setData((prev) => {
@@ -127,6 +131,61 @@ export default function UnknownCaseList() {
     if (!meOrgUnitId) return;
     fetchData.current(1, pager.pageSize);
   }, [debouncedCaseNo, debouncedName, reportDateEq, orgUnitId, order, statusCodeEq, meOrgUnitId]);
+
+  const handleDelete = async (record: UnknownCaseRow) => {
+    modal.confirm({
+      title: '确认删除',
+      content: (
+        <div>
+          <p>您确定要删除以下病例吗？</p>
+          <p><strong>病例编号：</strong>{record.caseNo || '-'}</p>
+          <p><strong>患者姓名：</strong>{record.patientName || '-'}</p>
+        </div>
+      ),
+      okText: '确认',
+      cancelText: '取消',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          // 1. 调接口查询该条数据的详情
+          const teiDetails = await loadUnknownCaseDetails(record.trackedEntity);
+          
+          // 2. 构造更新数据，将"删除"属性设置为true
+          const attributes = teiDetails.attributes.map((attr: any) => ({
+            attribute: attr.attribute,
+            value: attr.value
+          }));
+          
+          // 查找并更新"删除"属性，如果不存在则添加
+          const deleteAttrIndex = attributes.findIndex((attr: any) => attr.attribute === 'QRTY172dH9F');
+          if (deleteAttrIndex >= 0) {
+            attributes[deleteAttrIndex].value = 'true';
+          } else {
+            attributes.push({ attribute: 'QRTY172dH9F', value: 'true' });
+          }
+          
+          // 3. 调用更新接口
+          const result = await updateTrackedEntities([{
+            trackedEntity: record.trackedEntity,
+            trackedEntityType: teiDetails.trackedEntityType,
+            orgUnit: teiDetails.orgUnit,
+            attributes,
+          }]);
+          
+          if (result.status === 'OK') {
+            messageApi.success('删除成功');
+            setTimeout(() => {
+              fetchData.current();
+            }, 500);
+          } else {
+            messageApi.error('删除失败，请重试');
+          }
+        } catch (e: any) {
+          messageApi.error(`删除失败: ${e.message}`);
+        }
+      },
+    });
+  };
 
   const columns = useMemo(() => {
     return [
@@ -161,12 +220,12 @@ export default function UnknownCaseList() {
       //     <Tag color={statusTagColor(record.statusCode)}>{record.statusName || '-'}</Tag>
       //   ),
       // },
-      {
-        title: '紧急度',
-        dataIndex: 'urgency',
-        key: 'urgency',
-        render: (u: UnknownCaseRow['urgency']) => <Tag color={urgencyTagColor(u)}>{u || '中'}</Tag>,
-      },
+      // {
+      //   title: '紧急度',
+      //   dataIndex: 'urgency',
+      //   key: 'urgency',
+      //   render: (u: UnknownCaseRow['urgency']) => <Tag color={urgencyTagColor(u)}>{u || '中'}</Tag>,
+      // },
       {
         title: '操作',
         key: 'action',
@@ -182,6 +241,7 @@ export default function UnknownCaseList() {
               {/* {isPendingOrTesting && <Link to={`/unknown-cases/${record.trackedEntity}/edit`}>编辑</Link>} */}
               {/* {isPendingOrTesting && <a>上报</a>} */}
               {isConfirmed && <a>推送</a>}
+              <a onClick={() => handleDelete(record)} style={{ color: 'red' }}>删除</a>
             </Space>
           );
         },

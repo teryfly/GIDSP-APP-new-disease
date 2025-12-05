@@ -39,7 +39,7 @@ export default function StepConfirm({ data }: Props) {
           {data.dob ? (typeof data.dob === 'string' ? formatDate(data.dob) : data.dob.format('YYYY-MM-DD')) : '-'}
         </Descriptions.Item>
         <Descriptions.Item label="联系电话">{data.phone || '-'}</Descriptions.Item>
-        <Descriptions.Item label="报告单位">{data.reportOrgName || '-'}</Descriptions.Item>
+        <Descriptions.Item label="报告机构">{data.reportOrgName || '-'}</Descriptions.Item>
         <Descriptions.Item label="报告人员">{data.reportUser || '当前用户'}</Descriptions.Item>
         <Descriptions.Item label="报告日期">{formatDate(data.reportDate)}</Descriptions.Item>
         <Descriptions.Item label="症状开始日期">{formatDate(data.symptomOnsetDate)}</Descriptions.Item>
