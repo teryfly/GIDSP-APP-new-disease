@@ -60,15 +60,15 @@ export function useUnknownCaseDetails(teiUid: string) {
       const teiAttrs = new Map(tei.attributes.map((a: any) => [a.attribute, a.value]));
       const enrAttrs = new Map((enr.attributes || []).map((a: any) => [a.attribute, a.value]));
 
-      reportDateRef.current = teiAttrs.get(ATR_RPT_DATE) || undefined;
-      symptDateRef.current = teiAttrs.get(ATR_SYMPT_DATE) || undefined;
+      reportDateRef.current = (teiAttrs.get(ATR_RPT_DATE) as string) || null;
+      symptDateRef.current = (teiAttrs.get(ATR_SYMPT_DATE) as string) || null;
 
       const reg = (enr.events || []).find((ev: any) => ev.programStage === 'PsRegister1');
       setRegisterEvent(reg || null);
       registerOccurredAtRef.current = reg?.occurredAt || dayjs().toISOString();
 
       // Load organization unit name
-      const orgUnitId = teiAttrs.get(ATR_RPT_ORG);
+      const orgUnitId = teiAttrs.get(ATR_RPT_ORG) as string;
       let orgUnitName = orgUnitId;
       if (orgUnitId) {
         const ou = await getOrgUnitById(orgUnitId);
@@ -89,7 +89,8 @@ export function useUnknownCaseDetails(teiUid: string) {
       });
 
       // labs (page 1)
-      const labRes = await listLabEventsByEnrollment(enr.enrollment, 1, labPager.pageSize);
+      // 传递trackedEntity参数以过滤数据
+      const labRes = await listLabEventsByEnrollment(enr.enrollment, tei.trackedEntity, 1, labPager.pageSize);
       setLabEvents(labRes.events || []);
       setLabPager({ page: labRes.pager.page, pageSize: labRes.pager.pageSize, total: labRes.pager.total || 0 });
     } finally {
@@ -124,7 +125,7 @@ export function useUnknownCaseDetails(teiUid: string) {
       // 推导病原体→疾病映射（从最新实验室事件的 DeConfPath1）
       const latestLab = labEvents[0];
       const dvMap = new Map((latestLab?.dataValues || []).map((d: any) => [d.dataElement, String(d.value)]));
-      const pathogenCode = dvMap.get('DeConfPath1');
+      const pathogenCode = dvMap.get('DeConfPath1') as string | undefined;
       const diseaseCode = (pathogenCode && PATHOGEN_TO_DISEASE_MAP[pathogenCode]) || '';
 
       // Step 2: create enrollment in Program1
@@ -133,12 +134,12 @@ export function useUnknownCaseDetails(teiUid: string) {
         teiUid: header.teiUid,
         orgUnit: orgUnitRef.current || header.orgUnit,
         enrollmentUid: header.enrollment,
-        reportDate: reportDateRef.current || header.reportDate,
-        symptomOnsetDate: symptDateRef.current || header.symptomOnsetDate,
+        reportDate: reportDateRef.current || (header.reportDate as string),
+        symptomOnsetDate: symptDateRef.current || (header.symptomOnsetDate as string),
         registerEventUid: registerEvent.event,
         confirmedPathogenCode: pathogenCode,
         confirmedDiseaseCode: diseaseCode,
-        initialDiagnosisText: dvMap.get('DeConfDis01') || '不明原因转入个案',
+        initialDiagnosisText: (dvMap.get('DeConfDis01') as string) || '不明原因转入个案',
       });
       const newEnrollmentUid = res?.bundleReport?.typeReportMap?.ENROLLMENT?.objectReports?.[0]?.uid || '';
       if (!newEnrollmentUid) throw new Error('创建 Program1 Enrollment 失败');
@@ -171,8 +172,8 @@ export function useUnknownCaseDetails(teiUid: string) {
         teiUid: header.teiUid,
         enrollmentUid: header.enrollment,
         orgUnit: orgUnitRef.current || header.orgUnit,
-        reportDate: reportDateRef.current || header.reportDate,
-        symptomOnsetDate: symptDateRef.current || header.symptomOnsetDate,
+        reportDate: reportDateRef.current || (header.reportDate as string),
+        symptomOnsetDate: symptDateRef.current || (header.symptomOnsetDate as string),
       });
       setProgress((prev) => prev.map((s) => (s.key === 'completeEnrollment' ? { ...s, status: 'finish' } : s)));
 

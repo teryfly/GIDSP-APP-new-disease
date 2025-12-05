@@ -16,6 +16,9 @@ import { createTestEvent } from '../../services/eventService';
 const { Title } = Typography;
 const { TextArea } = Input;
 
+// 定义用户类型
+type UserType = { uid: string; displayName: string; username: string; firstName: string; surname: string } | null;
+
 const EditTestRecord = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -25,10 +28,16 @@ const EditTestRecord = () => {
   const [submitting, setSubmitting] = useState(false);
   const [orgUnitOptions, setOrgUnitOptions] = useState<{ value: string; label: string }[]>([]);
   const [enrollment, setEnrollment] = useState<string | null>(null);
-  const [statusCompleted, setStatusCompleted] = useState<boolean>(false);
+  // 移除statusCompleted状态，因为我们不再需要"事件完成"复选框
 
   const [notes, setNotes] = useState<NoteItem[]>([]);
-  const [assignee, setAssignee] = useState<{ uid: string; displayName: string; username: string; firstName: string; surname: string } | null>(null);
+  const [assignee, setAssignee] = useState<UserType>(null);
+  
+  // 为AssigneeSelect创建兼容的onChange处理函数
+  const handleAssigneeChange = (user: UserType | undefined) => {
+    // 处理undefined情况，将其转换为null
+    setAssignee(user ?? null);
+  };
 
   useEffect(() => {
     if (!caseId) {
@@ -61,7 +70,6 @@ const EditTestRecord = () => {
           });
         } else {
           const event = await getEvent(id!);
-          setStatusCompleted(event.status === 'COMPLETED');
           const mapped = toTestForm(event.dataValues || []);
           form.setFieldsValue({
             occurredAt: event.occurredAt ? dayjs(event.occurredAt) : dayjs(),
@@ -159,7 +167,7 @@ const EditTestRecord = () => {
             programStage: PS.TEST,
             enrollment,
             orgUnit: values.orgUnit,
-            status: statusCompleted ? 'COMPLETED' : 'ACTIVE',
+            status: 'ACTIVE',
             occurredAt: occurred,
             dataValues: dvs,
           },
@@ -218,11 +226,7 @@ const EditTestRecord = () => {
             )}
 
             <Col span={12}>
-              <Form.Item 
-                label="机构" 
-                name="orgUnit"
-                rules={[{ required: true, message: '请选择机构' }]}
-              >
+              <Form.Item label="机构" name="orgUnit" rules={[{ required: true, message: '请选择机构' }]}>
                 <Select
                   showSearch
                   placeholder="请选择机构"
@@ -345,14 +349,7 @@ const EditTestRecord = () => {
                 </Select>
               </Form.Item>
             </Col>
-
-            {!isCreate && (
-              <Col span={24}>
-                <Checkbox checked={statusCompleted} onChange={(e) => setStatusCompleted(e.target.checked)}>
-                  事件完成
-                </Checkbox>
-              </Col>
-            )}
+            
           </Row>
         </Form>
       </Card>
@@ -360,7 +357,7 @@ const EditTestRecord = () => {
       {isCreate && (
         <>
           <NotesEditor notes={notes} onChange={setNotes} />
-          <AssigneeSelect value={assignee} onChange={setAssignee} />
+          <AssigneeSelect value={assignee} onChange={handleAssigneeChange} />
         </>
       )}
 

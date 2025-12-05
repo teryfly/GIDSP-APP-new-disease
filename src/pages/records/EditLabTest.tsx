@@ -3,8 +3,6 @@ import { Form, Button, Space, message, Spin, Card, Typography } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import LabTestForm from '../../components/forms/LabTestForm';
-import NotesInput from '../../components/forms/NotesInput';
-import AssignedUserSelect from '../../components/forms/AssignedUserSelect';
 import type { LabTestFormData, NoteData } from '../../types/labTest';
 import { getLabTestEventDetail, updateLabTestEvent } from '../../services/unknownCase/labTest';
 
@@ -155,15 +153,6 @@ const EditLabTest = () => {
         mode="edit"
         initialValues={form.getFieldsValue()}
       />
-
-      <NotesInput notes={notes} onChange={setNotes} />
-
-      <Card title="分配者">
-        <AssignedUserSelect
-          value={assignedUser?.uid || assignedUser?.id}
-          onChange={(userId, user) => setAssignedUser(user)}
-        />
-      </Card>
 
       <div style={{ textAlign: 'right' }}>
         <Space>

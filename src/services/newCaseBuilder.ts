@@ -79,6 +79,8 @@ function buildTeiAttributes(basic: BasicInfoForm) {
     { attribute: ATR_NATIONAL_ID, value: basic.nationalId },
     { attribute: ATR_GENDER, value: mapGenderToCode(basic.genderZh) },
     { attribute: ATR_ADDRESS, value: fullAddress || '' },
+    // 添加"删除"属性，值为false
+    { attribute: 'QRTY172dH9F', value: 'false' },
   ];
   if (typeof basic.age === 'number' && !Number.isNaN(basic.age)) attrs.push({ attribute: ATR_AGE, value: String(basic.age) });
   if (basic.phone) attrs.push({ attribute: ATR_PHONE, value: basic.phone });

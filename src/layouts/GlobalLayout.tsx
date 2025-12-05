@@ -54,10 +54,10 @@ const menuItems: MenuItem[] = [
         getItem(<Link to="/disease-codes">疾病编码管理</Link>, '/disease-codes'),
         getItem(<Link to="/pathogens">病原微生物管理</Link>, '/pathogens', <BugOutlined />),
     ]),
-    getItem('系统管理', 'sub6', <SettingOutlined />, [
-        getItem('用户管理', '11'),
-        getItem('角色权限管理', '12'),
-    ]),
+    // getItem('系统管理', 'sub6', <SettingOutlined />, [
+    //     getItem('用户管理', '11'),
+    //     getItem('角色权限管理', '12'),
+    // ]),
 ];
 
 const userMenuItems = [

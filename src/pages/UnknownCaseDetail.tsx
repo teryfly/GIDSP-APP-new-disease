@@ -15,6 +15,7 @@ import {
   ATR_UNK_SYMPT,
   ATR_UNK_NO
 } from '../services/unknownCase/constants';
+import { loadUnknownStatusOS, buildCodeNameMap, toLabel } from '../utils/recordOptionsUtils';
 
 const { TabPane } = Tabs;
 
@@ -34,6 +35,7 @@ export default function UnknownCaseDetail() {
   const [active, setActive] = useState<string>('1');
   const [pushing, setPushing] = useState(false);
   const [createdEnrollment, setCreatedEnrollment] = useState<string | null>(null);
+  const [unknownStatusMap, setUnknownStatusMap] = useState<Map<string, string> | undefined>(undefined);
 
   const ctx = useUnknownCaseDetails(id!);
 
@@ -42,9 +44,25 @@ export default function UnknownCaseDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // 加载不明病例状态选项集
+  useEffect(() => {
+    const loadOptionMaps = async () => {
+      try {
+        // 加载不明病例状态选项集
+        const unknownStatusOS = await loadUnknownStatusOS();
+        const unknownStatusMap = buildCodeNameMap(unknownStatusOS);
+        setUnknownStatusMap(unknownStatusMap);
+      } catch (error) {
+        console.error('加载选项集失败:', error);
+      }
+    };
+
+    loadOptionMaps();
+  }, []);
+
   const statusDvMap = useMemo(() => new Map((ctx.registerEvent?.dataValues || []).map((d: any) => [d.dataElement, String(d.value)])), [ctx.registerEvent]);
   const statusCode = statusDvMap.get('DeUnkStat01');
-  const pushed = (statusDvMap.get('DePushCase1') || '').toLowerCase() === 'true';
+  const pushed = String(statusDvMap.get('DePushCase1') || '').toLowerCase() === 'true';
 
   // 提取完整的患者信息
   const patientInfo = useMemo(() => {
@@ -78,27 +96,29 @@ export default function UnknownCaseDetail() {
     };
   }, [ctx.header, statusCode]);
 
-  // 映射检测记录数据
+  // 映射检测记录数据，只显示status为"ACTIVE"的记录
   const labTestRecords = useMemo(() => {
-    return ctx.labEvents.map((event: any) => {
-      const dvMap = new Map(event.dataValues.map((dv: any) => [dv.dataElement, dv.value]));
-      return {
-        event: event.event,
-        occurredAt: event.occurredAt || '-',
-        testNo: dvMap.get('DeUnkTstNo1') || '-',
-        testType: dvMap.get('DeUnkTstTp1') || '-',
-        sampleCollectionDate: dvMap.get('DeUnkSmplDt') || '-',
-        testStatus: dvMap.get('DeUnkTstSt1') || '-',
-        testResult: dvMap.get('DeUnkTstRst'),
-        confirmedPathogen: dvMap.get('DeConfPath1'),
-        testOrgName: dvMap.get('DeUnkTstOrg'),
-        sampleType: dvMap.get('DeUnkSmplTp') || '-',
-        confirmedDiseaseName: dvMap.get('DeConfDis01'),
-        testDate: dvMap.get('DeUnkTstDt1'),
-        labReportUrl: dvMap.get('DeUnkLabUrl'),
-        resultDetails: dvMap.get('DeUnkRstDtl'),
-      };
-    });
+    return ctx.labEvents
+      .filter((event: any) => event.status !== 'COMPLETED') // 过滤掉状态为"COMPLETED"的记录
+      .map((event: any) => {
+        const dvMap = new Map(event.dataValues.map((dv: any) => [dv.dataElement, dv.value]));
+        return {
+          event: event.event,
+          occurredAt: event.occurredAt || '-',
+          testNo: dvMap.get('DeUnkTstNo1') as string || '-',
+          testType: dvMap.get('DeUnkTstTp1') as string || '-',
+          sampleCollectionDate: dvMap.get('DeUnkSmplDt') as string || '-',
+          testStatus: dvMap.get('DeUnkTstSt1') as string || '-',
+          testResult: dvMap.get('DeUnkTstRst') as string || undefined,
+          confirmedPathogen: dvMap.get('DeConfPath1') as string || undefined,
+          testOrgName: dvMap.get('DeUnkTstOrg') as string || undefined,
+          sampleType: dvMap.get('DeUnkSmplTp') as string || '-',
+          confirmedDiseaseName: dvMap.get('DeConfDis01') as string || undefined,
+          testDate: dvMap.get('DeUnkTstDt1') as string || undefined,
+          labReportUrl: dvMap.get('DeUnkLabUrl') as string || undefined,
+          resultDetails: dvMap.get('DeUnkRstDtl') as string || undefined,
+        };
+      });
   }, [ctx.labEvents]);
 
   if (!id) return <Empty description="缺少病例ID" />;
@@ -112,7 +132,7 @@ export default function UnknownCaseDetail() {
           <Descriptions column={1} bordered size="small">
             <Descriptions.Item label="病例编号">{caseInfo?.caseNo || '-'}</Descriptions.Item>
             <Descriptions.Item label="患者姓名">{patientInfo?.fullName || '-'}</Descriptions.Item>
-            <Descriptions.Item label="病例状态">{statusCode || '-'}</Descriptions.Item>
+            <Descriptions.Item label="病例状态">{toLabel(statusCode, unknownStatusMap) || statusCode || '-'}</Descriptions.Item>
           </Descriptions>
           <div style={{ marginTop: 12 }}>
             <ul>
@@ -128,15 +148,20 @@ export default function UnknownCaseDetail() {
       onOk: async () => {
         setPushing(true);
         setCreatedEnrollment(null);
-        const res = await ctx.runPush();
-        if (res.ok) {
-          setCreatedEnrollment(res.createdEnrollment || null);
-          message.success('推送成功');
-          await ctx.reload();
-        } else {
-          message.error(res.error || '推送失败');
+        try {
+          const res = await ctx.runPush();
+          if (res && res.ok) {
+            setCreatedEnrollment(res.createdEnrollment || null);
+            message.success('推送成功');
+            await ctx.reload();
+          } else {
+            message.error(res?.error || '推送失败');
+          }
+        } catch (error: any) {
+          message.error(error?.message || '推送失败');
+        } finally {
+          setPushing(false);
         }
-        setPushing(false);
       },
     });
   };
@@ -170,7 +195,7 @@ export default function UnknownCaseDetail() {
           >
             <Descriptions.Item label="患者姓名">{patientInfo?.fullName || '-'}</Descriptions.Item>
             <Descriptions.Item label="病例状态">
-              <Tag color={statusTagColor(statusCode)}>{statusCode || '-'}</Tag>
+              <Tag color={statusTagColor(statusCode)}>{toLabel(statusCode, unknownStatusMap) || statusCode || '-'}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="报告日期">{caseInfo?.reportDate || '-'}</Descriptions.Item>
             <Descriptions.Item label="症状开始">{caseInfo?.symptomOnsetDate || '-'}</Descriptions.Item>
@@ -194,7 +219,7 @@ export default function UnknownCaseDetail() {
                 <Descriptions.Item label="报告日期">{caseInfo?.reportDate || '-'}</Descriptions.Item>
                 <Descriptions.Item label="症状开始日期">{caseInfo?.symptomOnsetDate || '-'}</Descriptions.Item>
                 <Descriptions.Item label="病例状态">
-                  <Tag color={statusTagColor(caseInfo?.statusCode)}>{caseInfo?.statusCode || '-'}</Tag>
+                  <Tag color={statusTagColor(caseInfo?.statusCode)}>{toLabel(caseInfo?.statusCode, unknownStatusMap) || caseInfo?.statusCode || '-'}</Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="临床症状描述" span={2}>
                   {caseInfo?.clinicalSymptoms || '-'}

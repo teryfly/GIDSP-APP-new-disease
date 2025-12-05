@@ -1,4 +1,4 @@
-import { StrictMode, useEffect } from 'react'
+import { useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ConfigProvider, theme, App as AntdApp } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
@@ -11,14 +11,16 @@ function Bootstrap() {
     primeRequiredOptionSets();
   }, []);
   return (
-    <AntdApp>
+    <AntdApp notification={{ placement: 'topRight' }} message={{ duration: 3, maxCount: 3 }}>
       <App />
     </AntdApp>
   );
 }
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+  // 在开发环境中，React.StrictMode会导致某些函数执行两次，用于检测副作用
+  // 如果需要禁用此行为，可以注释掉StrictMode包装器，但在生产环境中不会有此问题
+  // <StrictMode>
     <ConfigProvider
       locale={zhCN}
       theme={{
@@ -30,5 +32,5 @@ createRoot(document.getElementById('root')!).render(
     >
       <Bootstrap />
     </ConfigProvider>
-  </StrictMode>,
+  // </StrictMode>,
 )

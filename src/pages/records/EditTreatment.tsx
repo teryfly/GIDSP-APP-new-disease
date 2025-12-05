@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Form, Button, Space, message, Spin, Card, Typography, DatePicker, Radio, Input, Row, Col, Select, Tooltip, Checkbox } from 'antd';
+import { Form, Button, Space, message, Spin, Card, Typography, DatePicker, Radio, Input, Row, Col, Select, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -16,6 +16,9 @@ import { createTreatmentEvent } from '../../services/eventService';
 const { Title } = Typography;
 const { TextArea } = Input;
 
+// 定义用户类型
+type UserType = { uid: string; displayName: string; username: string; firstName: string; surname: string } | null;
+
 const EditTreatment = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -25,10 +28,15 @@ const EditTreatment = () => {
   const [submitting, setSubmitting] = useState(false);
   const [orgUnitOptions, setOrgUnitOptions] = useState<{ value: string; label: string }[]>([]);
   const [enrollment, setEnrollment] = useState<string | null>(null);
-  const [statusCompleted, setStatusCompleted] = useState<boolean>(false);
 
   const [notes, setNotes] = useState<NoteItem[]>([]);
-  const [assignee, setAssignee] = useState<{ uid: string; displayName: string; username: string; firstName: string; surname: string } | null>(null);
+  const [assignee, setAssignee] = useState<UserType>(null);
+
+  // 为AssigneeSelect创建兼容的onChange处理函数
+  const handleAssigneeChange = (user: UserType | undefined) => {
+    // 处理undefined情况，将其转换为null
+    setAssignee(user ?? null);
+  };
 
   useEffect(() => {
     if (!caseId) {
@@ -58,7 +66,6 @@ const EditTreatment = () => {
           });
         } else {
           const event = await getEvent(id!);
-          setStatusCompleted(event.status === 'COMPLETED');
           const mapped = toTreatmentForm(event.dataValues || []);
           form.setFieldsValue({
             occurredAt: event.occurredAt ? dayjs(event.occurredAt) : dayjs(),
@@ -141,6 +148,7 @@ const EditTreatment = () => {
           dischargeDate,
         });
 
+        // 编辑时默认传status: "ACTIVE"
         const res = await updateEvents([
           {
             event: id!,
@@ -148,7 +156,7 @@ const EditTreatment = () => {
             programStage: PS.TREATMENT,
             enrollment,
             orgUnit: values.orgUnit,
-            status: statusCompleted ? 'COMPLETED' : 'ACTIVE',
+            status: 'ACTIVE', // 默认传值为ACTIVE
             occurredAt: occurred,
             dataValues: dvs,
           },
@@ -287,13 +295,7 @@ const EditTreatment = () => {
               </Form.Item>
             </Col>
 
-            {!isCreate && (
-              <Col span={24}>
-                <Checkbox checked={statusCompleted} onChange={(e) => setStatusCompleted(e.target.checked)}>
-                  事件完成
-                </Checkbox>
-              </Col>
-            )}
+            {/* 移除了"事件完成"复选框 */}
           </Row>
         </Form>
       </Card>
@@ -301,7 +303,7 @@ const EditTreatment = () => {
       {isCreate && (
         <>
           <NotesEditor notes={notes} onChange={setNotes} />
-          <AssigneeSelect value={assignee} onChange={setAssignee} />
+          <AssigneeSelect value={assignee} onChange={handleAssigneeChange} />
         </>
       )}
 

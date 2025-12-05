@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { Steps, Button, Card, Space, Row, Col, Typography, Alert } from 'antd';
 import { LeftOutlined, RightOutlined, SaveOutlined, CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom'; // Import useLocation
+
 import appConfig from '../../config.json';
 import StepBasicInfo from '../../components/NewCase/StepBasicInfo';
 import StepEpiInfo from '../../components/NewCase/StepEpiInfo';
@@ -16,7 +18,7 @@ const { Title } = Typography;
 export default function NewCase() {
   const ctx = useNewCase();
   const trackerDebug = Boolean((appConfig as any)?.tracker?.debug);
-
+ const navigate = useNavigate();
   const previewData = useMemo(() => {
     const b = ctx.formBasic.getFieldsValue(true);
     const e = ctx.formEpi.getFieldsValue(true);
@@ -82,7 +84,7 @@ export default function NewCase() {
             <Button 
               danger 
               icon={<CloseOutlined />}
-              onClick={ctx.handleCancel}
+              onClick={() => navigate('/cases')}
               disabled={ctx.loading}
             >
               取消

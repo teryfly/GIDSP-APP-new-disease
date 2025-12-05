@@ -5,7 +5,7 @@ import { getOrgUnitsByPath, getMe } from '../../services/caseService2';
 
 interface Props {
   value?: string;
-  onChange?: (val?: string) => void;
+  onChange?: (val?: string, option?: { value: string; label: string }) => void;
 }
 
 const OrgUnitSelect = ({ value, onChange }: Props) => {
@@ -27,13 +27,21 @@ const OrgUnitSelect = ({ value, onChange }: Props) => {
     })();
   }, []);
 
+  // 处理选择变化
+  const handleChange = (val?: string, option?: any) => {
+    // 调用外部传入的onChange
+    if (onChange) {
+      onChange(val, option);
+    }
+  };
+
   return (
     <Select
       showSearch
       allowClear
-      placeholder="全部"
+      placeholder="请选择"
       value={value}
-      onChange={onChange}
+      onChange={handleChange}
       loading={loading}
       options={options}
       filterOption={(input, option) => (option?.label as string)?.toLowerCase().includes(input.toLowerCase())}

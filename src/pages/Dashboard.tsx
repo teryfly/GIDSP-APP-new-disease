@@ -1,11 +1,11 @@
 import { ArrowUpOutlined } from '@ant-design/icons';
-import { Card, Col, Row, Statistic, List, Space, Typography, Button, Divider } from 'antd';
+import { Card, Col, Row, Statistic, List, Space, Typography, Button } from 'antd';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getProcessingCasesCount, getVerifiedCasesCount, getNewCasesCount, getAlertEventsCount, getVerifiedCasesTodo, getPendingConfirmationTestsTodo, getTrackedEntityDetails, getPendingAlertsTodo } from '../services/dashboardService';
-import { recentVisits, quickAccess } from '../data/dashboard';
+import { quickAccess } from '../data/dashboard';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 const Dashboard = () => {
     const [processingCases, setProcessingCases] = useState(0);

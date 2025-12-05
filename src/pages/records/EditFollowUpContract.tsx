@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Form, Button, Space, message, Spin, Card, Typography, DatePicker, Radio, Input, Row, Col, Tooltip, Checkbox, Select } from 'antd';
+import { Form, Button, Space, message, Spin, Card, Typography, DatePicker, Radio, Input, Row, Col, Tooltip, Select } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -15,6 +15,9 @@ import { createFollowUpEvent } from '../../services/eventService';
 
 const { Title } = Typography;
 
+// 定义用户类型
+type UserType = { uid: string; displayName: string; username: string; firstName: string; surname: string } | null;
+
 const EditFollowUpContract = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -27,10 +30,15 @@ const EditFollowUpContract = () => {
 
   const [enrollment, setEnrollment] = useState<string | null>(null);
   const [orgUnit, setOrgUnit] = useState<string | null>(null);
-  const [statusCompleted, setStatusCompleted] = useState<boolean>(false);
 
   const [notes, setNotes] = useState<NoteItem[]>([]);
-  const [assignee, setAssignee] = useState<{ uid: string; displayName: string; username: string; firstName: string; surname: string } | null>(null);
+  const [assignee, setAssignee] = useState<UserType>(null);
+
+  // 为AssigneeSelect创建兼容的onChange处理函数
+  const handleAssigneeChange = (user: UserType | undefined) => {
+    // 处理undefined情况，将其转换为null
+    setAssignee(user ?? null);
+  };
 
   useEffect(() => {
     if (!caseId) {
@@ -59,7 +67,6 @@ const EditFollowUpContract = () => {
         } else {
           const event = await getEvent(id!);
           setOrgUnit(event.orgUnit);
-          setStatusCompleted(event.status === 'COMPLETED');
           const initial = toFollowUpForm(event.dataValues || []);
           form.setFieldsValue({
             occurredAt: event.occurredAt ? dayjs(event.occurredAt) : dayjs(),
@@ -137,7 +144,7 @@ const EditFollowUpContract = () => {
             programStage: PS.FOLLOW_UP,
             enrollment,
             orgUnit: values.orgUnit,
-            status: statusCompleted ? 'COMPLETED' : 'ACTIVE',
+            status: 'ACTIVE', // 默认传值为ACTIVE
             occurredAt: occurred,
             dataValues: dvs,
           },
@@ -271,14 +278,6 @@ const EditFollowUpContract = () => {
                 <Input.TextArea rows={3} placeholder="请输入备注" />
               </Form.Item>
             </Col>
-
-            {!isCreate && (
-              <Col span={24}>
-                <Checkbox checked={statusCompleted} onChange={(e) => setStatusCompleted(e.target.checked)}>
-                  事件完成
-                </Checkbox>
-              </Col>
-            )}
           </Row>
         </Form>
       </Card>
@@ -286,7 +285,7 @@ const EditFollowUpContract = () => {
       {isCreate && (
         <>
           <NotesEditor notes={notes} onChange={setNotes} />
-          <AssigneeSelect value={assignee} onChange={setAssignee} />
+          <AssigneeSelect value={assignee} onChange={handleAssigneeChange} />
         </>
       )}
 

@@ -183,7 +183,10 @@ export function useNewCase() {
       const b = formBasic.getFieldsValue(true);
       const e = formEpi.getFieldsValue(true);
       const d = formDiag.getFieldsValue(true);
-      if (!defaultOu) throw new Error('缺少报告机构');
+      
+      // 使用表单中选择的报告机构ID，而不是默认机构ID
+      const selectedOrgId = b.reportOrgId;
+      if (!selectedOrgId) throw new Error('请选择报告单位');
 
       setLoading(true);
       setLastRequest(null);
@@ -206,7 +209,7 @@ export function useNewCase() {
             addressCity: b.addressCity,
             addressDistrict: b.addressDistrict,
             addressDetail: b.addressDetail,
-            reportOrgId: b.reportOrgId,
+            reportOrgId: selectedOrgId, // 使用选择的机构ID
             reportUser: b.reportUser,
             reportDate: b.reportDate?.format('YYYY-MM-DD'),
             symptomOnsetDate: b.symptomOnsetDate?.format('YYYY-MM-DD'),
@@ -224,7 +227,7 @@ export function useNewCase() {
             caseSourceCode: d.caseSourceCode,
             caseStatusCode: d.caseStatusCode,
           },
-          orgUnitId: defaultOu.id,
+          orgUnitId: selectedOrgId, // 使用选择的机构ID
         });
         setLastRequest(payload);
         response = await createCaseNested(payload);
@@ -234,7 +237,7 @@ export function useNewCase() {
       } else {
         payload = buildEnrollmentWithEvent({
           teiUid: foundTeiRef.current.teiUid,
-          orgUnitId: defaultOu.id,
+          orgUnitId: selectedOrgId, // 使用选择的机构ID
           basic: {
             diseaseCode: b.diseaseCode,
             fullName: b.fullName,
@@ -246,7 +249,7 @@ export function useNewCase() {
             addressCity: b.addressCity,
             addressDistrict: b.addressDistrict,
             addressDetail: b.addressDetail,
-            reportOrgId: b.reportOrgId,
+            reportOrgId: selectedOrgId, // 使用选择的机构ID
             reportUser: b.reportUser,
             reportDate: b.reportDate?.format('YYYY-MM-DD'),
             symptomOnsetDate: b.symptomOnsetDate?.format('YYYY-MM-DD'),

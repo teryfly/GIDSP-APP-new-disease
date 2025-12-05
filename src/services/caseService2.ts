@@ -174,6 +174,9 @@ export async function queryTrackedEntities(filters: CaseFilters, signal?: AbortS
   if (patientNameLike) filterArr.push(`${ATR_FULL_NAME}:like:${patientNameLike}`);
   if (diseaseCodeEq) filterArr.push(`${ATR_DISEASE_CODE}:eq:${diseaseCodeEq}`);
   if (reportDateEq) filterArr.push(`${ATR_RPT_DATE}:eq:${reportDateEq}`); // 新增：报告日期精确匹配
+  
+  // 默认添加"删除"属性过滤条件，只查询未删除的记录
+  filterArr.push(`QRTY172dH9F:eq:false`);
 
   const searchParams: Record<string, any> = { ...params };
   filterArr.forEach((f) => {
