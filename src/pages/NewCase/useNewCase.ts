@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Form, Modal, message } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import appConfig from '../../config.json';
 import {
@@ -22,6 +23,7 @@ export function useNewCase() {
   const [formBasic] = Form.useForm();
   const [formEpi] = Form.useForm();
   const [formDiag] = Form.useForm();
+  const navigate = useNavigate(); // 使用useNavigate hook
 
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -154,7 +156,7 @@ export function useNewCase() {
       okText: '确认取消',
       cancelText: '继续填写',
       onOk: () => {
-        window.location.href = '/cases';
+        navigate('/cases'); // 使用navigate代替window.location.href
       },
     });
   };
@@ -299,8 +301,9 @@ export function useNewCase() {
         if (teiUidRef.current) {
           clearDraft(nid);
           message.success('个案创建成功，正在跳转...');
+          // 使用navigate代替window.location.href
           setTimeout(() => {
-            window.location.href = `/cases/${teiUidRef.current}`;
+            navigate(`/cases/${teiUidRef.current}`);
           }, 500);
         } else {
           message.warning('未解析到 TEI UID，请联系管理员');
@@ -317,7 +320,8 @@ export function useNewCase() {
     if (teiUidRef.current) {
       const nid = formBasic.getFieldValue('nationalId');
       clearDraft(nid);
-      window.location.href = `/cases/${teiUidRef.current}`;
+      // 使用navigate代替window.location.href
+      navigate(`/cases/${teiUidRef.current}`);
     } else {
       message.info('未解析到 TEI UID，请先检查错误信息');
     }
